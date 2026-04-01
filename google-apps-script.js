@@ -690,6 +690,179 @@ function processAllWaitlists() {
   }
 }
 
+// ========== GOOGLE MEET INVITE AUTOMATION ==========
+// Set up as a time-driven trigger (every 5 minutes).
+// Checks if any class is starting within 30 minutes, then creates a
+// Google Calendar event with a Meet link and adds all registered students as guests.
+//
+// REQUIRES: Enable "Google Calendar API" in Apps Script sidebar > Services > "+"
+//
+// Class schedule (PST / America/Los_Angeles):
+//   Sunday    6:00 PM - 7:15 PM  Online
+//   Tuesday   6:00 PM - 7:15 PM  Online
+//   Wednesday 6:00 PM - 7:15 PM  In-Person (CCV)
+
+var CLASS_SCHEDULE = [
+  { day: 0, name: 'Sunday Evening — Online via Google Meet',    startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
+  { day: 2, name: 'Tuesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
+  { day: 3, name: 'Wednesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' }
+];
+
+var MEET_TZ = 'America/Los_Angeles';
+
+function sendMeetInvites() {
+  var now = new Date();
+
+  // Convert "now" to PST to figure out what day/time it is in class timezone
+  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: MEET_TZ }));
+  var currentDay = pstNow.getDay();       // 0=Sun, 1=Mon, ...
+  var currentHour = pstNow.getHours();
+  var currentMin = pstNow.getMinutes();
+  var currentTotalMin = currentHour * 60 + currentMin;
+
+  Logger.log('Meet check at PST: ' + pstNow.toLocaleString() + ' (day=' + currentDay + ', time=' + currentHour + ':' + currentMin + ')');
+
+  for (var c = 0; c < CLASS_SCHEDULE.length; c++) {
+    var cls = CLASS_SCHEDULE[c];
+
+    // Only process if today matches the class day
+    if (currentDay !== cls.day) continue;
+
+    var classStartMin = cls.startH * 60 + cls.startM;
+    var minutesUntilClass = classStartMin - currentTotalMin;
+
+    // Send invite when class is 25-35 minutes away (covers the 5-min trigger interval)
+    if (minutesUntilClass < 25 || minutesUntilClass > 35) {
+      Logger.log('Skipping ' + cls.name + ': ' + minutesUntilClass + ' min away (not in 25-35 min window)');
+      continue;
+    }
+
+    Logger.log('Class ' + cls.name + ' starts in ' + minutesUntilClass + ' min — preparing Meet invite');
+
+    // Build the class date string to match what's in the spreadsheet (e.g., "Sun, Apr 6")
+    var classDate = formatClassDate(pstNow);
+
+    // Check if we already sent an invite for this class+date (avoid duplicates)
+    var sentKey = 'meet_sent_' + cls.day + '_' + classDate;
+    var cache = PropertiesService.getScriptProperties();
+    if (cache.getProperty(sentKey)) {
+      Logger.log('Already sent invite for ' + cls.name + ' on ' + classDate);
+      continue;
+    }
+
+    // Get registered students for this class
+    var students = getRegisteredStudents(cls.name, classDate);
+    if (students.length === 0) {
+      Logger.log('No students registered for ' + cls.name + ' on ' + classDate);
+      continue;
+    }
+
+    Logger.log('Found ' + students.length + ' student(s) for ' + cls.name);
+
+    // Create Calendar event with Meet link
+    try {
+      var startTime = new Date(pstNow);
+      startTime.setHours(cls.startH, cls.startM, 0, 0);
+
+      var endTime = new Date(pstNow);
+      endTime.setHours(cls.endH, cls.endM, 0, 0);
+
+      // Build attendee list
+      var attendees = [];
+      for (var s = 0; s < students.length; s++) {
+        attendees.push({ email: students[s] });
+      }
+
+      // Create event using Advanced Calendar API (needed for conferenceData)
+      var event = {
+        summary: 'Yoga with Jessica — ' + cls.name,
+        description: 'Join us for yoga class! Please have your camera on with good lighting. Microphones will be muted to minimize noise.\n\nProps to bring: Check https://yogawithjessica.com/schedule.html',
+        start: {
+          dateTime: Utilities.formatDate(startTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
+          timeZone: MEET_TZ
+        },
+        end: {
+          dateTime: Utilities.formatDate(endTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
+          timeZone: MEET_TZ
+        },
+        attendees: attendees,
+        conferenceData: {
+          createRequest: {
+            conferenceSolutionKey: { type: 'hangoutsMeet' },
+            requestId: 'yoga-' + cls.day + '-' + Date.now()
+          }
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'popup', minutes: 5 }
+          ]
+        }
+      };
+
+      var createdEvent = Calendar.Events.insert(event, 'primary', { conferenceDataVersion: 1, sendUpdates: 'all' });
+
+      var meetLink = '';
+      if (createdEvent.conferenceData && createdEvent.conferenceData.entryPoints) {
+        for (var ep = 0; ep < createdEvent.conferenceData.entryPoints.length; ep++) {
+          if (createdEvent.conferenceData.entryPoints[ep].entryPointType === 'video') {
+            meetLink = createdEvent.conferenceData.entryPoints[ep].uri;
+            break;
+          }
+        }
+      }
+
+      Logger.log('Created event with Meet link: ' + meetLink + ' for ' + students.length + ' students');
+
+      // Mark as sent to avoid duplicates
+      cache.setProperty(sentKey, new Date().toISOString());
+
+    } catch (calErr) {
+      Logger.log('Error creating calendar event for ' + cls.name + ': ' + calErr.toString());
+    }
+  }
+}
+
+// Get all registered student emails for a class name + date
+function getRegisteredStudents(className, classDate) {
+  var emails = [];
+  try {
+    var ss = getOrCreateSpreadsheet();
+    var sheet = getOrCreateSheet(ss);
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return emails;
+
+    var data = sheet.getRange(2, 1, lastRow - 1, 11).getValues();
+    var seen = {};
+
+    for (var i = 0; i < data.length; i++) {
+      var rowClass = (data[i][4] || '').toString().trim();
+      var rowDate  = (data[i][5] || '').toString().trim();
+      var rowEmail = (data[i][3] || '').toString().trim().toLowerCase();
+
+      // Match by class date (the class name in the sheet may be abbreviated)
+      if (rowDate === classDate && rowEmail && !seen[rowEmail]) {
+        // Check the class type matches — only send Meet invites for online classes
+        var rowType = (data[i][6] || '').toString().trim().toLowerCase();
+        if (rowType === 'online') {
+          emails.push(rowEmail);
+          seen[rowEmail] = true;
+        }
+      }
+    }
+  } catch (err) {
+    Logger.log('Error getting registered students: ' + err.toString());
+  }
+  return emails;
+}
+
+// Format a date to match the spreadsheet format (e.g., "Sun, Apr 6")
+function formatClassDate(date) {
+  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return days[date.getDay()] + ', ' + months[date.getMonth()] + ' ' + date.getDate();
+}
+
 // ========== HELPERS ==========
 function getOrCreateSpreadsheet() {
   var files = DriveApp.getFilesByName('Yoga Signup');
