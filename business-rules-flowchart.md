@@ -17,9 +17,9 @@ This is the primary diagram covering the full journey from visiting the schedule
 flowchart TD
     A([User visits schedule.html]) --> B[View 3 Class Cards]
 
-    B --> B1["Monday 6-7:30 PM PST\nOnline - Google Meet\nOpen to Everyone"]
-    B --> B2["Tuesday 6-7:30 PM PST\nOnline - Google Meet\nRestorative Yoga"]
-    B --> B3["Wednesday 6-7:30 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only"]
+    B --> B1["Sunday 6-7:15 PM PST\nOnline - Google Meet\nOpen to Everyone"]
+    B --> B2["Tuesday 6-7:15 PM PST\nOnline - Google Meet\nRestorative Yoga"]
+    B --> B3["Wednesday 6-7:15 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only"]
 
     B1 --> C{Class within\n7-day rolling window\nAND before 6:15 PM PST\ncutoff?}
     B2 --> C
@@ -92,26 +92,26 @@ flowchart TD
 
     NOW --> WINDOW["Calculate 7-day\nrolling window:\nToday through Today + 6 days"]
 
-    WINDOW --> MON{Is Monday\nwithin window?}
+    WINDOW --> MON{Is Sunday\nwithin window?}
     WINDOW --> TUE{Is Tuesday\nwithin window?}
     WINDOW --> WED{Is Wednesday\nwithin window?}
 
-    MON -- Yes --> MON_CUT{Current time\npast Monday\n6:15 PM PST?}
-    MON -- No --> MON_HIDE[Monday class\nnot shown]
+    MON -- Yes --> MON_CUT{Current time\npast Sunday\n6:15 PM PST?}
+    MON -- No --> MON_HIDE[Sunday class\nnot shown]
 
-    MON_CUT -- No --> MON_SHOW["Show THIS Monday:\nMonday 6-7:30 PM PST\nOnline via Google Meet\nOpen to Everyone\nSign-up OPEN"]
-    MON_CUT -- Yes --> MON_NEXT["Show NEXT Monday:\nSign-up opens for\nnext week's class\nimmediately"]
+    MON_CUT -- No --> MON_SHOW["Show THIS Sunday:\nSunday 6-7:15 PM PST\nOnline via Google Meet\nOpen to Everyone\nSign-up OPEN"]
+    MON_CUT -- Yes --> MON_NEXT["Show NEXT Sunday:\nSign-up opens for\nnext week's class\nimmediately"]
 
     TUE -- Yes --> TUE_CUT{Current time\npast Tuesday\n6:15 PM PST?}
     TUE -- No --> TUE_HIDE[Tuesday class\nnot shown]
 
-    TUE_CUT -- No --> TUE_SHOW["Show THIS Tuesday:\nTuesday 6-7:30 PM PST\nOnline via Google Meet\nRestorative Yoga\nSign-up OPEN"]
+    TUE_CUT -- No --> TUE_SHOW["Show THIS Tuesday:\nTuesday 6-7:15 PM PST\nOnline via Google Meet\nRestorative Yoga\nSign-up OPEN"]
     TUE_CUT -- Yes --> TUE_NEXT["Show NEXT Tuesday:\nSign-up opens for\nnext week's class\nimmediately"]
 
     WED -- Yes --> WED_CUT{Current time\npast Wednesday\n6:15 PM PST?}
     WED -- No --> WED_HIDE[Wednesday class\nnot shown]
 
-    WED_CUT -- No --> WED_SHOW["Show THIS Wednesday:\nWednesday 6-7:30 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only\nSign-up OPEN"]
+    WED_CUT -- No --> WED_SHOW["Show THIS Wednesday:\nWednesday 6-7:15 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only\nSign-up OPEN"]
     WED_CUT -- Yes --> WED_NEXT["Show NEXT Wednesday:\nSign-up opens for\nnext week's class\nimmediately"]
 
     MON_SHOW --> COMPARE

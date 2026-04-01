@@ -573,12 +573,12 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
   /* Cards — reduce padding */
   .card { padding: 1.5rem; }
 
-  /* Disable fixed parallax on mobile (performance + iOS issues) */
+  /* Keep parallax fixed backgrounds on mobile too */
   .section > .bg-art {
-    position: absolute;
-    height: 100%;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100vh;
   }
-  .section { clip-path: none; }
+  .section { clip-path: inset(0); }
 
   /* Background art — scale down decorative SVGs */
   .bg-art svg[style*="width:700px"],
