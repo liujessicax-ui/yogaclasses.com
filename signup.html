@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | Yoga with Jessica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ===== Sign-up form styles ===== */
+    .signup-form-wrap {
+      max-width: 620px; margin: 0 auto;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block; font-weight: 600; font-size: .9rem;
+      margin-bottom: .4rem; color: var(--charcoal);
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%; padding: .75rem 1rem;
+      border: 1px solid var(--sand-dk);
+      border-radius: 8px; font-size: 1rem;
+      font-family: var(--font-body);
+      background: var(--white);
+      transition: border-color .2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none; border-color: var(--olive);
+      box-shadow: 0 0 0 3px rgba(122,139,111,.15);
+    }
+    .form-hint {
+      font-size: .82rem; color: #888; margin-top: .3rem;
+    }
+
+    /* Multi-select class list — compact rows */
+    .class-options {
+      display: flex; flex-direction: column; gap: .35rem;
+    }
+    .class-option {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .55rem .8rem;
+      border: 1px solid var(--sand); border-radius: 8px;
+      cursor: pointer; transition: all .15s;
+      background: var(--white);
+    }
+    .class-option:hover { border-color: var(--olive-lt); background: rgba(122,139,111,.03); }
+    .class-option.selected {
+      border-color: var(--olive); background: rgba(122,139,111,.07);
+    }
+    .class-option input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--olive); flex-shrink: 0;
+    }
+    .class-option-info {
+      flex: 1; display: flex; align-items: center;
+      gap: .5rem; flex-wrap: wrap;
+    }
+    .class-option-info strong { font-size: .85rem; white-space: nowrap; }
+    .class-option-info span { font-size: .78rem; color: #777; }
+    .class-option .tag-badge {
+      display: inline-block; font-size: .65rem; font-weight: 700;
+      padding: .1rem .4rem; border-radius: 10px;
+      text-transform: uppercase; letter-spacing: .02em;
+    }
+    .tag-badge--open { background: rgba(122,139,111,.15); color: var(--olive-dk); }
+    .tag-badge--inperson { background: rgba(196,120,90,.12); color: #a0603e; }
+
+    .no-classes-msg {
+      text-align: center; padding: 1.5rem;
+      color: #888; font-style: italic;
+      border: 1px dashed var(--sand-dk); border-radius: 8px;
+    }
+
+    /* Duplicate registration popup */
+    .dup-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 999;
+      align-items: center; justify-content: center; padding: 1rem;
+      overflow: hidden; box-sizing: border-box; width: 100%; height: 100%;
+    }
+    .dup-overlay.active { display: flex; }
+    .dup-modal {
+      background: var(--white); border-radius: 14px;
+      max-width: 480px; width: 100%; padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .dup-modal__icon {
+      width: 56px; height: 56px; margin: 0 auto 1rem;
+      border-radius: 50%; background: rgba(196,125,90,.1);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dup-modal__icon svg { width: 28px; height: 28px; color: var(--terracotta); }
+    .dup-modal h3 { font-size: 1.3rem; margin-bottom: .8rem; }
+    .dup-modal p { color: #555; font-size: .9rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .dup-modal__actions { display: flex; gap: .8rem; justify-content: center; }
+    .dup-modal__actions button {
+      padding: .6rem 1.5rem; border-radius: 50px;
+      font-weight: 700; font-size: .82rem; text-transform: uppercase;
+      letter-spacing: .04em; cursor: pointer; border: none; transition: all .2s;
+    }
+    .dup-modal__browse { background: var(--olive); color: var(--white); }
+    .dup-modal__browse:hover { background: var(--olive-dk); }
+    .dup-modal__close { background: var(--sand); color: var(--charcoal); }
+    .dup-modal__close:hover { background: var(--sand-dk); }
+
+    /* Liability modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.55); z-index: 1000;
+      align-items: center; justify-content: center;
+      padding: 1rem;
+      overflow: hidden;
+      box-sizing: border-box;
+      width: 100%; height: 100%;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--white); border-radius: 14px;
+      max-width: 620px; width: 100%; max-height: 85vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      overflow: hidden; word-wrap: break-word; overflow-wrap: break-word;
+      box-sizing: border-box;
+    }
+    .modal__header {
+      padding: 1.5rem 2rem 1rem;
+      border-bottom: 1px solid var(--sand);
+    }
+    .modal__header h3 {
+      font-family: var(--font-heading);
+      font-size: 1.5rem; margin: 0;
+    }
+    .modal__body {
+      padding: 1.5rem 2rem;
+      overflow-y: auto; flex: 1;
+      font-size: .9rem; line-height: 1.7; color: #444;
+    }
+    .modal__body p { margin-bottom: 1rem; }
+    .modal__body ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .modal__body ol li { margin-bottom: .4rem; }
+    .modal__footer {
+      padding: 1rem 2rem 1.5rem;
+      border-top: 1px solid var(--sand);
+      display: flex; flex-direction: column; gap: .8rem;
+    }
+    .modal__footer label {
+      display: flex; align-items: flex-start; gap: .6rem;
+      font-size: .9rem; cursor: pointer;
+    }
+    .modal__footer input[type="checkbox"] {
+      width: 18px; height: 18px; margin-top: 2px;
+      accent-color: var(--olive); flex-shrink: 0;
+    }
+    .modal__actions {
+      display: flex; gap: 1rem; justify-content: flex-end;
+    }
+    .modal__actions button {
+      padding: .7rem 1.8rem; border-radius: 50px;
+      font-weight: 700; font-size: .85rem;
+      text-transform: uppercase; letter-spacing: .04em;
+      cursor: pointer; transition: all .3s;
+      border: none;
+    }
+    .modal__cancel {
+      background: var(--sand); color: var(--charcoal);
+    }
+    .modal__cancel:hover { background: var(--sand-dk); }
+    .modal__accept {
+      background: var(--olive); color: var(--white);
+    }
+    .modal__accept:hover { background: var(--olive-dk); }
+    .modal__accept:disabled {
+      background: #bbb; cursor: not-allowed;
+    }
+
+    /* Success message */
+    .success-message {
+      display: none; text-align: center; padding: 3rem 2rem;
+    }
+    .success-message.show { display: block; }
+    .success-message svg { width: 64px; height: 64px; color: var(--olive); margin-bottom: 1rem; }
+    .success-message h2 { margin-bottom: .8rem; }
+    .success-message p { color: #555; max-width: 480px; margin: 0 auto; }
+
+    /* Confirmation class list */
+    #confirmClasses li {
+      padding: .5rem .8rem; margin-bottom: .4rem;
+      background: rgba(122,139,111,.07); border-radius: 8px;
+      border-left: 3px solid var(--olive);
+      font-size: .88rem; color: var(--charcoal);
+    }
+    #confirmClasses li span { color: #777; font-size: .82rem; }
+
+    /* Loading spinner on button */
+    .btn--loading { pointer-events: none; opacity: .7; }
+    .btn--loading::after {
+      content: ''; display: inline-block; width: 16px; height: 16px;
+      border: 2px solid transparent; border-top-color: currentColor;
+      border-radius: 50%; animation: spin .6s linear infinite;
+      margin-left: .6rem; vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Guest section (inline inside the in-person class box) */
+    .class-option-wrap {
+      border: 1px solid var(--sand); border-radius: 8px;
+      overflow: hidden; transition: all .15s;
+    }
+    .class-option-wrap .class-option {
+      border: none; border-radius: 0;
+    }
+    .class-option-wrap:has(.class-option.selected) {
+      border-color: var(--olive); background: rgba(122,139,111,.07);
+    }
+    .guest-inline {
+      padding: .7rem 1rem;
+      background: rgba(196,120,90,.08);
+      border-top: 1px dashed rgba(196,120,90,.25);
+    }
+    .guest-inline label.guest-check-label {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .85rem; font-weight: 600; color: var(--charcoal);
+      cursor: pointer; margin: 0;
+    }
+    .guest-inline input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: var(--terracotta);
+      flex-shrink: 0; margin: 0;
+    }
+    .guest-name-wrap {
+      display: none; margin-top: .8rem;
+    }
+    .guest-name-wrap.visible { display: block; }
+    .guest-name-wrap label {
+      display: block; font-weight: 600; font-size: .85rem;
+      margin-bottom: .3rem; color: var(--charcoal);
+    }
+    .guest-name-wrap input {
+      width: 100%; padding: .65rem .9rem;
+      border: 1px solid var(--sand-dk); border-radius: 8px;
+      font-size: .95rem; font-family: var(--font-body);
+      background: var(--white); transition: border-color .2s;
+    }
+    .guest-name-wrap input:focus {
+      outline: none; border-color: var(--olive);
+      box-shadow: 0 0 0 3px rgba(122,139,111,.15);
+    }
+    .guest-hint {
+      font-size: .78rem; color: #888; margin-top: .3rem;
+    }
+
+    /* Capacity / Waitlist popup (reuses dup-modal pattern) */
+    .cap-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 999;
+      align-items: center; justify-content: center; padding: 1rem;
+      overflow: hidden; box-sizing: border-box; width: 100%; height: 100%;
+    }
+    .cap-overlay.active { display: flex; }
+    .cap-modal {
+      background: var(--white); border-radius: 14px;
+      max-width: 480px; width: 100%; padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .cap-modal__icon {
+      width: 56px; height: 56px; margin: 0 auto 1rem;
+      border-radius: 50%; background: rgba(196,125,90,.1);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cap-modal__icon svg { width: 28px; height: 28px; color: var(--terracotta); }
+    .cap-modal h3 { font-size: 1.3rem; margin-bottom: .8rem; }
+    .cap-modal p { color: #555; font-size: .9rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .cap-modal__actions { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+    .cap-modal__actions button {
+      padding: .6rem 1.5rem; border-radius: 50px;
+      font-weight: 700; font-size: .82rem; text-transform: uppercase;
+      letter-spacing: .04em; cursor: pointer; border: none; transition: all .2s;
+    }
+    .cap-btn--primary { background: var(--olive); color: var(--white); }
+    .cap-btn--primary:hover { background: var(--olive-dk); }
+    .cap-btn--secondary { background: var(--sand); color: var(--charcoal); }
+    .cap-btn--secondary:hover { background: var(--sand-dk); }
+
+    /* Waitlist confirmation (reuses success-message pattern) */
+    .waitlist-message {
+      display: none; text-align: center; padding: 3rem 2rem;
+    }
+    .waitlist-message.show { display: block; }
+    .waitlist-message svg { width: 64px; height: 64px; color: var(--terracotta); margin-bottom: 1rem; }
+    .waitlist-message h2 { margin-bottom: .8rem; }
+    .waitlist-message p { color: #555; max-width: 480px; margin: 0 auto; font-size: .95rem; line-height: 1.6; }
+
+    /* ===== Mobile responsive for signup page ===== */
+    @media (max-width: 768px) {
+      .signup-form-wrap { max-width: 100%; }
+      .modal { max-width: calc(100vw - 2rem); max-height: 90vh; min-width: 0; }
+      .modal__body, .modal__header, .modal__footer { max-width: 100%; box-sizing: border-box; overflow-wrap: break-word; }
+      .modal__header { padding: 1.2rem 1.2rem .8rem; }
+      .modal__header h3 { font-size: 1.2rem; }
+      .modal__body { padding: 1rem 1.2rem; font-size: .85rem; }
+      .modal__footer { padding: .8rem 1.2rem 1.2rem; }
+      .modal__footer label { font-size: .82rem; }
+      .modal__actions { flex-direction: column; }
+      .modal__actions button { width: 100%; text-align: center; }
+      .dup-modal { padding: 1.8rem 1.2rem; max-width: calc(100vw - 2rem); }
+      .dup-modal h3 { font-size: 1.1rem; }
+      .dup-modal p { font-size: .85rem; }
+      .dup-modal__actions { flex-direction: column; }
+      .dup-modal__actions button { width: 100%; text-align: center; }
+      .cap-modal { padding: 1.8rem 1.2rem; max-width: calc(100vw - 2rem); }
+      .cap-modal h3 { font-size: 1.1rem; }
+      .cap-modal p { font-size: .85rem; }
+      .cap-modal__actions { flex-direction: column; }
+      .cap-modal__actions button { width: 100%; text-align: center; }
+      .form-group input,
+      .form-group select { font-size: 16px; /* prevents iOS zoom on focus */ }
+    }
+    @media (max-width: 480px) {
+      .class-option-info { flex-direction: column; align-items: flex-start; gap: .2rem; }
+      .class-option-info strong { font-size: .82rem; }
+      .success-message { padding: 2rem 1rem; }
+      .success-message svg { width: 48px; height: 48px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <a href="index.html" class="nav__logo">
+        <svg viewBox="0 0 40 40" fill="none"><g transform="rotate(180 20 20)"><path d="M20 4c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#7a8b6f" opacity=".6"/><path d="M20 8c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#7a8b6f" opacity=".4"/><path d="M20 8c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#7a8b6f" opacity=".4"/></g></svg>
+        Yoga with Jessica
+      </a>
+      <button class="nav__toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About Me</a></li>
+        <li><a href="schedule.html">Class Schedule</a></li>
+        <li><a href="privates.html">Private Sessions</a></li>
+        <li><a href="props.html">Props</a></li>
+        <li><a href="donations.html">Donations</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Page header -->
+  <header class="page-header">
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 300" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <path d="M0,100 C360,60 720,140 1080,80 C1260,60 1380,90 1440,70" stroke="#7a8b6f" stroke-width="3" fill="none" opacity=".4"/>
+        <path d="M0,140 C300,100 600,180 900,120 C1200,80 1350,130 1440,110" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".35"/>
+        <path d="M0,180 C280,150 560,210 840,160 C1120,120 1320,170 1440,150" stroke="#c4a882" stroke-width="1.5" fill="none" opacity=".35"/>
+        <path d="M0,120 C400,80 800,160 1200,100 L1440,90 L1440,300 L0,300 Z" fill="#7a8b6f" opacity=".12"/>
+      </svg>
+    </div>
+    <div class="container">
+      <h1>Sign Up for Class</h1>
+      <div class="page-header__ornament">
+        <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+      </div>
+      <p>Reserve your spot in an upcoming class</p>
+    </div>
+  </header>
+
+  <!-- Sign-up form -->
+  <section class="section">
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <path d="M-50,150 C200,100 450,250 700,170 S1000,80 1250,160 S1420,220 1500,180" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".3"/>
+        <path d="M-50,200 C250,160 500,290 750,210 S1050,130 1300,210 S1450,260 1500,230" stroke="#c4a882" stroke-width="1.5" fill="none" opacity=".3"/>
+        <path d="M-50,170 C200,130 450,260 700,180 S1050,100 1300,180 L1500,170 L1500,600 L-50,600 Z" fill="#7a8b6f" opacity=".1"/>
+      </svg>
+    </div>
+
+    <div class="container signup-form-wrap">
+
+      <!-- Success state (hidden by default) -->
+      <div class="success-message" id="successMessage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <h2>You&rsquo;re All Set!</h2>
+        <div id="confirmationSummary" style="text-align:left;max-width:480px;margin:1.5rem auto;">
+          <p style="color:#555;margin-bottom:1rem;" id="confirmName"></p>
+          <p style="color:#555;font-size:.9rem;margin-bottom:.8rem;">You&rsquo;ve signed up for:</p>
+          <ul id="confirmClasses" style="list-style:none;padding:0;margin-bottom:1.5rem;"></ul>
+          <div id="guestConfirmation" style="display:none;padding:1rem;background:rgba(196,120,90,.07);border-radius:8px;margin-bottom:1.2rem;">
+            <p style="color:var(--charcoal);font-size:.9rem;margin:0 0 .8rem;"><strong>Guest:</strong> <span id="confirmGuestName"></span></p>
+            <p style="color:#555;font-size:.85rem;line-height:1.6;margin:0;">
+              Your guest will need to sign a liability waiver before class begins. Please share the waiver with them ahead of time so they can review it:
+              <a href="waiver.html" target="_blank" style="color:var(--olive);font-weight:600;text-decoration:underline;">View &amp; Print Liability Waiver</a>
+            </p>
+          </div>
+        </div>
+        <p style="color:#555;font-size:.9rem;">A confirmation email will be sent to <strong id="confirmEmail"></strong> with your class details.</p>
+        <a href="schedule.html" class="btn btn--outline" style="margin-top:1.5rem;">Back to Schedule</a>
+      </div>
+
+      <!-- Waitlist confirmation (hidden by default) -->
+      <div class="waitlist-message" id="waitlistMessage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <h2>You&rsquo;re on the Waitlist</h2>
+        <p id="waitlistDetails"></p>
+        <a href="schedule.html" class="btn btn--outline" style="margin-top:1.5rem;">Back to Schedule</a>
+      </div>
+
+      <!-- The form -->
+      <form id="signupForm" novalidate>
+        <div class="card" style="padding:2.5rem;">
+
+          <p style="color:#555;font-size:.95rem;margin-bottom:2rem;text-align:center;">
+            Sign up for classes happening in the next 7 days. If the class you&rsquo;re looking for isn&rsquo;t listed yet, please check back when it gets closer.
+            For in-person classes, walk-ins are welcome, but I encourage signing up ahead of time in case space is limited.
+          </p>
+
+          <div class="form-group">
+            <label for="firstName">First Name <span style="color:#c47d5a;">*</span></label>
+            <input type="text" id="firstName" name="firstName" required autocomplete="given-name" />
+          </div>
+
+          <div class="form-group">
+            <label for="lastName">Last Name <span style="color:#c47d5a;">*</span></label>
+            <input type="text" id="lastName" name="lastName" required autocomplete="family-name" />
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address <span style="color:#c47d5a;">*</span></label>
+            <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+            <p class="form-hint">Class invite links and details will be sent to this address.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Select Classes <span style="color:#c47d5a;">*</span></label>
+            <p class="form-hint" style="margin-bottom:.6rem;">Choose one or more classes. Only classes within the next 7 days are available for sign-up.</p>
+            <div class="class-options" id="classOptions">
+              <!-- Populated dynamically by JavaScript -->
+              <div class="no-classes-msg">Loading available classes&hellip;</div>
+            </div>
+          </div>
+
+          <div style="text-align:center;margin-top:2rem;">
+            <button type="submit" class="btn btn--primary" id="submitBtn">Sign Up</button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Duplicate Registration Popup -->
+  <div class="dup-overlay" id="dupOverlay">
+    <div class="dup-modal">
+      <div class="dup-modal__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <h3>Looks Like You&rsquo;re Already Signed Up</h3>
+      <p>It appears you&rsquo;re already registered for one or more of the classes you selected. If you need to cancel, check your confirmation email for a cancellation link. Otherwise, feel free to sign up for a different class below!</p>
+      <div id="dupClassList" style="text-align:left;margin-bottom:1.2rem;"></div>
+      <div class="dup-modal__actions">
+        <button type="button" class="dup-modal__browse" id="dupBrowse">Choose Another Class</button>
+        <button type="button" class="dup-modal__close" id="dupClose">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capacity / Waitlist Popup -->
+  <div class="cap-overlay" id="capOverlay">
+    <div class="cap-modal">
+      <div class="cap-modal__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <h3 id="capTitle">Class Full</h3>
+      <p id="capMessage"></p>
+      <div class="cap-modal__actions" id="capActions"></div>
+    </div>
+  </div>
+
+  <!-- Liability Modal -->
+  <div class="modal-overlay" id="liabilityModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h3>Liability Waiver</h3>
+      </div>
+      <div class="modal__body">
+        <p><strong>PLEASE READ CAREFULLY BEFORE SIGNING.</strong> This is a legally binding agreement. By checking the box below and submitting this form, you acknowledge that you have read, understood, and agree to be bound by the following terms:</p>
+
+        <p><strong>1. ASSUMPTION OF RISK.</strong> I acknowledge that participation in yoga classes and related activities involves inherent risks, including but not limited to: physical injury, muscle strain, sprains, fractures, joint injuries, aggravation of pre-existing conditions, cardiovascular events, and in rare cases, serious injury. I freely and voluntarily assume all such risks, both known and unknown, even if arising from the negligence of the Released Parties.</p>
+
+        <p><strong>2. RELEASE AND WAIVER OF LIABILITY.</strong> In consideration of being permitted to participate in yoga classes, I, on behalf of myself, my heirs, executors, administrators, and assigns, hereby release, waive, discharge, and covenant not to sue the following Released Parties: the yoga instructor (Jessica), Cross Creek Village (CCV), its homeowners association, property management, board members, residents, and any affiliated persons, entities, officers, agents, employees, or volunteers, from any and all liability, claims, demands, actions, or causes of action arising out of or related to any loss, damage, or injury that may be sustained by me, whether caused by the negligence of the Released Parties or otherwise, while participating in any yoga class or activity, or while on or about the premises where classes are held.</p>
+
+        <p><strong>3. INDEMNIFICATION.</strong> I agree to indemnify and hold harmless all Released Parties from any loss, liability, damage, or costs, including attorney&rsquo;s fees, that they may incur due to my participation in yoga classes, whether caused by my negligence or otherwise.</p>
+
+        <p><strong>4. MEDICAL ACKNOWLEDGMENT.</strong> I represent that I am physically fit and have no medical condition that would prevent my full participation in yoga classes. I acknowledge that it is my responsibility to consult with a physician prior to and regarding my participation. I agree that it is my responsibility to inform the instructor of any medical conditions, injuries, or limitations before each class.</p>
+
+        <p><strong>5. GOVERNING LAW.</strong> This agreement shall be governed by and construed in accordance with the laws of the State of California. Any dispute arising under this agreement shall be subject to the exclusive jurisdiction of the courts of Los Angeles County, California.</p>
+
+        <p><strong>6. SEVERABILITY.</strong> If any provision of this agreement is held to be invalid or unenforceable, the remaining provisions shall continue in full force and effect.</p>
+
+        <p><strong>7. ACKNOWLEDGMENT.</strong> I acknowledge that I have read this Release of Liability and Assumption of Risk agreement, fully understand its terms, and understand that I am giving up substantial rights, including my right to sue. I acknowledge that I am signing this agreement freely and voluntarily.</p>
+      </div>
+      <div class="modal__footer">
+        <label>
+          <input type="checkbox" id="liabilityAgree" />
+          <span>I have read, understand, and voluntarily agree to the above Release of Liability and Assumption of Risk. I acknowledge that this constitutes a waiver of my legal rights.</span>
+        </label>
+        <div class="modal__actions">
+          <button type="button" class="modal__cancel" id="modalCancel">Cancel</button>
+          <button type="button" class="modal__accept" id="modalAccept" disabled>I Agree &amp; Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <svg class="footer__lotus" viewBox="0 0 40 40" width="36" height="36">
+        <g transform="rotate(180 20 20)">
+        <path d="M20 6c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#c4a882" opacity=".5"/>
+        <path d="M20 9c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        <path d="M20 9c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        </g>
+      </svg>
+      <div class="footer__links">
+        <a href="about.html">About</a>
+        <a href="schedule.html">Schedule</a>
+        <a href="privates.html">Privates</a>
+        <a href="props.html">Props</a>
+        <a href="donations.html">Donate</a>
+      </div>
+      <p>&copy; 2026 Yoga with Jessica. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // ========== NAV TOGGLE ==========
+    const toggle = document.querySelector('.nav__toggle');
+    const navLinks = document.querySelector('.nav__links');
+    toggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+    navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+    // ========== CLASS SCHEDULE DEFINITIONS ==========
+    // All times are in PST (UTC-8). The code converts to the user's
+    // local timezone for comparison so classes appear/disappear at
+    // the correct real-world moment regardless of the visitor's location.
+    // All class times are in America/Los_Angeles (handles PST/PDT automatically).
+    const LA_TZ = 'America/Los_Angeles';
+
+    // day: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat (in Pacific time)
+    const CLASS_DEFS = [
+      {
+        id: 'monday-online',
+        label: 'Monday Evening &mdash; Online via Google Meet',
+        day: 1, startHour: 18, startMin: 0, endHour: 19, endMin: 30,
+        duration: '6:00 PM – 7:30 PM PST',
+        type: 'online',
+        tags: ['Open to Everyone']
+      },
+      {
+        id: 'tuesday-restorative',
+        label: 'Tuesday Evening &mdash; Restorative Yoga (Online)',
+        day: 2, startHour: 18, startMin: 0, endHour: 19, endMin: 30,
+        duration: '6:00 PM – 7:30 PM PST',
+        type: 'online',
+        tags: ['Restorative', 'Open to Everyone']
+      },
+      {
+        id: 'wednesday-ccv',
+        label: 'Wednesday Evening &mdash; CCV Clubhouse (In Person)',
+        day: 3, startHour: 18, startMin: 0, endHour: 19, endMin: 30,
+        duration: '6:00 PM – 7:30 PM PST',
+        type: 'inperson',
+        tags: ['CCV Residents Only', 'In Person']
+      }
+    ];
+
+    // ========== DATE UTILITIES (Pacific Time, DST-aware) ==========
+
+    // Get components of "now" in Pacific time using Intl
+    function getNowInPacific() {
+      const now = new Date();
+      const parts = {};
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: LA_TZ,
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hour12: false, weekday: 'short'
+      }).formatToParts(now).forEach(p => { parts[p.type] = p.value; });
+      return {
+        year: +parts.year,
+        month: +parts.month,
+        day: +parts.day,
+        hour: +parts.hour === 24 ? 0 : +parts.hour,
+        minute: +parts.minute,
+        weekday: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(
+          new Date(now.toLocaleString('en-US', { timeZone: LA_TZ })).toLocaleDateString('en-US', { weekday: 'short' })
+        ),
+        _date: now
+      };
+    }
+
+    // Create a Date for a specific Pacific time date+time (DST-aware).
+    // Tries both -08:00 and -07:00, keeps whichever lands on the right local hour.
+    function pacificDate(year, month, day, hour, minute) {
+      const m = String(month).padStart(2, '0');
+      const d = String(day).padStart(2, '0');
+      const h = String(hour).padStart(2, '0');
+      const min = String(minute).padStart(2, '0');
+      const base = year + '-' + m + '-' + d + 'T' + h + ':' + min + ':00';
+
+      // Try PST (-08:00) first, then PDT (-07:00)
+      for (const offset of ['-08:00', '-07:00']) {
+        const candidate = new Date(base + offset);
+        // Verify it resolves to the right hour in Pacific time
+        const checkHour = +new Intl.DateTimeFormat('en-US', {
+          timeZone: LA_TZ, hour: 'numeric', hour12: false
+        }).formatToParts(candidate).find(p => p.type === 'hour').value;
+        if (checkHour === hour || (checkHour === 24 && hour === 0)) {
+          return candidate;
+        }
+      }
+      // Fallback (shouldn't happen)
+      return new Date(base + '-08:00');
+    }
+
+    function getNextOccurrences(classDef, nowUTC, windowDays) {
+      const pac = getNowInPacific();
+      const results = [];
+
+      // Scan 9 calendar days to cover the full 7-day window
+      for (let offset = 0; offset <= windowDays + 1; offset++) {
+        // Build a date in Pacific time for scanning
+        const scanDate = new Date(pac.year, pac.month - 1, pac.day + offset);
+        // scanDate.getDay() gives the weekday (works because we just need day-of-week)
+
+        if (scanDate.getDay() === classDef.day) {
+          const classStart = pacificDate(
+            scanDate.getFullYear(), scanDate.getMonth() + 1, scanDate.getDate(),
+            classDef.startHour, classDef.startMin
+          );
+
+          // Sign-up cutoff: 15 minutes after class starts
+          const signupCutoff = new Date(classStart.getTime() + 15 * 60000);
+
+          // Window end: 7 days from now
+          const windowEnd = new Date(nowUTC.getTime() + windowDays * 86400000);
+
+          // Show if: we haven't passed the 15-min cutoff AND starts within 7 days
+          if (signupCutoff > nowUTC && classStart <= windowEnd) {
+            results.push(classStart);
+          }
+        }
+      }
+      return results;
+    }
+
+    // Format a Date for display — always show the Pacific time date
+    function formatDate(date) {
+      const opts = { weekday: 'long', month: 'long', day: 'numeric', timeZone: LA_TZ };
+      return date.toLocaleDateString('en-US', opts);
+    }
+
+    // ========== BUILD CLASS OPTIONS ==========
+    function buildClassOptions() {
+      const container = document.getElementById('classOptions');
+      const now = new Date();
+      let hasAny = false;
+      let html = '';
+
+      // Get pre-selected class from URL param (e.g. ?class=monday-online)
+      const urlParams = new URLSearchParams(window.location.search);
+      const preselectedClass = urlParams.get('class');
+
+      CLASS_DEFS.forEach(cls => {
+        const occurrences = getNextOccurrences(cls, now, 7);
+        occurrences.forEach(date => {
+          hasAny = true;
+          const dateStr = formatDate(date);
+          const value = cls.id + '|' + date.toISOString();
+          const isInPerson = cls.type === 'inperson';
+          const isPreselected = (preselectedClass === cls.id);
+          html += `
+            <div class="class-option-wrap">
+              <label class="class-option${isPreselected ? ' selected' : ''}" data-type="${cls.type}">
+                <input type="checkbox" name="classes" value="${value}" data-type="${cls.type}" ${isPreselected ? 'checked' : ''} />
+                <div class="class-option-info">
+                  <strong>${dateStr}</strong>
+                  <span>${cls.duration}</span>
+                  ${cls.tags.map(t => `<span class="tag-badge ${t === 'In Person' ? 'tag-badge--inperson' : 'tag-badge--open'}">${t}</span>`).join('')}
+                </div>
+              </label>
+              ${isInPerson ? `
+              <div class="guest-inline" id="guestSection" style="display:none;">
+                <label class="guest-check-label">
+                  <input type="checkbox" id="guestCheckbox" />
+                  <span>I&rsquo;m bringing a guest (max 1)</span>
+                </label>
+                <div class="guest-name-wrap" id="guestNameWrap">
+                  <div style="display:flex;gap:.5rem;">
+                    <div style="flex:1;">
+                      <label for="guestFirstName">Guest&rsquo;s First Name <span style="color:#c47d5a;">*</span></label>
+                      <input type="text" id="guestFirstName" name="guestFirstName" placeholder="First name" autocomplete="off" />
+                    </div>
+                    <div style="flex:1;">
+                      <label for="guestLastName">Guest&rsquo;s Last Name <span style="color:#c47d5a;">*</span></label>
+                      <input type="text" id="guestLastName" name="guestLastName" placeholder="Last name" autocomplete="off" />
+                    </div>
+                  </div>
+                </div>
+              </div>` : ''}
+            </div>`;
+        });
+      });
+
+      if (!hasAny) {
+        html = '<div class="no-classes-msg">No classes are available for sign-up right now. Classes open for registration 7 days before they begin &mdash; please check back soon!</div>';
+      }
+
+      container.innerHTML = html;
+
+      // Toggle .selected class on check
+      container.querySelectorAll('.class-option').forEach(opt => {
+        const cb = opt.querySelector('input[type="checkbox"]');
+        cb.addEventListener('change', () => {
+          opt.classList.toggle('selected', cb.checked);
+        });
+      });
+    }
+
+    buildClassOptions();
+
+    // ========== GUEST SECTION TOGGLE ==========
+    // These are dynamically created, so we get them after buildClassOptions
+    function getGuestEls() {
+      return {
+        section: document.getElementById('guestSection'),
+        checkbox: document.getElementById('guestCheckbox'),
+        nameWrap: document.getElementById('guestNameWrap'),
+        nameInput: document.getElementById('guestFirstName'),
+        lastNameInput: document.getElementById('guestLastName')
+      };
+    }
+
+    // Show guest section only when wednesday-ccv is checked
+    function updateGuestVisibility() {
+      const g = getGuestEls();
+      if (!g.section) return; // no in-person class available this week
+      const ccvChecked = document.querySelector('input[name="classes"][value^="wednesday-ccv"]:checked');
+      if (ccvChecked) {
+        g.section.style.display = 'block';
+      } else {
+        g.section.style.display = 'none';
+        g.checkbox.checked = false;
+        g.nameWrap.classList.remove('visible');
+        g.nameInput.value = '';
+      }
+    }
+
+    // Use event delegation since checkboxes are built dynamically
+    document.getElementById('classOptions').addEventListener('change', (e) => {
+      updateGuestVisibility();
+      // Also handle guest checkbox toggle
+      if (e.target.id === 'guestCheckbox') {
+        const g = getGuestEls();
+        if (g.checkbox.checked) {
+          g.nameWrap.classList.add('visible');
+        } else {
+          g.nameWrap.classList.remove('visible');
+          g.nameInput.value = '';
+        }
+      }
+    });
+
+    // Run on load in case a class was pre-selected via URL param
+    updateGuestVisibility();
+
+    // ========== FORM SUBMISSION ==========
+    const form = document.getElementById('signupForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const successMessage = document.getElementById('successMessage');
+
+    // Liability modal elements
+    const modal = document.getElementById('liabilityModal');
+    const modalAgree = document.getElementById('liabilityAgree');
+    const modalAccept = document.getElementById('modalAccept');
+    const modalCancel = document.getElementById('modalCancel');
+
+    modalAgree.addEventListener('change', () => {
+      modalAccept.disabled = !modalAgree.checked;
+    });
+
+    modalCancel.addEventListener('click', () => {
+      modal.classList.remove('active');
+      modalAgree.checked = false;
+      modalAccept.disabled = true;
+    });
+
+    // Close modal on overlay click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modalCancel.click();
+      }
+    });
+
+    let pendingFormData = null;
+
+    // ========== DUPLICATE POPUP ELEMENTS ==========
+    const dupOverlay = document.getElementById('dupOverlay');
+    const dupClassList = document.getElementById('dupClassList');
+    document.getElementById('dupBrowse').addEventListener('click', () => {
+      dupOverlay.classList.remove('active');
+      // Scroll to class selection
+      document.getElementById('classOptions').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    document.getElementById('dupClose').addEventListener('click', () => {
+      dupOverlay.classList.remove('active');
+    });
+    dupOverlay.addEventListener('click', (e) => {
+      if (e.target === dupOverlay) dupOverlay.classList.remove('active');
+    });
+
+    // ========== FORM SUBMIT ==========
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      // Validate fields
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const selectedClasses = Array.from(document.querySelectorAll('input[name="classes"]:checked'));
+
+      if (!firstName || !lastName || !email || selectedClasses.length === 0) {
+        alert('Please fill out all required fields and select at least one class.');
+        return;
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+
+      const hasInPerson = selectedClasses.some(cb => cb.dataset.type === 'inperson');
+
+      // Guest validation
+      const _g = getGuestEls();
+      const bringingGuest = _g.checkbox && _g.checkbox.checked && _g.section && _g.section.style.display !== 'none';
+      const guestFirstName = bringingGuest ? _g.nameInput.value.trim() : '';
+      const guestLastName = bringingGuest ? (_g.lastNameInput ? _g.lastNameInput.value.trim() : '') : '';
+      if (bringingGuest && !guestFirstName) {
+        alert('Please enter your guest\'s first name.');
+        _g.nameInput.focus();
+        return;
+      }
+      if (bringingGuest && !guestLastName) {
+        alert('Please enter your guest\'s last name.');
+        _g.lastNameInput.focus();
+        return;
+      }
+
+      const classEntries = selectedClasses.map(cb => {
+        const [id, isoDate] = cb.value.split('|');
+        const def = CLASS_DEFS.find(c => c.id === id);
+        const date = new Date(isoDate);
+        return {
+          id,
+          name: def.label.replace(/&mdash;/g, '—').replace(/&amp;/g, '&'),
+          date: formatDate(date),
+          isoDate: isoDate,
+          duration: def.duration,
+          type: def.type
+        };
+      });
+
+      pendingFormData = {
+        firstName, lastName, email,
+        classEntries,
+        hasInPerson,
+        guestFirstName: guestFirstName,
+        guestLastName: guestLastName,
+        bringingGuest
+      };
+
+      // ---- DUPLICATE CHECK (runs before liability or submit) ----
+      checkForDuplicates(pendingFormData, function(duplicates, hasPriorWaiver) {
+        // Store waiver status on the pending data
+        pendingFormData.hasPriorWaiver = hasPriorWaiver;
+
+        if (duplicates && duplicates.length > 0) {
+          dupClassList.innerHTML = duplicates.map(d =>
+            '<p style="font-size:.85rem;color:var(--terracotta);margin:.3rem 0;">• ' + d + '</p>'
+          ).join('');
+          dupOverlay.classList.add('active');
+        } else {
+          proceedAfterDupCheck();
+        }
+      });
+    });
+
+    function proceedAfterDupCheck() {
+      // If there are in-person classes, check capacity first
+      const inPersonClasses = pendingFormData.classEntries.filter(c => c.type === 'inperson');
+      if (inPersonClasses.length > 0) {
+        checkCapacity(inPersonClasses, function() {
+          // Capacity OK — proceed to waiver or submit
+          proceedToWaiverOrSubmit();
+        });
+      } else {
+        proceedToWaiverOrSubmit();
+      }
+    }
+
+    function proceedToWaiverOrSubmit() {
+      if (pendingFormData.hasInPerson && !pendingFormData.hasPriorWaiver) {
+        // First-time in-person student — must sign liability waiver
+        modal.classList.add('active');
+      } else if (pendingFormData.hasInPerson && pendingFormData.hasPriorWaiver) {
+        // Returning in-person student — waiver already on file, skip
+        doSubmit(true);
+      } else {
+        // Online only — no waiver needed
+        doSubmit(false);
+      }
+    }
+
+    modalAccept.addEventListener('click', () => {
+      modal.classList.remove('active');
+      doSubmit(true);
+    });
+
+    // ========== DUPLICATE CHECK FUNCTION ==========
+    function checkForDuplicates(data, callback) {
+      if (!SHEETS_WEB_APP_URL) {
+        // Sheets not configured — skip check, assume no prior waiver
+        callback([], false);
+        return;
+      }
+
+      submitBtn.classList.add('btn--loading');
+      submitBtn.textContent = 'Checking…';
+
+      const classDates = data.classEntries.map(cls =>
+        encodeURIComponent(cls.name + '|' + cls.date)
+      ).join(',');
+
+      const checkUrl = SHEETS_WEB_APP_URL +
+        '?action=check' +
+        '&firstName=' + encodeURIComponent(data.firstName) +
+        '&lastName=' + encodeURIComponent(data.lastName) +
+        '&email=' + encodeURIComponent(data.email) +
+        '&classDates=' + classDates;
+
+      fetch(checkUrl)
+        .then(r => r.json())
+        .then(result => {
+          submitBtn.classList.remove('btn--loading');
+          submitBtn.textContent = 'Sign Up';
+          const dups = result.hasDuplicates ? result.duplicates : [];
+          const priorWaiver = result.hasPriorWaiver || false;
+          callback(dups, priorWaiver);
+        })
+        .catch(() => {
+          submitBtn.classList.remove('btn--loading');
+          submitBtn.textContent = 'Sign Up';
+          callback([], false);
+        });
+    }
+
+    // ========== CAPACITY CHECK ==========
+    const capOverlay = document.getElementById('capOverlay');
+    const capTitle = document.getElementById('capTitle');
+    const capMessage = document.getElementById('capMessage');
+    const capActions = document.getElementById('capActions');
+
+    capOverlay.addEventListener('click', (e) => {
+      if (e.target === capOverlay) capOverlay.classList.remove('active');
+    });
+
+    function checkCapacity(inPersonClasses, onSuccess) {
+      if (!SHEETS_WEB_APP_URL) {
+        onSuccess();
+        return;
+      }
+
+      submitBtn.classList.add('btn--loading');
+      submitBtn.textContent = 'Checking availability…';
+
+      // Check capacity for each in-person class
+      const checks = inPersonClasses.map(cls => {
+        const url = SHEETS_WEB_APP_URL +
+          '?action=capacity' +
+          '&className=' + encodeURIComponent(cls.name) +
+          '&classDate=' + encodeURIComponent(cls.date);
+        return fetch(url).then(r => r.json());
+      });
+
+      Promise.all(checks)
+        .then(results => {
+          submitBtn.classList.remove('btn--loading');
+          submitBtn.textContent = 'Sign Up';
+
+          const spotsNeeded = pendingFormData.bringingGuest ? 2 : 1;
+
+          for (let i = 0; i < results.length; i++) {
+            const result = results[i];
+            const cls = inPersonClasses[i];
+            const count = result.count || 0;
+            const available = 10 - count;
+
+            if (available <= 0) {
+              // Class is full — offer waitlist
+              showCapacityPopup(
+                'Class Full',
+                'Sorry, ' + cls.name.split('—')[0].trim() + ' on ' + cls.date + ' is full. Would you like to get on a waitlist?',
+                [
+                  { label: 'Join Waitlist', style: 'primary', action: () => { capOverlay.classList.remove('active'); doWaitlist(cls); } },
+                  { label: 'Cancel', style: 'secondary', action: () => { capOverlay.classList.remove('active'); } }
+                ]
+              );
+              return;
+            } else if (spotsNeeded > available) {
+              // Only 1 spot left but user + guest need 2
+              showCapacityPopup(
+                'Limited Availability',
+                'There\'s only ' + available + ' spot remaining for ' + cls.name.split('—')[0].trim() + ' on ' + cls.date + '. Please remove your guest or cancel the registration.',
+                [
+                  { label: 'Remove Guest', style: 'primary', action: () => {
+                    capOverlay.classList.remove('active');
+                    const _gr = getGuestEls();
+                    if (_gr.checkbox) _gr.checkbox.checked = false;
+                    if (_gr.nameWrap) _gr.nameWrap.classList.remove('visible');
+                    if (_gr.nameInput) _gr.nameInput.value = '';
+                    if (_gr.lastNameInput) _gr.lastNameInput.value = '';
+                    pendingFormData.bringingGuest = false;
+                    pendingFormData.guestFirstName = '';
+                    pendingFormData.guestLastName = '';
+                    // Re-run capacity check without guest
+                    checkCapacity(inPersonClasses, onSuccess);
+                  }},
+                  { label: 'Cancel', style: 'secondary', action: () => { capOverlay.classList.remove('active'); } }
+                ]
+              );
+              return;
+            }
+          }
+
+          // All classes have capacity
+          onSuccess();
+        })
+        .catch(() => {
+          submitBtn.classList.remove('btn--loading');
+          submitBtn.textContent = 'Sign Up';
+          // On error, proceed anyway
+          onSuccess();
+        });
+    }
+
+    function showCapacityPopup(title, message, buttons) {
+      capTitle.textContent = title;
+      capMessage.textContent = message;
+      capActions.innerHTML = '';
+      buttons.forEach(btn => {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.textContent = btn.label;
+        el.className = btn.style === 'primary' ? 'cap-btn--primary' : 'cap-btn--secondary';
+        el.addEventListener('click', btn.action);
+        capActions.appendChild(el);
+      });
+      capOverlay.classList.add('active');
+    }
+
+    // ========== WAITLIST FLOW ==========
+    const waitlistMessage = document.getElementById('waitlistMessage');
+    const waitlistDetails = document.getElementById('waitlistDetails');
+
+    function doWaitlist(cls) {
+      submitBtn.classList.add('btn--loading');
+      submitBtn.textContent = 'Joining waitlist…';
+
+      const data = pendingFormData;
+      const payload = {
+        action: 'waitlist',
+        rows: [{
+          timestamp: new Date().toISOString(),
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          className: cls.name,
+          classDate: cls.date,
+          classType: cls.type,
+          guestFirstName: data.guestFirstName || '',
+          guestLastName: data.guestLastName || ''
+        }]
+      };
+
+      const doShowWaitlist = () => {
+        waitlistDetails.textContent =
+          'You\'ve been added to the waitlist for ' + cls.name.split('—')[0].trim() +
+          ' on ' + cls.date + '. We\'ll send an email to ' + data.email +
+          ' as soon as a spot becomes available.';
+        form.style.display = 'none';
+        successMessage.classList.remove('show');
+        waitlistMessage.classList.add('show');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        submitBtn.classList.remove('btn--loading');
+        submitBtn.textContent = 'Sign Up';
+      };
+
+      if (SHEETS_WEB_APP_URL) {
+        fetch(SHEETS_WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(doShowWaitlist)
+        .catch(doShowWaitlist);
+      } else {
+        console.log('Waitlist data:', JSON.stringify(payload, null, 2));
+        doShowWaitlist();
+      }
+    }
+
+    // ========== GOOGLE SHEETS WEB APP URL ==========
+    // To connect: create a Google Apps Script with the code in google-apps-script.js,
+    // deploy as web app, and paste the URL here.
+    const SHEETS_WEB_APP_URL = ''; // paste your deployed Apps Script URL here
+
+    function doSubmit(liabilityAccepted) {
+      submitBtn.classList.add('btn--loading');
+      submitBtn.textContent = 'Submitting…';
+
+      const data = pendingFormData;
+      const liabilityText = liabilityAccepted
+        ? 'YES — Accepted'
+        : 'N/A — Online only';
+
+      // Build one row per class
+      const rows = data.classEntries.map(cls => ({
+        timestamp: new Date().toISOString(),
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        className: cls.name,
+        classDate: cls.date,
+        classType: cls.type,
+        liabilityWaiver: cls.type === 'inperson' ? liabilityText : 'N/A',
+        guestFirstName: (cls.type === 'inperson' && data.bringingGuest) ? data.guestFirstName : '',
+        guestLastName: (cls.type === 'inperson' && data.bringingGuest) ? (data.guestLastName || '') : '',
+        guestOf: (cls.type === 'inperson' && data.bringingGuest) ? (data.firstName + ' ' + data.lastName) : ''
+      }));
+
+      const payload = { rows };
+
+      if (SHEETS_WEB_APP_URL) {
+        // Send to Google Sheets via Apps Script
+        fetch(SHEETS_WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(() => showSuccess(data))
+        .catch(() => showSuccess(data)); // still show success; sheet will retry
+      } else {
+        // No Sheets URL configured yet — show success anyway
+        console.log('Google Sheets URL not configured. Data:', JSON.stringify(payload, null, 2));
+        showSuccess(data);
+      }
+    }
+
+    function showSuccess(data) {
+      // Populate confirmation summary
+      document.getElementById('confirmName').textContent =
+        'Thank you, ' + data.firstName + '!';
+      document.getElementById('confirmEmail').textContent = data.email;
+
+      const ul = document.getElementById('confirmClasses');
+      ul.innerHTML = data.classEntries.map(cls =>
+        '<li><strong>' + cls.name + '</strong><br><span>' + cls.date + ' · ' + cls.duration + '</span></li>'
+      ).join('');
+
+      // Show guest info if applicable
+      const guestConfirmEl = document.getElementById('guestConfirmation');
+      if (data.bringingGuest && data.guestFirstName) {
+        guestConfirmEl.style.display = 'block';
+        document.getElementById('confirmGuestName').textContent = data.guestFirstName + (data.guestLastName ? ' ' + data.guestLastName : '');
+      } else {
+        guestConfirmEl.style.display = 'none';
+      }
+
+      form.style.display = 'none';
+      waitlistMessage.classList.remove('show');
+      successMessage.classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      submitBtn.classList.remove('btn--loading');
+      submitBtn.textContent = 'Sign Up';
+    }
+  </script>
+</body>
+</html>

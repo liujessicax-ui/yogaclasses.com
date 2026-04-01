@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Class Schedule | Yoga with Jessica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <a href="index.html" class="nav__logo">
+        <svg viewBox="0 0 40 40" fill="none"><g transform="rotate(180 20 20)"><path d="M20 4c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#7a8b6f" opacity=".6"/><path d="M20 8c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#7a8b6f" opacity=".4"/><path d="M20 8c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#7a8b6f" opacity=".4"/></g></svg>
+        Yoga with Jessica
+      </a>
+      <button class="nav__toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About Me</a></li>
+        <li><a href="schedule.html" class="active">Class Schedule</a></li>
+        <li><a href="privates.html">Private Sessions</a></li>
+        <li><a href="props.html">Props</a></li>
+        <li><a href="donations.html">Donations</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Page header -->
+  <header class="page-header">
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 300" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <path d="M0,100 C360,60 720,140 1080,80 C1260,60 1380,90 1440,70" stroke="#7a8b6f" stroke-width="3" fill="none" opacity=".4"/>
+        <path d="M0,140 C300,100 600,180 900,120 C1200,80 1350,130 1440,110" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".35"/>
+        <path d="M0,180 C280,150 560,210 840,160 C1120,120 1320,170 1440,150" stroke="#c4a882" stroke-width="1.5" fill="none" opacity=".35"/>
+        <path d="M0,120 C400,80 800,160 1200,100 L1440,90 L1440,300 L0,300 Z" fill="#7a8b6f" opacity=".12"/>
+      </svg>
+      <svg viewBox="0 0 300 300" style="width:300px;height:300px;bottom:-80px;left:-60px;opacity:.25;">
+        <g transform="rotate(180 150 150)">
+        <path d="M150 30c-6 30-25 50-25 85s18 55 25 85c7-30 25-50 25-85s-18-55-25-85z" fill="#7a8b6f"/>
+        <path d="M150 55c-18 10-40 18-55 45s-8 50 3 68c7-22 30-40 52-55s28-30 0-58z" fill="#7a8b6f"/>
+        <path d="M150 55c18 10 40 18 55 45s8 50-3 68c-7-22-30-40-52-55s-28-30 0-58z" fill="#7a8b6f"/>
+        </g>
+      </svg>
+    </div>
+    <div class="container">
+      <h1>Class Schedule</h1>
+      <div class="page-header__ornament">
+        <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+      </div>
+      <p>Three weekly classes &mdash; find the one that fits your practice</p>
+    </div>
+  </header>
+
+  <!-- Schedule -->
+  <section class="section">
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <path d="M-50,150 C200,100 450,250 700,170 S1000,80 1250,160 S1420,220 1500,180" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".3"/>
+        <path d="M-50,200 C250,160 500,290 750,210 S1050,130 1300,210 S1450,260 1500,230" stroke="#c4a882" stroke-width="1.5" fill="none" opacity=".3"/>
+        <path d="M-50,170 C200,130 450,260 700,180 S1050,100 1300,180 L1500,170 L1500,600 L-50,600 Z" fill="#7a8b6f" opacity=".1"/>
+        <circle cx="700" cy="300" r="60" stroke="#7a8b6f" stroke-width="1.5" fill="none" opacity=".3"/>
+        <circle cx="700" cy="300" r="100" stroke="#7a8b6f" stroke-width="1.2" fill="none" opacity=".24"/>
+        <circle cx="700" cy="300" r="140" stroke="#7a8b6f" stroke-width="1" fill="none" opacity=".2"/>
+      </svg>
+    </div>
+    <div class="container" style="max-width:750px;">
+
+      <!-- How sign-up works -->
+      <div class="card" style="text-align:center;padding:1.8rem 2rem;margin-bottom:2.5rem;border-left:4px solid var(--olive);background:rgba(122,139,111,.06);">
+        <h3 style="font-family:var(--font-heading);font-size:1.3rem;margin-bottom:.6rem;color:var(--olive);">How It Works</h3>
+        <p style="color:#555;font-size:.92rem;line-height:1.7;margin:0;">
+          I offer <strong>three classes each week</strong> &mdash; Monday, Tuesday, and Wednesday evenings.
+          You can sign up for any class happening within the <strong>next 7 days</strong>, first come, first served.
+          Click the <strong>Sign Up</strong> button on any class below to see available dates and register.
+          If you need to cancel, you can do so from the confirmation email you'll receive after signing up.
+          For online classes, meeting invites will be sent to your email <strong>30 minutes before</strong> class starts.
+          Please have your <strong>camera on with good lighting</strong> so I can see your alignment and offer corrections.
+          Microphones will generally be muted during class to minimize background noise.
+        </p>
+        <p style="color:#555;font-size:.92rem;line-height:1.7;margin:.8rem 0 0;">
+          Each class lists recommended props below. The more props you have, the better &mdash; but don't let that stop you!
+          Stacked towels work as blankets, books can stand in for blocks, and a regular chair can substitute for a yoga chair.
+          That said, if your situation allows, proper yoga props are always encouraged for the best experience.
+        </p>
+      </div>
+
+      <div class="schedule-grid">
+
+        <!-- Monday -->
+        <div class="card schedule-card">
+          <div class="schedule-card__icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14"/><rect x="1" y="6" width="14" height="12" rx="2"/></svg>
+          </div>
+          <div class="schedule-card__details">
+            <h3>Monday Evening</h3>
+            <p><strong>6:00 PM &ndash; 7:30 PM PST</strong> &bull; Online via Google Meet</p>
+            <span class="schedule-card__tag">Open to Everyone</span>
+          </div>
+          <div class="schedule-card__action">
+            <a href="signup.html?class=monday-online" class="btn btn--primary" style="font-size:.75rem;padding:.5rem 1.2rem;">Sign Up</a>
+          </div>
+          <div class="schedule-card__props">
+            <span style="font-family:var(--font-body);font-weight:600;">Props to bring:</span>
+            <ul><li>Yoga mat</li><li>Strap</li><li>Two blocks</li><li>Wall space</li><li>Yoga chair (ideal)</li><li>Bolster (ideal)</li></ul>
+          </div>
+        </div>
+
+        <!-- Tuesday -->
+        <div class="card schedule-card">
+          <div class="schedule-card__icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </div>
+          <div class="schedule-card__details">
+            <h3>Tuesday Evening &mdash; Restorative Yoga</h3>
+            <p><strong>6:00 PM &ndash; 7:30 PM PST</strong> &bull; Online via Google Meet</p>
+            <span class="schedule-card__tag">Restorative</span>
+            <span class="schedule-card__tag">Open to Everyone</span>
+          </div>
+          <div class="schedule-card__action">
+            <a href="signup.html?class=tuesday-restorative" class="btn btn--primary" style="font-size:.75rem;padding:.5rem 1.2rem;">Sign Up</a>
+          </div>
+          <div class="schedule-card__props">
+            <span style="font-family:var(--font-body);font-weight:600;">Props to bring:</span>
+            <ul><li>Yoga mat</li><li>Bolster</li><li>Two blocks</li><li>Two blankets</li><li>Strap</li><li>Wall space</li><li>Yoga chair (ideal)</li></ul>
+          </div>
+        </div>
+
+        <!-- Wednesday -->
+        <div class="card schedule-card">
+          <div class="schedule-card__icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="schedule-card__details">
+            <h3>Wednesday Evening</h3>
+            <p><strong>6:00 PM &ndash; 7:30 PM PST</strong> &bull; CCV Clubhouse &mdash; In Person</p>
+            <span class="schedule-card__tag">CCV Residents Only</span>
+          </div>
+          <div class="schedule-card__action">
+            <a href="signup.html?class=wednesday-ccv" class="btn btn--primary" style="font-size:.75rem;padding:.5rem 1.2rem;">Sign Up</a>
+          </div>
+          <div class="schedule-card__props">
+            <span style="font-family:var(--font-body);font-weight:600;">Props to bring:</span>
+            <ul><li>Yoga mat</li><li>Two blocks</li><li>Strap</li></ul>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="text-center" style="margin-top:3rem;">
+        <svg class="decor-lotus decor-lotus--sm" viewBox="0 0 48 48" style="margin-bottom:.8rem;">
+          <g transform="rotate(180 24 24)">
+          <path d="M24 8c-.6 3-3 5-3 9s2 6 3 9c.6-3 3-5 3-9s-2-6-3-9z" fill="#7a8b6f" opacity=".2"/>
+          <path d="M24 10c-2 1.5-5 2-7 6s-.5 7 1 9c.6-3 3.5-5 6.5-7.5s3.5-4.5 0-7.5z" fill="#7a8b6f" opacity=".12"/>
+          <path d="M24 10c2 1.5 5 2 7 6s.5 7-1 9c-.6-3-3.5-5-6.5-7.5s-3.5-4.5 0-7.5z" fill="#7a8b6f" opacity=".12"/>
+          </g>
+        </svg>
+        <p style="color:#6b6b6b;font-size:.95rem;">All classes are offered free of charge. If you'd like to support, visit the <a href="donations.html">donations page</a>.</p>
+        <p style="color:#6b6b6b;font-size:.95rem;margin-top:.5rem;">Looking for one-on-one instruction? Check out <a href="privates.html">private sessions</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <svg class="footer__lotus" viewBox="0 0 40 40" width="36" height="36">
+        <g transform="rotate(180 20 20)">
+        <path d="M20 6c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#c4a882" opacity=".5"/>
+        <path d="M20 9c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        <path d="M20 9c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        </g>
+      </svg>
+      <div class="footer__links">
+        <a href="about.html">About</a>
+        <a href="schedule.html">Schedule</a>
+        <a href="privates.html">Privates</a>
+        <a href="props.html">Props</a>
+        <a href="donations.html">Donate</a>
+      </div>
+      <p>&copy; 2026 Yoga with Jessica. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.nav__toggle');
+    const links  = document.querySelector('.nav__links');
+    toggle.addEventListener('click', () => links.classList.toggle('open'));
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+  </script>
+</body>
+</html>

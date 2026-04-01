@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yoga with Jessica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <a href="index.html" class="nav__logo">
+        <svg viewBox="0 0 40 40" fill="none"><g transform="rotate(180 20 20)"><path d="M20 4c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#7a8b6f" opacity=".6"/><path d="M20 8c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#7a8b6f" opacity=".4"/><path d="M20 8c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#7a8b6f" opacity=".4"/></g></svg>
+        Yoga with Jessica
+      </a>
+      <button class="nav__toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="about.html">About Me</a></li>
+        <li><a href="schedule.html">Class Schedule</a></li>
+
+        <li><a href="privates.html">Private Sessions</a></li>
+        <li><a href="props.html">Props</a></li>
+        <li><a href="donations.html">Donations</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <!-- Full-page background art: flowing water + mandala + lotus -->
+    <div class="bg-art">
+      <!-- Large flowing water waves spanning full width -->
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <!-- Water flow layers -->
+        <path d="M-50,600 C200,550 400,700 600,620 S900,500 1100,580 S1350,650 1500,600" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".25"/>
+        <path d="M-50,640 C180,590 380,730 580,650 S880,540 1080,620 S1330,680 1500,640" stroke="#7a8b6f" stroke-width="1.8" fill="none" opacity=".18"/>
+        <path d="M-50,680 C220,630 420,760 620,680 S920,560 1120,640 S1370,710 1500,670" stroke="#7a8b6f" stroke-width="1.2" fill="none" opacity=".14"/>
+        <path d="M-50,720 C250,670 450,790 650,710 S950,590 1150,670 S1390,740 1500,700" stroke="#c4a882" stroke-width="1" fill="none" opacity=".15"/>
+        <!-- Flowing water fills -->
+        <path d="M-50,650 C200,600 400,750 650,660 S950,550 1200,640 S1400,700 1500,670 L1500,900 L-50,900 Z" fill="#7a8b6f" opacity=".07"/>
+        <path d="M-50,700 C300,660 500,780 700,700 S1000,600 1250,680 S1420,740 1500,720 L1500,900 L-50,900 Z" fill="#7a8b6f" opacity=".05"/>
+        <!-- Ripple circles -->
+        <circle cx="300" cy="680" r="40" stroke="#7a8b6f" stroke-width="1" fill="none" opacity=".15"/>
+        <circle cx="300" cy="680" r="65" stroke="#7a8b6f" stroke-width=".7" fill="none" opacity=".1"/>
+        <circle cx="300" cy="680" r="90" stroke="#7a8b6f" stroke-width=".4" fill="none" opacity=".07"/>
+        <circle cx="900" cy="620" r="35" stroke="#c4a882" stroke-width="1" fill="none" opacity=".15"/>
+        <circle cx="900" cy="620" r="55" stroke="#c4a882" stroke-width=".6" fill="none" opacity=".1"/>
+      </svg>
+      <!-- Giant mandala, top right -->
+      <svg viewBox="0 0 800 800" style="width:700px;height:700px;top:-150px;right:-150px;opacity:.12;">
+        <circle cx="400" cy="400" r="380" stroke="#7a8b6f" stroke-width="1.5" fill="none"/>
+        <circle cx="400" cy="400" r="320" stroke="#7a8b6f" stroke-width="1" fill="none"/>
+        <circle cx="400" cy="400" r="260" stroke="#7a8b6f" stroke-width=".8" fill="none"/>
+        <circle cx="400" cy="400" r="200" stroke="#7a8b6f" stroke-width=".8" fill="none"/>
+        <circle cx="400" cy="400" r="140" stroke="#7a8b6f" stroke-width=".6" fill="none"/>
+        <circle cx="400" cy="400" r="80" stroke="#7a8b6f" stroke-width=".6" fill="none"/>
+        <g stroke="#7a8b6f" stroke-width=".6" fill="none">
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(0 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(22.5 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(45 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(67.5 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(90 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(112.5 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(135 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(157.5 400 400)"/>
+        </g>
+        <!-- Lotus petals at center -->
+        <g opacity=".5" transform="rotate(180 400 400)">
+          <path d="M400 280c-10 30-30 50-30 80s20 40 30 60c10-20 30-30 30-60s-20-50-30-80z" fill="#7a8b6f" opacity=".3"/>
+          <path d="M400 280c-25 15-50 20-65 50s-5 55 5 75c10-25 35-45 60-60s30-35 0-65z" fill="#7a8b6f" opacity=".2"/>
+          <path d="M400 280c25 15 50 20 65 50s5 55-5 75c-10-25-35-45-60-60s-30-35 0-65z" fill="#7a8b6f" opacity=".2"/>
+        </g>
+      </svg>
+      <!-- Large lotus, bottom left -->
+      <svg viewBox="0 0 400 400" style="width:450px;height:450px;bottom:-100px;left:-80px;opacity:.15;">
+        <g transform="rotate(180 200 200)">
+        <path d="M200 50c-8 40-35 70-35 120s25 80 35 120c10-40 35-70 35-120s-25-80-35-120z" fill="#7a8b6f" opacity=".35"/>
+        <path d="M200 80c-25 15-55 25-80 65s-10 75 5 100c10-35 45-60 75-85s40-45 0-80z" fill="#7a8b6f" opacity=".25"/>
+        <path d="M200 80c25 15 55 25 80 65s10 75-5 100c-10-35-45-60-75-85s-40-45 0-80z" fill="#7a8b6f" opacity=".25"/>
+        <path d="M200 100c-35 8-65 15-95 50s-15 70 0 95c8-35 40-55 65-80s50-35 30-65z" fill="#7a8b6f" opacity=".15"/>
+        <path d="M200 100c35 8 65 15 95 50s15 70 0 95c-8-35-40-55-65-80s-50-35-30-65z" fill="#7a8b6f" opacity=".15"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero__inner">
+      <p class="hero__tagline">
+        <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#7a8b6f"/></g></svg>
+        Find Your Alignment
+      </p>
+      <h1>Strength, Stillness &amp; Self-Discovery Through Yoga</h1>
+      <p>Rooted in a deep love of movement and a lifelong practice, my classes create space for you to slow down, find alignment, and connect with your body. All levels welcome.</p>
+      <div class="hero__buttons">
+        <a href="schedule.html" class="btn btn--primary">View Schedule</a>
+        <a href="donations.html" class="btn btn--outline">Support Classes</a>
+      </div>
+      <div class="hero__photo-placeholder">Your photo here<br />(replace this placeholder)</div>
+    </div>
+  </section>
+
+  <!-- Wave divider -->
+  <div class="wave-divider">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none"><path d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z" fill="#faf7f2"/></svg>
+  </div>
+
+  <!-- Welcome section -->
+  <section class="section">
+    <div class="container text-center">
+      <!-- Lotus ornament -->
+      <svg class="decor-lotus decor-lotus--md" viewBox="0 0 80 80" style="margin-bottom:1rem;">
+        <g transform="rotate(180 40 40)">
+        <path d="M40 15c-2 8-8 14-8 24s6 16 8 24c2-8 8-14 8-24s-6-16-8-24z" fill="#7a8b6f" opacity=".2"/>
+        <path d="M40 20c-6 4-14 6-20 16s-2 18 2 24c2-8 10-14 18-20s10-12 0-20z" fill="#7a8b6f" opacity=".12"/>
+        <path d="M40 20c6 4 14 6 20 16s2 18-2 24c-2-8-10-14-18-20s-10-12 0-20z" fill="#7a8b6f" opacity=".12"/>
+        </g>
+      </svg>
+      <h2>Welcome</h2>
+      <p style="max-width:640px;margin:0 auto 2rem;color:#555;font-size:1.05rem;">
+        Whether you're stepping onto the mat for the first time or deepening a long-standing practice, my classes offer a space to slow down, listen to your body, and discover the alignment that connects breath, movement, and energy.
+      </p>
+      <a href="about.html" class="btn btn--outline">Learn More About Me</a>
+    </div>
+  </section>
+
+  <!-- Wave into alt section -->
+  <div class="wave-divider">
+    <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,0 L0,30 C240,60 480,0 720,30 C960,60 1200,0 1440,30 L1440,0 Z" fill="#faf7f2"/></svg>
+  </div>
+
+  <!-- What to Expect -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section-heading">
+        <h2>What to Expect</h2>
+        <div class="section-heading__ornament">
+          <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+        </div>
+      </div>
+      <div class="features-grid">
+        <div class="card feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <h3>Mindful Movement</h3>
+          <p>Each class focuses on intentional alignment and breath awareness, helping you move with purpose and presence.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <h3>All Levels Welcome</h3>
+          <p>Modifications and progressions are offered so every student can practice at their own edge safely.</p>
+        </div>
+        <div class="card feature-card">
+          <div class="feature-card__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </div>
+          <h3>Community &amp; Generosity</h3>
+          <p>Classes are offered freely. Your presence is the only requirement &mdash; donations are always appreciated but never expected.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Inspirational quote -->
+  <section class="section" style="padding:3rem 0;">
+    <div class="container">
+      <p class="pullquote">The body is your temple. Keep it pure and clean for the soul to reside in.</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <svg class="footer__lotus" viewBox="0 0 40 40" width="36" height="36">
+        <g transform="rotate(180 20 20)">
+        <path d="M20 6c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#c4a882" opacity=".5"/>
+        <path d="M20 9c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        <path d="M20 9c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        </g>
+      </svg>
+      <div class="footer__links">
+        <a href="about.html">About</a>
+        <a href="schedule.html">Schedule</a>
+
+        <a href="privates.html">Privates</a>
+        <a href="props.html">Props</a>
+        <a href="donations.html">Donate</a>
+      </div>
+      <p>&copy; 2026 Yoga with Jessica. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.nav__toggle');
+    const links  = document.querySelector('.nav__links');
+    toggle.addEventListener('click', () => links.classList.toggle('open'));
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+  </script>
+</body>
+</html>

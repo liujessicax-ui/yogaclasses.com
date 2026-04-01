@@ -1,0 +1,11 @@
+# Don't upload documentation/guide files to the website
+*.docx
+*.py
+*.pyc
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/

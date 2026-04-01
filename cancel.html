@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cancel Registration | Yoga with Jessica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <a href="index.html" class="nav__logo">
+        <svg viewBox="0 0 40 40" fill="none"><g transform="rotate(180 20 20)"><path d="M20 4c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#7a8b6f" opacity=".6"/><path d="M20 8c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#7a8b6f" opacity=".4"/><path d="M20 8c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#7a8b6f" opacity=".4"/></g></svg>
+        Yoga with Jessica
+      </a>
+      <button class="nav__toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About Me</a></li>
+        <li><a href="schedule.html">Class Schedule</a></li>
+        <li><a href="privates.html">Private Sessions</a></li>
+        <li><a href="props.html">Props</a></li>
+        <li><a href="donations.html">Donations</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 320" style="width:100%;top:0;left:0;opacity:.25;">
+        <path d="M0 160c200-40 400 40 720 0s520-60 720 0v160H0z" fill="#c4a882" opacity=".3"/>
+        <path d="M0 200c240-30 480 50 720 10s480-40 720 10v100H0z" fill="#c4a882" opacity=".2"/>
+      </svg>
+    </div>
+    <div class="container" style="text-align:center;padding:3rem 1rem;">
+      <h1>Cancel Registration</h1>
+    </div>
+  </header>
+
+  <!-- Cancel Content -->
+  <section class="section" style="padding:2rem 0 4rem;">
+    <div class="container" style="max-width:560px;text-align:center;">
+
+      <!-- Loading state -->
+      <div id="cancel-loading" style="padding:2rem 0;">
+        <p style="font-size:1rem;color:#777;">Processing your cancellation...</p>
+      </div>
+
+      <!-- Confirm prompt (before cancelling) -->
+      <div id="cancel-confirm" style="display:none;">
+        <div style="margin-bottom:1.5rem;">
+          <svg viewBox="0 0 48 48" width="48" height="48" style="opacity:.6;"><circle cx="24" cy="24" r="22" fill="none" stroke="#c4a882" stroke-width="2"/><text x="24" y="30" text-anchor="middle" font-size="24" fill="#c4a882">?</text></svg>
+        </div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;margin-bottom:1rem;">Are you sure?</h2>
+        <p id="cancel-confirm-text" style="color:#555;line-height:1.7;margin-bottom:1.5rem;"></p>
+        <div id="cancel-class-list" style="text-align:left;margin:0 auto 1.5rem;max-width:400px;"></div>
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+          <button id="btn-cancel-yes" class="btn btn--primary" style="background:#b44;padding:.7rem 2rem;" onclick="confirmCancel()">Yes, Cancel</button>
+          <a href="schedule.html" class="btn" style="padding:.7rem 2rem;border:1px solid #ccc;">No, Keep My Spot</a>
+        </div>
+      </div>
+
+      <!-- Success state -->
+      <div id="cancel-success" style="display:none;">
+        <div style="margin-bottom:1.5rem;">
+          <svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="22" fill="none" stroke="#5B7553" stroke-width="2"/><path d="M14 24l7 7 13-13" fill="none" stroke="#5B7553" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#5B7553;margin-bottom:1rem;">Registration Cancelled</h2>
+        <p id="cancel-success-text" style="color:#555;line-height:1.7;margin-bottom:1.5rem;"></p>
+        <a href="schedule.html" class="btn btn--primary" style="padding:.7rem 2rem;">Sign Up for Another Class</a>
+      </div>
+
+      <!-- Not found / already cancelled -->
+      <div id="cancel-not-found" style="display:none;">
+        <div style="margin-bottom:1.5rem;">
+          <svg viewBox="0 0 48 48" width="48" height="48"><circle cx="24" cy="24" r="22" fill="none" stroke="#c4a882" stroke-width="2"/><text x="24" y="31" text-anchor="middle" font-size="22" fill="#c4a882">!</text></svg>
+        </div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;margin-bottom:1rem;">Not Found</h2>
+        <p id="cancel-not-found-text" style="color:#555;line-height:1.7;margin-bottom:1.5rem;">
+          This cancellation link has already been used or the registration was not found.
+        </p>
+        <a href="schedule.html" class="btn btn--primary" style="padding:.7rem 2rem;">View Class Schedule</a>
+      </div>
+
+      <!-- Error state -->
+      <div id="cancel-error" style="display:none;">
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#b44;margin-bottom:1rem;">Something Went Wrong</h2>
+        <p id="cancel-error-text" style="color:#555;line-height:1.7;margin-bottom:1.5rem;">
+          Please try again or contact the instructor.
+        </p>
+        <a href="schedule.html" class="btn btn--primary" style="padding:.7rem 2rem;">Back to Schedule</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <svg class="footer__lotus" viewBox="0 0 40 40" width="36" height="36">
+        <g transform="rotate(180 20 20)">
+        <path d="M20 6c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#c4a882" opacity=".5"/>
+        <path d="M20 9c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        <path d="M20 9c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        </g>
+      </svg>
+      <div class="footer__links">
+        <a href="about.html">About</a>
+        <a href="schedule.html">Schedule</a>
+        <a href="privates.html">Privates</a>
+        <a href="props.html">Props</a>
+        <a href="donations.html">Donate</a>
+      </div>
+      <p>&copy; 2026 Yoga with Jessica. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile nav
+    var toggle = document.querySelector('.nav__toggle');
+    var links  = document.querySelector('.nav__links');
+    toggle.addEventListener('click', function() { links.classList.toggle('open'); });
+    links.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', function() { links.classList.remove('open'); }); });
+
+    // ── CONFIG ──
+    var SHEETS_WEB_APP_URL = ''; // paste your Apps Script URL here
+
+    // ── INIT ──
+    var urlParams = new URLSearchParams(window.location.search);
+    var cancelToken = urlParams.get('token');
+
+    if (!cancelToken) {
+      showState('cancel-not-found');
+    } else if (!SHEETS_WEB_APP_URL) {
+      // No backend connected — show a placeholder
+      showState('cancel-error');
+      document.getElementById('cancel-error-text').textContent =
+        'Cancellation is not yet connected. Please contact the instructor directly.';
+    } else {
+      // First, look up what this token covers so we can show the user what they're cancelling
+      lookupToken(cancelToken);
+    }
+
+    function lookupToken(token) {
+      // Fetch the registration details for this token via the cancel action (with preview=true)
+      fetch(SHEETS_WEB_APP_URL + '?action=cancel_preview&token=' + encodeURIComponent(token))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'found') {
+            showConfirmPrompt(data);
+          } else {
+            showState('cancel-not-found');
+            if (data.message) {
+              document.getElementById('cancel-not-found-text').textContent = data.message;
+            }
+          }
+        })
+        .catch(function() {
+          // If cancel_preview isn't implemented, just go straight to confirm prompt
+          showState('cancel-confirm');
+          document.getElementById('cancel-confirm-text').textContent =
+            'This will cancel your class registration and any guest you may have signed up. This action cannot be undone.';
+        });
+    }
+
+    function showConfirmPrompt(data) {
+      var text = 'You are about to cancel the following registration:';
+      document.getElementById('cancel-confirm-text').textContent = text;
+
+      var listHtml = '<div class="card" style="padding:1rem;">';
+      listHtml += '<p style="margin:0 0 .5rem;"><strong>' + escH(data.studentName) + '</strong></p>';
+      if (data.guestName) {
+        listHtml += '<p style="margin:0 0 .75rem;color:#777;font-size:.9rem;">+ Guest: ' + escH(data.guestName) + '</p>';
+      }
+      if (data.classes && data.classes.length) {
+        data.classes.forEach(function(c) {
+          var icon = c.classType === 'In-Person' ? '\uD83C\uDFE0' : '\uD83D\uDCBB';
+          listHtml += '<p style="margin:.25rem 0;font-size:.9rem;">' + icon + ' ' + escH(c.className) + ' \u2014 ' + escH(c.classDate) + '</p>';
+        });
+      }
+      listHtml += '</div>';
+      document.getElementById('cancel-class-list').innerHTML = listHtml;
+
+      if (data.guestName) {
+        document.getElementById('cancel-confirm-text').textContent +=
+          ' This will cancel both your spot and your guest\'s spot.';
+      }
+
+      showState('cancel-confirm');
+    }
+
+    function confirmCancel() {
+      var btn = document.getElementById('btn-cancel-yes');
+      btn.disabled = true;
+      btn.textContent = 'Cancelling...';
+
+      fetch(SHEETS_WEB_APP_URL + '?action=cancel&token=' + encodeURIComponent(cancelToken))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 'cancelled') {
+            var msg = data.studentName + ', your registration has been cancelled.';
+            if (data.guestName) {
+              msg += ' Your guest (' + data.guestName + ') has also been removed.';
+            }
+            msg += ' ' + data.count + ' class(es) affected.';
+            document.getElementById('cancel-success-text').textContent = msg;
+            showState('cancel-success');
+          } else if (data.status === 'not_found') {
+            showState('cancel-not-found');
+            if (data.message) {
+              document.getElementById('cancel-not-found-text').textContent = data.message;
+            }
+          } else {
+            showState('cancel-error');
+            if (data.message) {
+              document.getElementById('cancel-error-text').textContent = data.message;
+            }
+          }
+        })
+        .catch(function(err) {
+          showState('cancel-error');
+          document.getElementById('cancel-error-text').textContent =
+            'Network error. Please check your connection and try again.';
+        });
+    }
+
+    function showState(id) {
+      ['cancel-loading', 'cancel-confirm', 'cancel-success', 'cancel-not-found', 'cancel-error']
+        .forEach(function(s) {
+          document.getElementById(s).style.display = s === id ? 'block' : 'none';
+        });
+    }
+
+    function escH(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>

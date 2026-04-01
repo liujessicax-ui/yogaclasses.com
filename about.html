@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Me | Yoga with Jessica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <a href="index.html" class="nav__logo">
+        <svg viewBox="0 0 40 40" fill="none"><g transform="rotate(180 20 20)"><path d="M20 4c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#7a8b6f" opacity=".6"/><path d="M20 8c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#7a8b6f" opacity=".4"/><path d="M20 8c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#7a8b6f" opacity=".4"/></g></svg>
+        Yoga with Jessica
+      </a>
+      <button class="nav__toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html" class="active">About Me</a></li>
+        <li><a href="schedule.html">Class Schedule</a></li>
+        <li><a href="privates.html">Private Sessions</a></li>
+        <li><a href="props.html">Props</a></li>
+        <li><a href="donations.html">Donations</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Page header -->
+  <header class="page-header">
+    <!-- Full-page flowing water background -->
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 300" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <path d="M0,80 C240,40 480,120 720,70 C960,20 1200,100 1440,60" stroke="#7a8b6f" stroke-width="3" fill="none" opacity=".4"/>
+        <path d="M0,120 C200,80 440,160 680,110 C920,60 1160,140 1440,100" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".35"/>
+        <path d="M0,160 C280,130 520,200 760,150 C1000,100 1240,170 1440,140" stroke="#c4a882" stroke-width="2" fill="none" opacity=".35"/>
+        <path d="M0,100 C300,70 500,150 750,100 C1000,50 1200,120 1440,90 L1440,300 L0,300 Z" fill="#7a8b6f" opacity=".12"/>
+      </svg>
+      <!-- Large mandala right -->
+      <svg viewBox="0 0 600 600" style="width:500px;height:500px;top:-100px;right:-120px;opacity:.25;">
+        <circle cx="300" cy="300" r="280" stroke="#7a8b6f" stroke-width="3" fill="none"/>
+        <circle cx="300" cy="300" r="220" stroke="#7a8b6f" stroke-width="2" fill="none"/>
+        <circle cx="300" cy="300" r="160" stroke="#7a8b6f" stroke-width="1.5" fill="none"/>
+        <circle cx="300" cy="300" r="100" stroke="#7a8b6f" stroke-width="1.5" fill="none"/>
+        <g stroke="#7a8b6f" stroke-width="1.5" fill="none">
+          <ellipse cx="300" cy="300" rx="35" ry="280" transform="rotate(0 300 300)"/>
+          <ellipse cx="300" cy="300" rx="35" ry="280" transform="rotate(30 300 300)"/>
+          <ellipse cx="300" cy="300" rx="35" ry="280" transform="rotate(60 300 300)"/>
+          <ellipse cx="300" cy="300" rx="35" ry="280" transform="rotate(90 300 300)"/>
+          <ellipse cx="300" cy="300" rx="35" ry="280" transform="rotate(120 300 300)"/>
+          <ellipse cx="300" cy="300" rx="35" ry="280" transform="rotate(150 300 300)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="container">
+      <h1>About Me</h1>
+      <div class="page-header__ornament">
+        <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+      </div>
+      <p>A lifetime of movement, a journey toward alignment</p>
+    </div>
+  </header>
+
+  <!-- About content -->
+  <section class="section">
+    <!-- Full-section water flow + lotus background -->
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 1000" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <!-- Flowing water curves -->
+        <path d="M-50,200 C200,150 400,280 650,200 S950,120 1200,200 S1400,260 1500,220" stroke="#7a8b6f" stroke-width="3" fill="none" opacity=".35"/>
+        <path d="M-50,250 C180,200 380,330 630,250 S930,170 1180,250 S1380,310 1500,270" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".3"/>
+        <path d="M-50,300 C220,260 420,370 670,290 S970,210 1220,290 S1420,350 1500,310" stroke="#c4a882" stroke-width="1.5" fill="none" opacity=".3"/>
+        <!-- Water fill -->
+        <path d="M-50,220 C200,170 400,300 650,220 S950,140 1200,220 L1500,220 L1500,1000 L-50,1000 Z" fill="#7a8b6f" opacity=".1"/>
+        <!-- Lotus bottom right -->
+        <g transform="translate(1100,700) scale(1,-1)" opacity=".25">
+          <path d="M0-80c-5 25-22 44-22 75s15 50 22 75c7-25 22-44 22-75s-15-50-22-75z" fill="#7a8b6f"/>
+          <path d="M0-60c-18 10-38 18-55 45s-8 52 3 70c7-25 30-42 52-58s28-32 0-57z" fill="#7a8b6f"/>
+          <path d="M0-60c18 10 38 18 55 45s8 52-3 70c-7-25-30-42-52-58s-28-32 0-57z" fill="#7a8b6f"/>
+        </g>
+      </svg>
+    </div>
+    <!-- Decorative mandala -->
+    <svg class="decor-mandala decor-mandala--right" viewBox="0 0 300 300" width="300" height="300">
+      <circle cx="150" cy="150" r="140" stroke="#7a8b6f" stroke-width=".8" fill="none"/>
+      <circle cx="150" cy="150" r="100" stroke="#7a8b6f" stroke-width=".5" fill="none"/>
+      <circle cx="150" cy="150" r="60" stroke="#7a8b6f" stroke-width=".5" fill="none"/>
+      <g stroke="#7a8b6f" stroke-width=".5" fill="none">
+        <ellipse cx="150" cy="150" rx="20" ry="140" transform="rotate(0 150 150)"/>
+        <ellipse cx="150" cy="150" rx="20" ry="140" transform="rotate(45 150 150)"/>
+        <ellipse cx="150" cy="150" rx="20" ry="140" transform="rotate(90 150 150)"/>
+        <ellipse cx="150" cy="150" rx="20" ry="140" transform="rotate(135 150 150)"/>
+      </g>
+    </svg>
+    <div class="container">
+      <div class="about-layout">
+        <div class="about-photo-placeholder">
+          Your photo here<br />(replace this placeholder)
+        </div>
+        <div class="about-text">
+          <p>
+            My relationship with movement began before I could choose it for myself. As a young child, I was immersed in dance and rhythmic gymnastics, attending rigorous training programs at one of China's state-owned sports universities that offered specialized youth classes. I grew up on that university campus &mdash; my father was a professor there, and our home was right inside the grounds. The gymnasium became my second home, and I spent most of my formative years training within its walls &mdash; building discipline, strength, and an intimate understanding of the body in motion.
+          </p>
+          <p>
+            When I eventually came to the United States, I carried that foundation with me. But it was yoga that gave it new meaning. I discovered that yoga offered something I didn't know I was looking for: a practice that could stabilize and heal my body after years of intense physical training. The rigor required in yoga reminded me of rhythmic gymnastics &mdash; the precision, the patience, the relentless pursuit of form &mdash; but it asked for something deeper.
+          </p>
+          <p>
+            Yoga demands a kind of total honesty. To practice well, you must be introspective and observant enough to penetrate beyond the surface of the physical body and find that subtle, energetic alignment within each pose. It's not about flexibility or how a posture looks from the outside. It's about what you feel on the inside &mdash; that quiet click when breath, structure, and awareness all come into harmony.
+          </p>
+          <p>
+            That alignment is what draws me to yoga, and it's what I hope to share with every student who steps onto the mat in my classes.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pullquote -->
+      <p class="pullquote" style="margin:3rem auto 2rem;">Yoga is the journey of the self, through the self, to the self.</p>
+
+      <!-- Contact -->
+      <div class="card contact-card" style="max-width:480px;margin:2rem auto 0;text-align:center;">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#7a8b6f" stroke-width="1.5" style="margin:0 auto .8rem;display:block;">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+        </svg>
+        <h3>Get in Touch</h3>
+        <p style="color:#555;font-size:.95rem;margin-top:.5rem;">
+          Have questions about classes or interested in private instruction? I'd love to hear from you.
+        </p>
+        <p style="margin-top:1rem;">
+          <a href="mailto:your-email@example.com" style="font-size:1.1rem;font-weight:600;color:var(--olive);">your-email@example.com</a>
+          <br /><span style="font-size:.85rem;color:#999;">(update with your email address)</span>
+        </p>
+      </div>
+
+      <!-- Gallery -->
+      <div style="margin-top:3rem;">
+        <div class="section-heading">
+          <h2>Gallery</h2>
+          <div class="section-heading__ornament">
+            <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+          </div>
+        </div>
+        <div class="gallery-grid">
+          <div class="about-photo-placeholder" style="aspect-ratio:1/1;">Photo 1</div>
+          <div class="about-photo-placeholder" style="aspect-ratio:1/1;">Photo 2</div>
+          <div class="about-photo-placeholder" style="aspect-ratio:1/1;">Photo 3</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="section section--tan" style="padding:3rem 0;">
+    <div class="container" style="max-width:600px;text-align:center;">
+      <div class="section-heading">
+        <h2>Stay Connected</h2>
+        <div class="section-heading__ornament">
+          <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+        </div>
+      </div>
+      <p style="color:#555;margin-bottom:1.5rem;line-height:1.7;">
+        Subscribe to my weekly newsletter for articles on yoga poses, alignment tips, breathing practices, and well-being topics to support your journey on and off the mat.
+      </p>
+      <form id="newsletterForm" onsubmit="return handleNewsletter(event)" style="display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;align-items:center;">
+        <input type="text" id="nl-first" placeholder="First Name" required
+               style="flex:1;min-width:120px;max-width:160px;padding:.65rem 1rem;border:1px solid #ccc;border-radius:6px;font-family:inherit;font-size:.9rem;" />
+        <input type="email" id="nl-email" placeholder="Email Address" required
+               style="flex:2;min-width:200px;max-width:280px;padding:.65rem 1rem;border:1px solid #ccc;border-radius:6px;font-family:inherit;font-size:.9rem;" />
+        <button type="submit" class="btn btn--primary" style="padding:.65rem 1.5rem;font-size:.9rem;white-space:nowrap;">Subscribe</button>
+      </form>
+      <p id="nl-success" style="display:none;margin-top:1rem;color:#5B7553;font-weight:600;">
+        Thank you for subscribing! Look out for your first newsletter soon.
+      </p>
+      <p id="nl-error" style="display:none;margin-top:1rem;color:#b44;">
+        Something went wrong. Please try again.
+      </p>
+      <p style="margin-top:1rem;font-size:.8rem;color:#999;">
+        Delivered weekly. Unsubscribe anytime.
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <svg class="footer__lotus" viewBox="0 0 40 40" width="36" height="36">
+        <g transform="rotate(180 20 20)">
+        <path d="M20 6c-1 4-4 7-4 12s3 8 4 12c1-4 4-7 4-12s-3-8-4-12z" fill="#c4a882" opacity=".5"/>
+        <path d="M20 9c-3 2-7 3-10 8s-1 9 1 12c1-4 5-7 9-10s5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        <path d="M20 9c3 2 7 3 10 8s1 9-1 12c-1-4-5-7-9-10s-5-6 0-10z" fill="#c4a882" opacity=".3"/>
+        </g>
+      </svg>
+      <div class="footer__links">
+        <a href="about.html">About</a>
+        <a href="schedule.html">Schedule</a>
+        <a href="privates.html">Privates</a>
+        <a href="props.html">Props</a>
+        <a href="donations.html">Donate</a>
+      </div>
+      <p>&copy; 2026 Yoga with Jessica. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.nav__toggle');
+    const links  = document.querySelector('.nav__links');
+    toggle.addEventListener('click', () => links.classList.toggle('open'));
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+
+    /* Newsletter subscription */
+    const SHEETS_WEB_APP_URL = ''; /* same URL as signup.html — paste your Apps Script URL here */
+    function handleNewsletter(e) {
+      e.preventDefault();
+      var first = document.getElementById('nl-first').value.trim();
+      var email = document.getElementById('nl-email').value.trim();
+      if (!first || !email) return false;
+
+      var btn = e.target.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'Subscribing...';
+
+      /* If Apps Script URL is set, send subscription data */
+      if (SHEETS_WEB_APP_URL) {
+        fetch(SHEETS_WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'newsletter', firstName: first, email: email })
+        }).then(function() {
+          showNLSuccess();
+        }).catch(function() {
+          showNLSuccess(); /* no-cors can't read response, assume success */
+        });
+      } else {
+        /* No backend yet — just show success */
+        showNLSuccess();
+      }
+      return false;
+    }
+
+    function showNLSuccess() {
+      document.getElementById('newsletterForm').style.display = 'none';
+      document.getElementById('nl-success').style.display = 'block';
+      document.getElementById('nl-error').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
