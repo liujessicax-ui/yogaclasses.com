@@ -131,8 +131,7 @@
           Have questions about classes or interested in private instruction? I'd love to hear from you.
         </p>
         <p style="margin-top:1rem;">
-          <a href="mailto:your-email@example.com" style="font-size:1.1rem;font-weight:600;color:var(--olive);">your-email@example.com</a>
-          <br /><span style="font-size:.85rem;color:#999;">(update with your email address)</span>
+          <a href="mailto:liu.jessica.x@gmail.com" style="font-size:1.1rem;font-weight:600;color:var(--olive);">Contact Me</a>
         </p>
       </div>
 
@@ -150,37 +149,6 @@
           <div class="about-photo-placeholder" style="aspect-ratio:1/1;">Photo 3</div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- Newsletter -->
-  <section class="section section--tan" style="padding:3rem 0;">
-    <div class="container" style="max-width:600px;text-align:center;">
-      <div class="section-heading">
-        <h2>Stay Connected</h2>
-        <div class="section-heading__ornament">
-          <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
-        </div>
-      </div>
-      <p style="color:#555;margin-bottom:1.5rem;line-height:1.7;">
-        Subscribe to my weekly newsletter for articles on yoga poses, alignment tips, breathing practices, and well-being topics to support your journey on and off the mat.
-      </p>
-      <form id="newsletterForm" onsubmit="return handleNewsletter(event)" style="display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;align-items:center;">
-        <input type="text" id="nl-first" placeholder="First Name" required
-               style="flex:1;min-width:120px;max-width:160px;padding:.65rem 1rem;border:1px solid #ccc;border-radius:6px;font-family:inherit;font-size:.9rem;" />
-        <input type="email" id="nl-email" placeholder="Email Address" required
-               style="flex:2;min-width:200px;max-width:280px;padding:.65rem 1rem;border:1px solid #ccc;border-radius:6px;font-family:inherit;font-size:.9rem;" />
-        <button type="submit" class="btn btn--primary" style="padding:.65rem 1.5rem;font-size:.9rem;white-space:nowrap;">Subscribe</button>
-      </form>
-      <p id="nl-success" style="display:none;margin-top:1rem;color:#5B7553;font-weight:600;">
-        Thank you for subscribing! Look out for your first newsletter soon.
-      </p>
-      <p id="nl-error" style="display:none;margin-top:1rem;color:#b44;">
-        Something went wrong. Please try again.
-      </p>
-      <p style="margin-top:1rem;font-size:.8rem;color:#999;">
-        Delivered weekly. Unsubscribe anytime.
-      </p>
     </div>
   </section>
 
@@ -210,43 +178,6 @@
     const links  = document.querySelector('.nav__links');
     toggle.addEventListener('click', () => links.classList.toggle('open'));
     links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
-
-    /* Newsletter subscription */
-    const SHEETS_WEB_APP_URL = ''; /* same URL as signup.html — paste your Apps Script URL here */
-    function handleNewsletter(e) {
-      e.preventDefault();
-      var first = document.getElementById('nl-first').value.trim();
-      var email = document.getElementById('nl-email').value.trim();
-      if (!first || !email) return false;
-
-      var btn = e.target.querySelector('button');
-      btn.disabled = true;
-      btn.textContent = 'Subscribing...';
-
-      /* If Apps Script URL is set, send subscription data */
-      if (SHEETS_WEB_APP_URL) {
-        fetch(SHEETS_WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'newsletter', firstName: first, email: email })
-        }).then(function() {
-          showNLSuccess();
-        }).catch(function() {
-          showNLSuccess(); /* no-cors can't read response, assume success */
-        });
-      } else {
-        /* No backend yet — just show success */
-        showNLSuccess();
-      }
-      return false;
-    }
-
-    function showNLSuccess() {
-      document.getElementById('newsletterForm').style.display = 'none';
-      document.getElementById('nl-success').style.display = 'block';
-      document.getElementById('nl-error').style.display = 'none';
-    }
   </script>
 </body>
 </html>
