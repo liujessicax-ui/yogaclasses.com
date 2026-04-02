@@ -1095,6 +1095,7 @@
       submitBtn.textContent = 'Joining waitlist…';
 
       const data = pendingFormData;
+      const tracking = getTrackingFields();
       const payload = {
         action: 'waitlist',
         rows: [{
@@ -1106,7 +1107,12 @@
           classDate: cls.date,
           classType: cls.type,
           guestFirstName: data.guestFirstName || '',
-          guestLastName: data.guestLastName || ''
+          guestLastName: data.guestLastName || '',
+          device: tracking.device,
+          browser: tracking.browser,
+          city: tracking.city,
+          state: tracking.state,
+          zip: tracking.zip
         }]
       };
 
@@ -1143,6 +1149,46 @@
     // deploy as web app, and paste the URL here.
     const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx3qxkR_qLgCyy0LVmslaK2LHzGFJq5UMUwfvj5SFRqx_vZ5xlssCx_Ku2r_wVhhpU3/exec';
 
+    // ========== DEVICE / BROWSER / LOCATION DETECTION ==========
+    function detectDevice() {
+      const ua = navigator.userAgent;
+      if (/iPad|Android(?!.*Mobile)/i.test(ua)) return 'Tablet';
+      if (/iPhone|iPod|Android.*Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return 'Mobile';
+      return 'Desktop';
+    }
+
+    function detectBrowser() {
+      const ua = navigator.userAgent;
+      if (/Edg\//i.test(ua)) return 'Edge';
+      if (/SamsungBrowser/i.test(ua)) return 'Samsung Internet';
+      if (/OPR\/|Opera/i.test(ua)) return 'Opera';
+      if (/Firefox/i.test(ua)) return 'Firefox';
+      if (/CriOS|Chrome/i.test(ua) && !/Edg/i.test(ua)) return 'Chrome';
+      if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+      return 'Other';
+    }
+
+    // Fetch location from IP (silent, no user prompt)
+    let geoData = { city: '', state: '', zip: '' };
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(d => {
+        geoData.city = d.city || '';
+        geoData.state = d.region || '';
+        geoData.zip = d.postal || '';
+      })
+      .catch(() => {}); // silently fail — location is optional
+
+    function getTrackingFields() {
+      return {
+        device: detectDevice(),
+        browser: detectBrowser(),
+        city: geoData.city,
+        state: geoData.state,
+        zip: geoData.zip
+      };
+    }
+
     function doSubmit(liabilityAccepted) {
       submitBtn.classList.add('btn--loading');
       submitBtn.textContent = 'Submitting…';
@@ -1151,6 +1197,7 @@
       const liabilityText = liabilityAccepted
         ? 'YES — Accepted'
         : 'N/A — Online only';
+      const tracking = getTrackingFields();
 
       // Build one row per class
       const rows = data.classEntries.map(cls => ({
@@ -1164,7 +1211,12 @@
         liabilityWaiver: cls.type === 'inperson' ? liabilityText : 'N/A',
         guestFirstName: (cls.type === 'inperson' && data.bringingGuest) ? data.guestFirstName : '',
         guestLastName: (cls.type === 'inperson' && data.bringingGuest) ? (data.guestLastName || '') : '',
-        guestOf: (cls.type === 'inperson' && data.bringingGuest) ? (data.firstName + ' ' + data.lastName) : ''
+        guestOf: (cls.type === 'inperson' && data.bringingGuest) ? (data.firstName + ' ' + data.lastName) : '',
+        device: tracking.device,
+        browser: tracking.browser,
+        city: tracking.city,
+        state: tracking.state,
+        zip: tracking.zip
       }));
 
       const payload = { rows };

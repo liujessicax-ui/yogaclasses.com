@@ -43,7 +43,7 @@ function doPost(e) {
     // Generate a cancellation token for this sign-up batch
     var cancelToken = generateCancelToken();
 
-    // Append each class as its own row (with cancel token in column 12)
+    // Append each class as its own row
     rows.forEach(function(row) {
       sheet.appendRow([
         row.timestamp,
@@ -57,14 +57,23 @@ function doPost(e) {
         row.guestFirstName || '',
         row.guestLastName || '',
         row.guestOf || '',
-        cancelToken
+        cancelToken,
+        row.device || '',
+        row.browser || '',
+        row.city || '',
+        row.state || '',
+        row.zip || ''
       ]);
     });
 
-    // Ensure the header for column 12 exists
+    // Ensure headers exist for all columns
     var header12 = sheet.getRange(1, 12).getValue();
     if (!header12) {
       sheet.getRange(1, 12).setValue('Cancel Token').setFontWeight('bold');
+    }
+    var header13 = sheet.getRange(1, 13).getValue();
+    if (!header13) {
+      sheet.getRange(1, 13, 1, 5).setValues([['Device', 'Browser', 'City', 'State', 'Zip Code']]).setFontWeight('bold');
     }
 
     // Send confirmation email with cancel link
@@ -213,7 +222,14 @@ function handleWaitlist(rows) {
         row.classDate,
         row.classType,
         row.guestFirstName || '',
-        row.guestLastName || ''
+        row.guestLastName || '',
+        '', // Status
+        '', // Notified At
+        row.device || '',
+        row.browser || '',
+        row.city || '',
+        row.state || '',
+        row.zip || ''
       ]);
     });
 
@@ -895,9 +911,14 @@ function getOrCreateWaitlistSheet(ss) {
       'Guest First Name',
       'Guest Last Name',
       'Status',
-      'Notified At'
+      'Notified At',
+      'Device',
+      'Browser',
+      'City',
+      'State',
+      'Zip Code'
     ]);
-    sheet.getRange(1, 1, 1, 12).setFontWeight('bold');
+    sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
   return sheet;
@@ -918,10 +939,96 @@ function getOrCreateSheet(ss) {
       'Liability Waiver',
       'Guest First Name',
       'Guest Last Name',
-      'Guest Of'
+      'Guest Of',
+      'Cancel Token',
+      'Device',
+      'Browser',
+      'City',
+      'State',
+      'Zip Code'
     ]);
-    sheet.getRange(1, 1, 1, 11).setFontWeight('bold');
+    sheet.getRange(1, 1, 1, 17).setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
   return sheet;
+}
+
+// ========== AUTO-ARCHIVE PAST SIGN-UPS ==========
+// Run this on a time-driven trigger every 10 minutes.
+// Moves rows to Archive / Waitlist Archive once the class cutoff has passed.
+
+var ARCHIVE_TZ = 'America/Los_Angeles';
+
+// Class start times by keyword (used to determine cutoff)
+var CLASS_START_TIMES = {
+  'Sunday':    { startH: 18, startM: 0 },
+  'Tuesday':   { startH: 18, startM: 0 },
+  'Wednesday': { startH: 17, startM: 15 }
+};
+
+function archivePastSignups() {
+  archiveSheet_('Yoga Signup', 'Sign-Ups', 'Archive', 6);   // Class Date in col 6
+  archiveSheet_('Yoga Waitlist', 'Waitlist', 'Waitlist Archive', 6);
+}
+
+function archiveSheet_(ssName, sheetName, archiveName, dateCol) {
+  var files = DriveApp.getFilesByName(ssName);
+  if (!files.hasNext()) return;
+  var ss = SpreadsheetApp.open(files.next());
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return;
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return; // header only
+
+  // Get or create the archive sheet
+  var archive = ss.getSheetByName(archiveName);
+  if (!archive) {
+    archive = ss.insertSheet(archiveName);
+    archive.appendRow(data[0]); // copy headers
+    archive.getRange(1, 1, 1, data[0].length).setFontWeight('bold');
+    archive.setFrozenRows(1);
+  }
+
+  // Current time in Pacific
+  var now = new Date();
+  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: ARCHIVE_TZ }));
+
+  // Check rows bottom-to-top so deletions don't shift indices
+  var rowsToArchive = [];
+  for (var i = data.length - 1; i >= 1; i--) {
+    var classDateStr = data[i][dateCol - 1]; // 0-indexed
+    var className = data[i][dateCol - 2] || ''; // Class name column (col 5)
+
+    if (!classDateStr) continue;
+
+    // Parse the class date string (e.g., "Sunday, Apr 6, 2026")
+    var classDate = new Date(classDateStr);
+    if (isNaN(classDate.getTime())) continue;
+
+    // Determine start time from class name
+    var startH = 18, startM = 0; // default
+    for (var key in CLASS_START_TIMES) {
+      if (className.indexOf(key) !== -1) {
+        startH = CLASS_START_TIMES[key].startH;
+        startM = CLASS_START_TIMES[key].startM;
+        break;
+      }
+    }
+
+    // Build cutoff: class date + start time + 15 minutes (sign-up cutoff)
+    var cutoff = new Date(classDate);
+    cutoff.setHours(startH, startM + 15, 0, 0);
+
+    // If cutoff has passed, archive this row
+    if (pstNow > cutoff) {
+      rowsToArchive.push({ index: i, row: data[i] });
+    }
+  }
+
+  // Append to archive and delete from source (bottom-to-top)
+  for (var j = 0; j < rowsToArchive.length; j++) {
+    archive.appendRow(rowsToArchive[j].row);
+    sheet.deleteRow(rowsToArchive[j].index + 1); // +1 for 1-based row index
+  }
 }
