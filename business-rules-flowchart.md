@@ -161,18 +161,23 @@ flowchart TD
 
     NAV --> PROPS["props.html\nProps\n- Blocks\n- Straps\n- Yoga chair\n- Blanket\n- Bolsters\n- Images for each"]
 
-    NAV --> DONATE["donations.html\nDonations\n- Classes always free\n- PayPal hosted button\n- Venmo: @Jessica-eifkc\n- Credit/debit card\n- Supporting Iyengar\n  certification journey"]
+    NAV --> DONATE["donations.html\nDonations\n- Classes always free\n- Venmo: @Jessica-eifkc\n- Supporting Iyengar\n  certification journey"]
 
-    SCHEDULE -- "Sign Up button\n?class= parameter" --> SIGNUP["signup.html\nSign-Up Form\n(NOT in main nav)\n- First Name\n- Last Name\n- Email\n- Class checkboxes"]
+    SCHEDULE -- "Sign Up button\n?class= parameter" --> SIGNUP["signup.html\nSign-Up Form\n(NOT in main nav)\n- First Name\n- Last Name\n- Email\n- Class checkboxes\n- Guest checkbox (in-person)\n- Device/Browser/Location tracking"]
 
-    SIGNUP -- "POST via\nApps Script" --> GSHEETS[("Google Sheets\n'Yoga Signup' spreadsheet\n'Sign-Ups' sheet\n\nColumns:\nTimestamp | First Name\nLast Name | Email\nClass | Class Date\nClass Type | Liability Waiver")]
+    SIGNUP -- "POST via\nApps Script" --> GSHEETS[("Google Sheets\n'Yoga Signup' spreadsheet\n'Sign-Ups' sheet\n\nColumns:\nTimestamp | First Name | Last Name\nEmail | Class | Class Date\nClass Type | Liability Waiver\nGuest First/Last | Guest Of\nCancel Token | Device | Browser\nCity | State | Zip Code")]
 
     SIGNUP -- "GET via\nApps Script" --> GSHEETS
 
-    SIGNUP -- "On success" --> CONFIRMATION["Confirmation Page\n- Personalized thank you\n- Classes signed up for\n- Email confirmation msg"]
+    SIGNUP -- "On success" --> CONFIRMATION["Confirmation Page\n- Personalized thank you\n- Classes signed up for\n- Email confirmation\n- Cancel link with token"]
 
-    DONATE -- "PayPal link" --> PAYPAL["External: PayPal\nHosted donate button"]
+    CONFIRMATION -- "Cancel button\nin email" --> CANCEL["cancel.html\nCancellation Flow\n- Preview what's cancelled\n- Confirm cancellation\n- Deletes rows by token"]
+
+    SIGNUP -- "First-time in-person\nguest registered" --> WAIVER_PAGE["waiver.html\nLiability Waiver\n- Standalone page\n- For guest paper signing"]
+
     DONATE -- "Venmo link" --> VENMO["External: Venmo\n@Jessica-eifkc"]
+
+    GSHEETS -- "Every 10 min\narchivePastSignups" --> ARCHIVE[("Archive Sheets\n- Sign-Ups → Archive\n- Waitlist → Waitlist Archive\nPast classes auto-moved")]
 
     style NAV fill:#7e57c2,stroke:#4527a0,color:#fff
     style HOME fill:#e8f5e9,stroke:#388e3c
@@ -184,8 +189,10 @@ flowchart TD
     style SIGNUP fill:#fff3e0,stroke:#f57c00
     style CONFIRMATION fill:#c8e6c9,stroke:#2e7d32
     style GSHEETS fill:#e3f2fd,stroke:#1565c0
-    style PAYPAL fill:#eeeeee,stroke:#9e9e9e
+    style CANCEL fill:#ffebee,stroke:#d32f2f
+    style WAIVER_PAGE fill:#e3f2fd,stroke:#1565c0
     style VENMO fill:#eeeeee,stroke:#9e9e9e
+    style ARCHIVE fill:#fff9c4,stroke:#f9a825
 ```
 
 ---
@@ -198,26 +205,41 @@ flowchart LR
     FORM -- "POST: write sign-up rows\n(one row per class)" --> SCRIPT
 
     SCRIPT <--> SHEET[("Google Sheets\n'Yoga Signup'\n'Sign-Ups' sheet")]
+    SCRIPT <--> WAITSHEET[("Google Sheets\n'Yoga Waitlist'\n'Waitlist' sheet")]
 
-    SHEET --- COLS["Columns:\n1. Timestamp\n2. First Name\n3. Last Name\n4. Email\n5. Class\n6. Class Date\n7. Class Type\n8. Liability Waiver"]
+    SHEET --- COLS["Sign-Up Columns:\n1. Timestamp  2. First Name\n3. Last Name  4. Email\n5. Class  6. Class Date\n7. Class Type  8. Liability Waiver\n9. Guest First Name\n10. Guest Last Name\n11. Guest Of  12. Cancel Token\n13. Device  14. Browser\n15. City  16. State  17. Zip Code"]
+
+    WAITSHEET --- WCOLS["Waitlist Columns:\n1. Timestamp  2. First Name\n3. Last Name  4. Email\n5. Class  6. Class Date\n7. Class Type\n8. Guest First Name\n9. Guest Last Name\n10. Status  11. Notified At\n12. Device  13. Browser\n14. City  15. State  16. Zip Code"]
 
     subgraph "GET Checks"
         DUP["Duplicate Check:\nfirst + last + email\n+ class + date"]
         WAIVER["Waiver Check:\nfirst + last + email\nwith Waiver = YES"]
+        CAP["Capacity Check:\ncount rows for class + date\n(includes guests)\nMAX = 10 for in-person"]
+        CANCEL_CHECK["Cancel Preview/Execute:\nfind rows by cancel token"]
     end
 
     SCRIPT --> DUP
     SCRIPT --> WAIVER
+    SCRIPT --> CAP
+    SCRIPT --> CANCEL_CHECK
 
     subgraph "POST Values per Row"
-        ROW["Timestamp: auto\nFirst Name: form\nLast Name: form\nEmail: form\nClass: selected class\nClass Date: calculated\nClass Type: online/in-person\nWaiver: YES / N/A / PREV"]
+        ROW["Timestamp: auto\nFirst/Last Name: form\nEmail: form\nClass: selected class\nClass Date: calculated\nClass Type: online/in-person\nWaiver: YES / N/A / PREV\nGuest Names: form (in-person)\nCancel Token: auto-generated\nDevice/Browser: auto-detected\nCity/State/Zip: IP lookup"]
     end
 
     SCRIPT --> ROW
 
+    subgraph "Auto-Archive (every 10 min)"
+        ARCH["archivePastSignups:\nMoves past class rows\nto Archive sheets"]
+    end
+
+    SHEET --> ARCH
+    WAITSHEET --> ARCH
+
     style FORM fill:#fff3e0,stroke:#f57c00
     style SCRIPT fill:#e3f2fd,stroke:#1565c0
     style SHEET fill:#e8f5e9,stroke:#388e3c
+    style WAITSHEET fill:#e8f5e9,stroke:#388e3c
 ```
 
 ---
