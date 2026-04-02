@@ -179,7 +179,7 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
 /* ========== Buttons ========== */
 .btn {
   display: flex !important; align-items: center !important; justify-content: center !important;
-  width: fit-content;
+  width: fit-content; margin-left: auto; margin-right: auto;
   padding: .85rem 2rem;
   border-radius: 50px; font-weight: 700; font-size: .9rem;
   line-height: 1 !important; letter-spacing: .06em; text-transform: uppercase;
