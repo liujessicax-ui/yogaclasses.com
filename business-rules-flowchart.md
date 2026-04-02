@@ -19,7 +19,7 @@ flowchart TD
 
     B --> B1["Sunday 6-7:15 PM PST\nOnline - Google Meet\nOpen to Everyone"]
     B --> B2["Tuesday 6-7:15 PM PST\nOnline - Google Meet\nRestorative Yoga"]
-    B --> B3["Wednesday 6-7:15 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only"]
+    B --> B3["Wednesday 5:15-6 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only"]
 
     B1 --> C{Class within\n7-day rolling window\nAND before 6:15 PM PST\ncutoff?}
     B2 --> C
@@ -108,10 +108,10 @@ flowchart TD
     TUE_CUT -- No --> TUE_SHOW["Show THIS Tuesday:\nTuesday 6-7:15 PM PST\nOnline via Google Meet\nRestorative Yoga\nSign-up OPEN"]
     TUE_CUT -- Yes --> TUE_NEXT["Show NEXT Tuesday:\nSign-up opens for\nnext week's class\nimmediately"]
 
-    WED -- Yes --> WED_CUT{Current time\npast Wednesday\n6:15 PM PST?}
+    WED -- Yes --> WED_CUT{Current time\npast Wednesday\n5:30 PM PST?}
     WED -- No --> WED_HIDE[Wednesday class\nnot shown]
 
-    WED_CUT -- No --> WED_SHOW["Show THIS Wednesday:\nWednesday 6-7:15 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only\nSign-up OPEN"]
+    WED_CUT -- No --> WED_SHOW["Show THIS Wednesday:\nWednesday 5:15-6 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only\nSign-up OPEN"]
     WED_CUT -- Yes --> WED_NEXT["Show NEXT Wednesday:\nSign-up opens for\nnext week's class\nimmediately"]
 
     MON_SHOW --> COMPARE

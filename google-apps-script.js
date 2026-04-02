@@ -700,12 +700,12 @@ function processAllWaitlists() {
 // Class schedule (PST / America/Los_Angeles):
 //   Sunday    6:00 PM - 7:15 PM  Online
 //   Tuesday   6:00 PM - 7:15 PM  Online
-//   Wednesday 6:00 PM - 7:15 PM  In-Person (CCV)
+//   Wednesday 5:15 PM - 6:00 PM  In-Person (CCV)
 
 var CLASS_SCHEDULE = [
   { day: 0, name: 'Sunday Evening — Online via Google Meet',    startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
   { day: 2, name: 'Tuesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
-  { day: 3, name: 'Wednesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' }
+  { day: 3, name: 'Wednesday Afternoon — CCV Clubhouse (In Person)', startH: 17, startM: 15, endH: 18, endM: 0, type: 'in-person' }
 ];
 
 var MEET_TZ = 'America/Los_Angeles';
