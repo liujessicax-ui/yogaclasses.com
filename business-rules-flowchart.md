@@ -18,8 +18,8 @@ flowchart TD
     A([User visits schedule.html]) --> B[View 3 Class Cards]
 
     B --> B1["Sunday 6-7:15 PM PST\nOnline - Google Meet\nOpen to Everyone"]
-    B --> B2["Tuesday 6-7:15 PM PST\nOnline - Google Meet\nRestorative Yoga"]
-    B --> B3["Wednesday 5:15-6:30 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only"]
+    B --> B2["Tuesday 6-7:15 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only"]
+    B --> B3["Wednesday 6-7:15 PM PST\nOnline - Google Meet\nRestorative Yoga"]
 
     B1 --> C{Class within\n7-day rolling window\nAND before 6:15 PM PST\ncutoff?}
     B2 --> C
@@ -44,7 +44,7 @@ flowchart TD
     I -- Yes --> J["Show 'Already Signed Up' popup:\n- Already registered message\n- Option to choose another class\n- Check confirmation email\n  for cancellation link"]
     J --> F
 
-    I -- No --> K{Any selected class\nin-person?\nWednesday CCV?}
+    I -- No --> K{Any selected class\nin-person?\nTuesday CCV?}
 
     K -- No / Online Only --> SUBMIT["POST to Google Apps Script.\nWrite one row per class:\nTimestamp, First Name, Last Name,\nEmail, Class, Class Date,\nClass Type, Liability Waiver = N/A"]
 
@@ -105,13 +105,13 @@ flowchart TD
     TUE -- Yes --> TUE_CUT{Current time\npast Tuesday\n6:15 PM PST?}
     TUE -- No --> TUE_HIDE[Tuesday class\nnot shown]
 
-    TUE_CUT -- No --> TUE_SHOW["Show THIS Tuesday:\nTuesday 6-7:15 PM PST\nOnline via Google Meet\nRestorative Yoga\nSign-up OPEN"]
+    TUE_CUT -- No --> TUE_SHOW["Show THIS Tuesday:\nTuesday 6-7:15 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only\nSign-up OPEN"]
     TUE_CUT -- Yes --> TUE_NEXT["Show NEXT Tuesday:\nSign-up opens for\nnext week's class\nimmediately"]
 
-    WED -- Yes --> WED_CUT{Current time\npast Wednesday\n5:30 PM PST?}
+    WED -- Yes --> WED_CUT{Current time\npast Wednesday\n6:15 PM PST?}
     WED -- No --> WED_HIDE[Wednesday class\nnot shown]
 
-    WED_CUT -- No --> WED_SHOW["Show THIS Wednesday:\nWednesday 5:15-6:30 PM PST\nCCV Clubhouse - In Person\nCCV Residents Only\nSign-up OPEN"]
+    WED_CUT -- No --> WED_SHOW["Show THIS Wednesday:\nWednesday 6-7:15 PM PST\nOnline via Google Meet\nRestorative Yoga\nSign-up OPEN"]
     WED_CUT -- Yes --> WED_NEXT["Show NEXT Wednesday:\nSign-up opens for\nnext week's class\nimmediately"]
 
     MON_SHOW --> COMPARE
@@ -248,7 +248,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    START{Does sign-up include\nan in-person class?\nWednesday CCV?} -- No --> SKIP["No waiver needed.\nSubmit directly.\nWaiver field = N/A"]
+    START{Does sign-up include\nan in-person class?\nTuesday CCV?} -- No --> SKIP["No waiver needed.\nSubmit directly.\nWaiver field = N/A"]
 
     START -- Yes --> CHECK["Query Google Sheets:\nLook up first name +\nlast name + email\nwhere Waiver = YES"]
 

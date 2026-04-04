@@ -43,9 +43,10 @@ function doPost(e) {
     // Generate a cancellation token for this sign-up batch
     var cancelToken = generateCancelToken();
 
-    // Append each class as its own row
+    // Append each class as its own row (using setValues to prevent date auto-formatting)
     rows.forEach(function(row) {
-      sheet.appendRow([
+      var newRow = sheet.getLastRow() + 1;
+      var values = [[
         row.timestamp,
         row.firstName,
         row.lastName,
@@ -63,7 +64,10 @@ function doPost(e) {
         row.city || '',
         row.state || '',
         row.zip || ''
-      ]);
+      ]];
+      var range = sheet.getRange(newRow, 1, 1, 17);
+      range.setNumberFormat('@'); // Force plain text to prevent date conversion
+      range.setValues(values);
     });
 
     // Ensure headers exist for all columns
@@ -290,10 +294,16 @@ function handleCancellation(token) {
       return { status: 'not_found', message: 'This cancellation link has already been used or the registration was not found.' };
     }
 
-    // Delete rows bottom-up to preserve indices
+    // Delete rows bottom-up to preserve indices (protect last non-frozen row)
     rowsToDelete.sort(function(a, b) { return b - a; });
+    var totalDataRows = sheet.getLastRow() - 1;
     for (var d = 0; d < rowsToDelete.length; d++) {
-      sheet.deleteRow(rowsToDelete[d]);
+      if (totalDataRows <= 1) {
+        sheet.getRange(rowsToDelete[d], 1, 1, sheet.getLastColumn()).clearContent();
+      } else {
+        sheet.deleteRow(rowsToDelete[d]);
+      }
+      totalDataRows--;
     }
 
     return {
@@ -425,8 +435,8 @@ function doGet(e) {
       var firstName = (params.firstName || '').trim().toLowerCase();
       var lastName  = (params.lastName || '').trim().toLowerCase();
       var email     = (params.email || '').trim().toLowerCase();
-      // classDates is a comma-separated list of "className|classDate" pairs
-      var classDates = (params.classDates || '').split(',').filter(Boolean);
+      // classDates is a ;;-separated list of "className|classDate" pairs
+      var classDates = (params.classDates || '').split(';;').filter(Boolean);
 
       var ss = getOrCreateSpreadsheet();
       var sheet = getOrCreateSheet(ss);
@@ -590,10 +600,16 @@ function processWaitlistForClass(className, classDate) {
     }
   }
 
-  // Delete bottom-up
+  // Delete bottom-up (protect last non-frozen row)
   rowsToDelete.sort(function(a, b) { return b - a; });
+  var wlDataRows = waitlistSheet.getLastRow() - 1;
   for (var d = 0; d < rowsToDelete.length; d++) {
-    waitlistSheet.deleteRow(rowsToDelete[d]);
+    if (wlDataRows <= 1) {
+      waitlistSheet.getRange(rowsToDelete[d], 1, 1, waitlistSheet.getLastColumn()).clearContent();
+    } else {
+      waitlistSheet.deleteRow(rowsToDelete[d]);
+    }
+    wlDataRows--;
   }
 
   // 4. Check if spots are available
@@ -715,13 +731,13 @@ function processAllWaitlists() {
 //
 // Class schedule (PST / America/Los_Angeles):
 //   Sunday    6:00 PM - 7:15 PM  Online
-//   Tuesday   6:00 PM - 7:15 PM  Online
-//   Wednesday 5:15 PM - 6:30 PM  In-Person (CCV)
+//   Tuesday   6:00 PM - 7:15 PM  In-Person (CCV)
+//   Wednesday 6:00 PM - 7:15 PM  Online
 
 var CLASS_SCHEDULE = [
   { day: 0, name: 'Sunday Evening — Online via Google Meet',    startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
-  { day: 2, name: 'Tuesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
-  { day: 3, name: 'Wednesday Afternoon — CCV Clubhouse (In Person)', startH: 17, startM: 15, endH: 18, endM: 30, type: 'in-person' }
+  { day: 2, name: 'Tuesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' },
+  { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' }
 ];
 
 var MEET_TZ = 'America/Los_Angeles';
@@ -963,7 +979,7 @@ var ARCHIVE_TZ = 'America/Los_Angeles';
 var CLASS_START_TIMES = {
   'Sunday':    { startH: 18, startM: 0 },
   'Tuesday':   { startH: 18, startM: 0 },
-  'Wednesday': { startH: 17, startM: 15 }
+  'Wednesday': { startH: 18, startM: 0 }
 };
 
 function archivePastSignups() {
@@ -1026,9 +1042,25 @@ function archiveSheet_(ssName, sheetName, archiveName, dateCol) {
     }
   }
 
-  // Append to archive and delete from source (bottom-to-top)
+  if (rowsToArchive.length === 0) return;
+
+  // BATCH WRITE to archive (much faster than appendRow in a loop)
+  var archiveData = [];
   for (var j = 0; j < rowsToArchive.length; j++) {
-    archive.appendRow(rowsToArchive[j].row);
-    sheet.deleteRow(rowsToArchive[j].index + 1); // +1 for 1-based row index
+    archiveData.push(rowsToArchive[j].row);
+  }
+  var archiveLastRow = archive.getLastRow();
+  archive.getRange(archiveLastRow + 1, 1, archiveData.length, archiveData[0].length).setValues(archiveData);
+
+  // BATCH DELETE from source (bottom-to-top, handling last-row protection)
+  var totalDataRows = sheet.getLastRow() - 1; // exclude header
+  for (var j = 0; j < rowsToArchive.length; j++) {
+    if (totalDataRows <= 1) {
+      // Can't delete the last non-frozen row — clear it instead
+      sheet.getRange(rowsToArchive[j].index + 1, 1, 1, sheet.getLastColumn()).clearContent();
+    } else {
+      sheet.deleteRow(rowsToArchive[j].index + 1);
+    }
+    totalDataRows--;
   }
 }

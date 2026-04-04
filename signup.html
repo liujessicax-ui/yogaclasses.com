@@ -573,20 +573,20 @@
         tags: ['Open to Everyone']
       },
       {
-        id: 'tuesday-restorative',
-        label: 'Tuesday Evening &mdash; Restorative Yoga (Online)',
+        id: 'tuesday-ccv',
+        label: 'Tuesday Evening &mdash; CCV Clubhouse (In Person)',
         day: 2, startHour: 18, startMin: 0, endHour: 19, endMin: 15,
+        duration: '6:00 PM – 7:15 PM PST',
+        type: 'inperson',
+        tags: ['CCV Residents Only', 'In Person']
+      },
+      {
+        id: 'wednesday-restorative',
+        label: 'Wednesday Evening &mdash; Restorative Yoga (Online)',
+        day: 3, startHour: 18, startMin: 0, endHour: 19, endMin: 15,
         duration: '6:00 PM – 7:15 PM PST',
         type: 'online',
         tags: ['Restorative', 'Open to Everyone']
-      },
-      {
-        id: 'wednesday-ccv',
-        label: 'Wednesday Afternoon &mdash; CCV Clubhouse (In Person)',
-        day: 3, startHour: 17, startMin: 15, endHour: 18, endMin: 30,
-        duration: '5:15 PM – 6:30 PM PST',
-        type: 'inperson',
-        tags: ['CCV Residents Only', 'In Person']
       }
     ];
 
@@ -757,11 +757,11 @@
       };
     }
 
-    // Show guest section only when wednesday-ccv is checked
+    // Show guest section only when tuesday-ccv is checked
     function updateGuestVisibility() {
       const g = getGuestEls();
       if (!g.section) return; // no in-person class available this week
-      const ccvChecked = document.querySelector('input[name="classes"][value^="wednesday-ccv"]:checked');
+      const ccvChecked = document.querySelector('input[name="classes"][value^="tuesday-ccv"]:checked');
       if (ccvChecked) {
         g.section.style.display = 'block';
       } else {
@@ -957,7 +957,7 @@
 
       const classDates = data.classEntries.map(cls =>
         encodeURIComponent(cls.name + '|' + cls.date)
-      ).join(',');
+      ).join(';;');
 
       const checkUrl = SHEETS_WEB_APP_URL +
         '?action=check' +
