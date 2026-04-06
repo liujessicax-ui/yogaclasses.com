@@ -14,7 +14,7 @@ module.exports = {
     },
     production: {
       baseUrl: 'https://yogawithjessica.com',
-      appsScriptUrl: 'https://script.google.com/macros/s/AKfycbzgNn2zYdI2VBA5JeBu0lQnD-JoJnvmYkDM8sHVx3zdNrTwZlGbvKnLc2uYJg9umovD/exec'
+      appsScriptUrl: 'https://script.google.com/macros/s/AKfycbx3qxkR_qLgCyy0LVmslaK2LHzGFJq5UMUwfvj5SFRqx_vZ5xlssCx_Ku2r_wVhhpU3/exec'
     }
   },
 
