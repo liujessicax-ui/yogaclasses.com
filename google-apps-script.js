@@ -26,6 +26,7 @@
 // ========== WRITE SIGN-UPS ==========
 // YOUR WEBSITE URL — update this when you deploy the site
 var SITE_URL = 'https://yogawithjessica.com'; // change to your actual domain
+var ADMIN_EMAIL = 'xiaojing25@gmail.com';
 
 function doPost(e) {
   try {
@@ -80,11 +81,21 @@ function doPost(e) {
       sheet.getRange(1, 13, 1, 5).setValues([['Device', 'Browser', 'City', 'State', 'Zip Code']]).setFontWeight('bold');
     }
 
-    // Send confirmation email with cancel link
-    sendConfirmationEmail(rows, cancelToken);
+    // Check if any online classes in this sign-up are starting within 30 minutes
+    // If so, ensure a Meet event exists and add the student to it
+    var meetLink = checkAndCreateMeetForLateSignup(rows);
+
+    // Send confirmation email with cancel link (and Meet link if applicable)
+    sendConfirmationEmail(rows, cancelToken, meetLink);
+
+    // Notify admin of new sign-up
+    sendAdminSignupNotification(rows);
+
+    var result = { status: 'ok', cancelToken: cancelToken };
+    if (meetLink) result.meetLink = meetLink;
 
     return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok', cancelToken: cancelToken }))
+      .createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
@@ -105,7 +116,7 @@ function generateCancelToken() {
 }
 
 // ========== CONFIRMATION EMAIL ==========
-function sendConfirmationEmail(rows, cancelToken) {
+function sendConfirmationEmail(rows, cancelToken, meetLink) {
   if (!rows || rows.length === 0) return;
 
   var firstName = rows[0].firstName;
@@ -132,7 +143,7 @@ function sendConfirmationEmail(rows, cancelToken) {
   // Cancel link — points to cancel.html on the website
   var cancelUrl = SITE_URL + '/cancel.html?token=' + cancelToken;
 
-  var subject = 'Yoga with Jessica — Sign-Up Confirmation';
+  var subject = 'Yoga with Jessica — Sign-Up Confirmation [v2]';
 
   var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
 
@@ -167,11 +178,22 @@ function sendConfirmationEmail(rows, cancelToken) {
         '</div>'
       : '') +
 
-      // Online class note
-      '<div style="background:#f0f5ee;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;">' +
-        '<strong>For online classes:</strong> A Google Meet invite will be sent to you 30 minutes before class. ' +
-        'Please have your camera on with good lighting. Microphones will be muted to minimize noise.' +
-      '</div>' +
+      // Online class note — with or without immediate Meet link
+      (meetLink ?
+        '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
+          '<strong>&#127909; Your Google Meet link is ready!</strong><br>' +
+          '<p style="margin:8px 0;">Class is starting soon — join here:</p>' +
+          '<div style="text-align:center;margin:12px 0;">' +
+            '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Google Meet</a>' +
+          '</div>' +
+          '<p style="margin:8px 0 0;color:#555;">Please have your camera on with good lighting. Microphones will be muted to minimize noise.</p>' +
+        '</div>'
+      :
+        '<div style="background:#f0f5ee;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;">' +
+          '<strong>For online classes:</strong> A Google Meet invite will be sent to you 30 minutes before class. ' +
+          'Please have your camera on with good lighting. Microphones will be muted to minimize noise.' +
+        '</div>'
+      ) +
 
       // Props reminder
       '<p style="font-size:14px;color:#555;line-height:1.6;">' +
@@ -208,6 +230,88 @@ function sendConfirmationEmail(rows, cancelToken) {
 
 function escHtml(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ========== ADMIN NOTIFICATION EMAILS ==========
+
+function sendAdminSignupNotification(rows) {
+  if (!rows || rows.length === 0) return;
+  // TEMP: try/catch removed for debugging — errors will surface in Executions log
+  var firstName = rows[0].firstName || '';
+  var lastName  = rows[0].lastName || '';
+  var email     = rows[0].email || '';
+  var guestFirst = rows[0].guestFirstName || '';
+  var guestLast  = rows[0].guestLastName || '';
+  var hasGuest   = !!(guestFirst);
+  var now = new Date();
+  var timestamp  = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }) + ' PST';
+
+  var classLines = '';
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var icon = r.classType === 'In-Person' ? '&#x1F3E0;' : '&#x1F4BB;';
+    classLines += '<li>' + icon + ' ' + escHtml(r.className) + ' — ' + escHtml(r.classDate) + ' (' + escHtml(r.classType) + ')</li>';
+  }
+
+  var subject = '\uD83E\uDDD8 New Sign-Up: ' + firstName + ' ' + lastName + ' — ' + (rows[0].className || '').split(' — ')[0];
+
+  var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+    '<div style="background:#e8f5e9;padding:16px 24px;border-radius:8px 8px 0 0;border-left:4px solid #5B7553;">' +
+      '<h2 style="margin:0;color:#5B7553;font-size:18px;">New Sign-Up</h2>' +
+    '</div>' +
+    '<div style="padding:20px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;">' +
+      '<p><strong>Student:</strong> ' + escHtml(firstName) + ' ' + escHtml(lastName) + '</p>' +
+      '<p><strong>Email:</strong> ' + escHtml(email) + '</p>' +
+      '<p><strong>Classes:</strong></p>' +
+      '<ul style="margin:4px 0 16px;">' + classLines + '</ul>' +
+      (hasGuest ? '<p><strong>Guest:</strong> ' + escHtml(guestFirst) + ' ' + escHtml(guestLast) + '</p>' : '') +
+      '<p style="color:#777;font-size:13px;">Signed up at: ' + timestamp + '</p>' +
+    '</div>' +
+  '</div>';
+
+  MailApp.sendEmail({
+    to: ADMIN_EMAIL,
+    subject: subject,
+    htmlBody: body
+  });
+}
+
+function sendAdminCancelNotification(studentName, studentEmail, guestName, cancelledClasses, count) {
+  try {
+    var now = new Date();
+    var timestamp = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }) + ' PST';
+
+    var classLines = '';
+    for (var i = 0; i < cancelledClasses.length; i++) {
+      var c = cancelledClasses[i];
+      classLines += '<li>' + escHtml(c.className) + ' — ' + escHtml(c.classDate) + ' (' + escHtml(c.classType) + ')</li>';
+    }
+
+    var subject = '\u274C Cancellation: ' + studentName + ' — ' + (cancelledClasses[0] ? cancelledClasses[0].className : '').split(' — ')[0];
+
+    var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+      '<div style="background:#ffebee;padding:16px 24px;border-radius:8px 8px 0 0;border-left:4px solid #c62828;">' +
+        '<h2 style="margin:0;color:#c62828;font-size:18px;">Cancellation</h2>' +
+      '</div>' +
+      '<div style="padding:20px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;">' +
+        '<p><strong>Student:</strong> ' + escHtml(studentName) + '</p>' +
+        '<p><strong>Email:</strong> ' + escHtml(studentEmail) + '</p>' +
+        '<p><strong>Cancelled classes:</strong></p>' +
+        '<ul style="margin:4px 0 16px;">' + classLines + '</ul>' +
+        (guestName ? '<p><strong>Guest also cancelled:</strong> ' + escHtml(guestName) + '</p>' : '') +
+        '<p><strong>Rows removed:</strong> ' + count + '</p>' +
+        '<p style="color:#777;font-size:13px;">Cancelled at: ' + timestamp + '</p>' +
+      '</div>' +
+    '</div>';
+
+    MailApp.sendEmail({
+      to: ADMIN_EMAIL,
+      subject: subject,
+      htmlBody: body
+    });
+  } catch (err) {
+    Logger.log('Admin cancel notification error: ' + err.toString());
+  }
 }
 
 // ========== WAITLIST HANDLER ==========
@@ -305,6 +409,9 @@ function handleCancellation(token) {
       }
       totalDataRows--;
     }
+
+    // Notify admin of cancellation
+    sendAdminCancelNotification(studentName.trim(), studentEmail, guestName, cancelledClasses, rowsToDelete.length);
 
     return {
       status: 'cancelled',
@@ -722,6 +829,156 @@ function processAllWaitlists() {
   }
 }
 
+// ========== LATE SIGN-UP MEET LINK ==========
+// Called at sign-up time. For each online class in the sign-up, checks if class
+// starts within 30 minutes. If so, ensures a Meet event exists (creating one if needed)
+// and adds the student as an attendee. Returns the Meet link or '' if not applicable.
+
+function checkAndCreateMeetForLateSignup(rows) {
+  if (!rows || rows.length === 0) return '';
+
+  var now = new Date();
+  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: MEET_TZ }));
+  var currentDay = pstNow.getDay();
+  var currentTotalMin = pstNow.getHours() * 60 + pstNow.getMinutes();
+  var cache = PropertiesService.getScriptProperties();
+  var email = rows[0].email;
+  var meetLink = '';
+
+  for (var c = 0; c < CLASS_SCHEDULE.length; c++) {
+    var cls = CLASS_SCHEDULE[c];
+
+    // Only care about online classes happening today
+    if (cls.type !== 'online' || cls.day !== currentDay) continue;
+
+    var classStartMin = cls.startH * 60 + cls.startM;
+    var minutesUntilClass = classStartMin - currentTotalMin;
+
+    // Only trigger for sign-ups within 30 minutes of class start
+    // (and not after class has already started by more than 15 min)
+    if (minutesUntilClass > 30 || minutesUntilClass < -15) continue;
+
+    // Check if this student actually signed up for this class
+    var classDate = formatClassDate(pstNow);
+    var signedUpForThis = false;
+    for (var r = 0; r < rows.length; r++) {
+      if (rows[r].classType === 'Online' && rows[r].classDate &&
+          rows[r].className && rows[r].className.indexOf(cls.name.split(' ')[0]) !== -1) {
+        signedUpForThis = true;
+        break;
+      }
+    }
+    if (!signedUpForThis) continue;
+
+    Logger.log('Late sign-up for ' + cls.name + ' (' + minutesUntilClass + ' min away) — checking Meet event');
+
+    // Check if a Meet event already exists for this class+date
+    var linkKey = 'meet_link_' + cls.day + '_' + classDate;
+    var eventIdKey = 'meet_event_' + cls.day + '_' + classDate;
+    var existingLink = cache.getProperty(linkKey);
+    var existingEventId = cache.getProperty(eventIdKey);
+
+    if (existingLink && existingEventId) {
+      // Meet event already exists — add this student as an attendee
+      Logger.log('Meet event exists, adding late sign-up: ' + email);
+      try {
+        var existingEvent = Calendar.Events.get('primary', existingEventId);
+        var attendees = existingEvent.attendees || [];
+        // Check if already an attendee
+        var alreadyAdded = false;
+        for (var a = 0; a < attendees.length; a++) {
+          if (attendees[a].email.toLowerCase() === email.toLowerCase()) {
+            alreadyAdded = true;
+            break;
+          }
+        }
+        if (!alreadyAdded) {
+          attendees.push({ email: email });
+          Calendar.Events.patch({ attendees: attendees }, 'primary', existingEventId, { sendUpdates: 'all' });
+          Logger.log('Added ' + email + ' to existing Meet event');
+        }
+      } catch (patchErr) {
+        Logger.log('Error adding attendee to existing event: ' + patchErr.toString());
+      }
+      meetLink = existingLink;
+    } else {
+      // No Meet event yet — create one now
+      Logger.log('No Meet event exists yet — creating for late sign-up');
+      try {
+        var result = createMeetEvent(cls, pstNow, [email]);
+        if (result.meetLink) {
+          meetLink = result.meetLink;
+          // Save for future late sign-ups
+          cache.setProperty(linkKey, result.meetLink);
+          cache.setProperty(eventIdKey, result.eventId);
+          // Also mark as sent so the regular trigger doesn't duplicate
+          var sentKey = 'meet_sent_' + cls.day + '_' + classDate;
+          cache.setProperty(sentKey, new Date().toISOString());
+          Logger.log('Created Meet event for late sign-up: ' + meetLink);
+        }
+      } catch (createErr) {
+        Logger.log('Error creating Meet event for late sign-up: ' + createErr.toString());
+      }
+    }
+  }
+
+  return meetLink;
+}
+
+// Shared function to create a Google Calendar event with Meet link
+function createMeetEvent(cls, dateRef, studentEmails) {
+  var startTime = new Date(dateRef);
+  startTime.setHours(cls.startH, cls.startM, 0, 0);
+
+  var endTime = new Date(dateRef);
+  endTime.setHours(cls.endH, cls.endM, 0, 0);
+
+  var attendees = [];
+  for (var s = 0; s < studentEmails.length; s++) {
+    attendees.push({ email: studentEmails[s] });
+  }
+
+  var event = {
+    summary: 'Yoga with Jessica — ' + cls.name,
+    description: 'Join us for yoga class! Please have your camera on with good lighting. Microphones will be muted to minimize noise.\n\nProps to bring: Check https://yogawithjessica.com/schedule.html',
+    start: {
+      dateTime: Utilities.formatDate(startTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
+      timeZone: MEET_TZ
+    },
+    end: {
+      dateTime: Utilities.formatDate(endTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
+      timeZone: MEET_TZ
+    },
+    attendees: attendees,
+    conferenceData: {
+      createRequest: {
+        conferenceSolutionKey: { type: 'hangoutsMeet' },
+        requestId: 'yoga-' + cls.day + '-' + Date.now()
+      }
+    },
+    reminders: {
+      useDefault: false,
+      overrides: [
+        { method: 'popup', minutes: 5 }
+      ]
+    }
+  };
+
+  var createdEvent = Calendar.Events.insert(event, 'primary', { conferenceDataVersion: 1, sendUpdates: 'all' });
+
+  var meetLink = '';
+  if (createdEvent.conferenceData && createdEvent.conferenceData.entryPoints) {
+    for (var ep = 0; ep < createdEvent.conferenceData.entryPoints.length; ep++) {
+      if (createdEvent.conferenceData.entryPoints[ep].entryPointType === 'video') {
+        meetLink = createdEvent.conferenceData.entryPoints[ep].uri;
+        break;
+      }
+    }
+  }
+
+  return { meetLink: meetLink, eventId: createdEvent.id };
+}
+
 // ========== GOOGLE MEET INVITE AUTOMATION ==========
 // Set up as a time-driven trigger (every 5 minutes).
 // Checks if any class is starting within 30 minutes, then creates a
@@ -791,60 +1048,17 @@ function sendMeetInvites() {
 
     Logger.log('Found ' + students.length + ' student(s) for ' + cls.name);
 
-    // Create Calendar event with Meet link
+    // Create Calendar event with Meet link using shared function
     try {
-      var startTime = new Date(pstNow);
-      startTime.setHours(cls.startH, cls.startM, 0, 0);
+      var result = createMeetEvent(cls, pstNow, students);
 
-      var endTime = new Date(pstNow);
-      endTime.setHours(cls.endH, cls.endM, 0, 0);
+      Logger.log('Created event with Meet link: ' + result.meetLink + ' for ' + students.length + ' students');
 
-      // Build attendee list
-      var attendees = [];
-      for (var s = 0; s < students.length; s++) {
-        attendees.push({ email: students[s] });
-      }
-
-      // Create event using Advanced Calendar API (needed for conferenceData)
-      var event = {
-        summary: 'Yoga with Jessica — ' + cls.name,
-        description: 'Join us for yoga class! Please have your camera on with good lighting. Microphones will be muted to minimize noise.\n\nProps to bring: Check https://yogawithjessica.com/schedule.html',
-        start: {
-          dateTime: Utilities.formatDate(startTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
-          timeZone: MEET_TZ
-        },
-        end: {
-          dateTime: Utilities.formatDate(endTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
-          timeZone: MEET_TZ
-        },
-        attendees: attendees,
-        conferenceData: {
-          createRequest: {
-            conferenceSolutionKey: { type: 'hangoutsMeet' },
-            requestId: 'yoga-' + cls.day + '-' + Date.now()
-          }
-        },
-        reminders: {
-          useDefault: false,
-          overrides: [
-            { method: 'popup', minutes: 5 }
-          ]
-        }
-      };
-
-      var createdEvent = Calendar.Events.insert(event, 'primary', { conferenceDataVersion: 1, sendUpdates: 'all' });
-
-      var meetLink = '';
-      if (createdEvent.conferenceData && createdEvent.conferenceData.entryPoints) {
-        for (var ep = 0; ep < createdEvent.conferenceData.entryPoints.length; ep++) {
-          if (createdEvent.conferenceData.entryPoints[ep].entryPointType === 'video') {
-            meetLink = createdEvent.conferenceData.entryPoints[ep].uri;
-            break;
-          }
-        }
-      }
-
-      Logger.log('Created event with Meet link: ' + meetLink + ' for ' + students.length + ' students');
+      // Save Meet link and event ID so late sign-ups can use them
+      var linkKey = 'meet_link_' + cls.day + '_' + classDate;
+      var eventIdKey = 'meet_event_' + cls.day + '_' + classDate;
+      cache.setProperty(linkKey, result.meetLink);
+      cache.setProperty(eventIdKey, result.eventId);
 
       // Mark as sent to avoid duplicates
       cache.setProperty(sentKey, new Date().toISOString());
