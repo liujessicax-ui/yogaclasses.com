@@ -88,7 +88,7 @@
           You can sign up for any class happening within the <strong>next 7 days</strong>, first come, first served.
           Click the <strong>Sign Up</strong> button on any class below to see available dates and register.
           If you need to cancel, you can do so from the confirmation email you'll receive after signing up.
-          For online classes, meeting invites will be sent to your email <strong>30 minutes before</strong> class starts.
+          For online classes, a Zoom link will be sent to your email <strong>30 minutes before</strong> class starts.
           Please have your <strong>camera on with good lighting</strong> so I can see your alignment and offer corrections.
           Microphones will generally be muted during class to minimize background noise.
         </p>
@@ -108,7 +108,7 @@
           </div>
           <div class="schedule-card__details">
             <h3>Sunday Evening</h3>
-            <p><strong>6:00 PM &ndash; 7:15 PM PST</strong> &bull; Online via Google Meet</p>
+            <p><strong class="class-time" data-pt-hour="18" data-pt-min="0" data-duration="75">6:00 PM &ndash; 7:15 PM PDT</strong> &bull; Online via Zoom</p>
             <span class="schedule-card__tag">Open to Everyone</span>
           </div>
           <div class="schedule-card__action">
@@ -127,7 +127,7 @@
           </div>
           <div class="schedule-card__details">
             <h3>Tuesday Evening</h3>
-            <p><strong>6:00 PM &ndash; 7:15 PM PST</strong> &bull; CCV Clubhouse &mdash; In Person</p>
+            <p><strong class="class-time" data-pt-hour="18" data-pt-min="0" data-duration="75">6:00 PM &ndash; 7:15 PM PDT</strong> &bull; CCV Clubhouse &mdash; In Person</p>
             <span class="schedule-card__tag">CCV Residents Only</span>
           </div>
           <div class="schedule-card__action">
@@ -146,7 +146,7 @@
           </div>
           <div class="schedule-card__details">
             <h3>Wednesday Evening &mdash; Restorative Yoga</h3>
-            <p><strong>6:00 PM &ndash; 7:15 PM PST</strong> &bull; Online via Google Meet</p>
+            <p><strong class="class-time" data-pt-hour="18" data-pt-min="0" data-duration="75">6:00 PM &ndash; 7:15 PM PDT</strong> &bull; Online via Zoom</p>
             <span class="schedule-card__tag">Restorative</span>
             <span class="schedule-card__tag">Open to Everyone</span>
           </div>
@@ -201,6 +201,38 @@
     const links  = document.querySelector('.nav__links');
     toggle.addEventListener('click', () => links.classList.toggle('open'));
     links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+
+    // Convert class times from PT to visitor's local timezone
+    document.querySelectorAll('.class-time').forEach(el => {
+      const ptHour   = parseInt(el.dataset.ptHour);
+      const ptMin    = parseInt(el.dataset.ptMin);
+      const duration = parseInt(el.dataset.duration);
+
+      // Get today's date components in America/Los_Angeles
+      const now = new Date();
+      const f = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hour12: false
+      });
+      const parts  = f.formatToParts(now);
+      const get    = type => parseInt(parts.find(p => p.type === type).value);
+      const laYear = get('year'), laMonth = get('month') - 1, laDay = get('day');
+
+      // Determine LA's UTC offset at this moment (handles DST automatically)
+      const laAsUTC    = Date.UTC(laYear, laMonth, laDay, get('hour'), get('minute'), get('second'));
+      const laOffsetMs = now.getTime() - laAsUTC;
+
+      // Build UTC Date objects for start and end
+      const startUTC = new Date(Date.UTC(laYear, laMonth, laDay, ptHour, ptMin) + laOffsetMs);
+      const endUTC   = new Date(startUTC.getTime() + duration * 60 * 1000);
+
+      const startStr = startUTC.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      const endStr   = endUTC.toLocaleTimeString('en-US',   { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+
+      el.textContent = `${startStr} \u2013 ${endStr}`;
+    });
   </script>
 </body>
 </html>

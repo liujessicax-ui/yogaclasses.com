@@ -143,7 +143,7 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
   // Cancel link — points to cancel.html on the website
   var cancelUrl = SITE_URL + '/cancel.html?token=' + cancelToken;
 
-  var subject = 'Yoga with Jessica — Sign-Up Confirmation [v2]';
+  var subject = 'Yoga with Jessica — Sign-Up Confirmation';
 
   var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
 
@@ -170,6 +170,12 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
         classLines +
       '</table>' +
 
+      // Website link
+      '<p style="font-size:13px;color:#777;margin:4px 0 16px;line-height:1.6;">' +
+        'View your schedule, props list, and class info anytime at ' +
+        '<a href="' + SITE_URL + '" style="color:#5B7553;font-weight:600;">yogawithjessica.com</a>.' +
+      '</p>' +
+
       // Guest info
       (hasGuest ?
         '<div style="background:#f9f7f2;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;">' +
@@ -178,19 +184,19 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
         '</div>'
       : '') +
 
-      // Online class note — with or without immediate Meet link
+      // Online class note — with or without immediate Zoom link
       (meetLink ?
         '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
-          '<strong>&#127909; Your Google Meet link is ready!</strong><br>' +
+          '<strong>&#x1F4F9; Your Zoom link is ready!</strong><br>' +
           '<p style="margin:8px 0;">Class is starting soon — join here:</p>' +
           '<div style="text-align:center;margin:12px 0;">' +
-            '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Google Meet</a>' +
+            '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
           '</div>' +
           '<p style="margin:8px 0 0;color:#555;">Please have your camera on with good lighting. Microphones will be muted to minimize noise.</p>' +
         '</div>'
       :
         '<div style="background:#f0f5ee;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;">' +
-          '<strong>For online classes:</strong> A Google Meet invite will be sent to you 30 minutes before class. ' +
+          '<strong>For online classes:</strong> A Zoom link will be sent to you 30 minutes before class. ' +
           'Please have your camera on with good lighting. Microphones will be muted to minimize noise.' +
         '</div>'
       ) +
@@ -236,44 +242,47 @@ function escHtml(str) {
 
 function sendAdminSignupNotification(rows) {
   if (!rows || rows.length === 0) return;
-  // TEMP: try/catch removed for debugging — errors will surface in Executions log
-  var firstName = rows[0].firstName || '';
-  var lastName  = rows[0].lastName || '';
-  var email     = rows[0].email || '';
-  var guestFirst = rows[0].guestFirstName || '';
-  var guestLast  = rows[0].guestLastName || '';
-  var hasGuest   = !!(guestFirst);
-  var now = new Date();
-  var timestamp  = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }) + ' PST';
+  try {
+    var firstName = rows[0].firstName || '';
+    var lastName  = rows[0].lastName || '';
+    var email     = rows[0].email || '';
+    var guestFirst = rows[0].guestFirstName || '';
+    var guestLast  = rows[0].guestLastName || '';
+    var hasGuest   = !!(guestFirst);
+    var now = new Date();
+    var timestamp  = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }) + ' PST';
 
-  var classLines = '';
-  for (var i = 0; i < rows.length; i++) {
-    var r = rows[i];
-    var icon = r.classType === 'In-Person' ? '&#x1F3E0;' : '&#x1F4BB;';
-    classLines += '<li>' + icon + ' ' + escHtml(r.className) + ' — ' + escHtml(r.classDate) + ' (' + escHtml(r.classType) + ')</li>';
+    var classLines = '';
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var icon = r.classType === 'In-Person' ? '&#x1F3E0;' : '&#x1F4BB;';
+      classLines += '<li>' + icon + ' ' + escHtml(r.className) + ' — ' + escHtml(r.classDate) + ' (' + escHtml(r.classType) + ')</li>';
+    }
+
+    var subject = '\uD83E\uDDD8 New Sign-Up: ' + firstName + ' ' + lastName + ' — ' + (rows[0].className || '').split(' — ')[0];
+
+    var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+      '<div style="background:#e8f5e9;padding:16px 24px;border-radius:8px 8px 0 0;border-left:4px solid #5B7553;">' +
+        '<h2 style="margin:0;color:#5B7553;font-size:18px;">New Sign-Up</h2>' +
+      '</div>' +
+      '<div style="padding:20px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;">' +
+        '<p><strong>Student:</strong> ' + escHtml(firstName) + ' ' + escHtml(lastName) + '</p>' +
+        '<p><strong>Email:</strong> ' + escHtml(email) + '</p>' +
+        '<p><strong>Classes:</strong></p>' +
+        '<ul style="margin:4px 0 16px;">' + classLines + '</ul>' +
+        (hasGuest ? '<p><strong>Guest:</strong> ' + escHtml(guestFirst) + ' ' + escHtml(guestLast) + '</p>' : '') +
+        '<p style="color:#777;font-size:13px;">Signed up at: ' + timestamp + '</p>' +
+      '</div>' +
+    '</div>';
+
+    MailApp.sendEmail({
+      to: ADMIN_EMAIL,
+      subject: subject,
+      htmlBody: body
+    });
+  } catch (err) {
+    Logger.log('Admin signup notification error: ' + err.toString());
   }
-
-  var subject = '\uD83E\uDDD8 New Sign-Up: ' + firstName + ' ' + lastName + ' — ' + (rows[0].className || '').split(' — ')[0];
-
-  var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
-    '<div style="background:#e8f5e9;padding:16px 24px;border-radius:8px 8px 0 0;border-left:4px solid #5B7553;">' +
-      '<h2 style="margin:0;color:#5B7553;font-size:18px;">New Sign-Up</h2>' +
-    '</div>' +
-    '<div style="padding:20px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;border-radius:0 0 8px 8px;">' +
-      '<p><strong>Student:</strong> ' + escHtml(firstName) + ' ' + escHtml(lastName) + '</p>' +
-      '<p><strong>Email:</strong> ' + escHtml(email) + '</p>' +
-      '<p><strong>Classes:</strong></p>' +
-      '<ul style="margin:4px 0 16px;">' + classLines + '</ul>' +
-      (hasGuest ? '<p><strong>Guest:</strong> ' + escHtml(guestFirst) + ' ' + escHtml(guestLast) + '</p>' : '') +
-      '<p style="color:#777;font-size:13px;">Signed up at: ' + timestamp + '</p>' +
-    '</div>' +
-  '</div>';
-
-  MailApp.sendEmail({
-    to: ADMIN_EMAIL,
-    subject: subject,
-    htmlBody: body
-  });
 }
 
 function sendAdminCancelNotification(studentName, studentEmail, guestName, cancelledClasses, count) {
@@ -829,10 +838,10 @@ function processAllWaitlists() {
   }
 }
 
-// ========== LATE SIGN-UP MEET LINK ==========
+// ========== LATE SIGN-UP ZOOM LINK ==========
 // Called at sign-up time. For each online class in the sign-up, checks if class
-// starts within 30 minutes. If so, ensures a Meet event exists (creating one if needed)
-// and adds the student as an attendee. Returns the Meet link or '' if not applicable.
+// starts within 30 minutes. If so, ensures a Zoom meeting exists (creating one if
+// needed) and returns the join URL for the confirmation email.
 
 function checkAndCreateMeetForLateSignup(rows) {
   if (!rows || rows.length === 0) return '';
@@ -842,7 +851,6 @@ function checkAndCreateMeetForLateSignup(rows) {
   var currentDay = pstNow.getDay();
   var currentTotalMin = pstNow.getHours() * 60 + pstNow.getMinutes();
   var cache = PropertiesService.getScriptProperties();
-  var email = rows[0].email;
   var meetLink = '';
 
   for (var c = 0; c < CLASS_SCHEDULE.length; c++) {
@@ -870,54 +878,31 @@ function checkAndCreateMeetForLateSignup(rows) {
     }
     if (!signedUpForThis) continue;
 
-    Logger.log('Late sign-up for ' + cls.name + ' (' + minutesUntilClass + ' min away) — checking Meet event');
+    Logger.log('Late sign-up for ' + cls.name + ' (' + minutesUntilClass + ' min away) — checking Zoom meeting');
 
-    // Check if a Meet event already exists for this class+date
     var linkKey = 'meet_link_' + cls.day + '_' + classDate;
-    var eventIdKey = 'meet_event_' + cls.day + '_' + classDate;
     var existingLink = cache.getProperty(linkKey);
-    var existingEventId = cache.getProperty(eventIdKey);
 
-    if (existingLink && existingEventId) {
-      // Meet event already exists — add this student as an attendee
-      Logger.log('Meet event exists, adding late sign-up: ' + email);
-      try {
-        var existingEvent = Calendar.Events.get('primary', existingEventId);
-        var attendees = existingEvent.attendees || [];
-        // Check if already an attendee
-        var alreadyAdded = false;
-        for (var a = 0; a < attendees.length; a++) {
-          if (attendees[a].email.toLowerCase() === email.toLowerCase()) {
-            alreadyAdded = true;
-            break;
-          }
-        }
-        if (!alreadyAdded) {
-          attendees.push({ email: email });
-          Calendar.Events.patch({ attendees: attendees }, 'primary', existingEventId, { sendUpdates: 'all' });
-          Logger.log('Added ' + email + ' to existing Meet event');
-        }
-      } catch (patchErr) {
-        Logger.log('Error adding attendee to existing event: ' + patchErr.toString());
-      }
+    if (existingLink) {
+      // Zoom meeting already exists — return the cached link
+      Logger.log('Zoom meeting exists, returning link for late sign-up');
       meetLink = existingLink;
     } else {
-      // No Meet event yet — create one now
-      Logger.log('No Meet event exists yet — creating for late sign-up');
+      // No Zoom meeting yet — create one now
+      Logger.log('No Zoom meeting exists yet — creating for late sign-up');
       try {
-        var result = createMeetEvent(cls, pstNow, [email]);
-        if (result.meetLink) {
-          meetLink = result.meetLink;
-          // Save for future late sign-ups
-          cache.setProperty(linkKey, result.meetLink);
-          cache.setProperty(eventIdKey, result.eventId);
-          // Also mark as sent so the regular trigger doesn't duplicate
-          var sentKey = 'meet_sent_' + cls.day + '_' + classDate;
-          cache.setProperty(sentKey, new Date().toISOString());
-          Logger.log('Created Meet event for late sign-up: ' + meetLink);
+        var result = createZoomMeeting(cls, pstNow, 75);
+        if (result.joinUrl) {
+          meetLink = result.joinUrl;
+          // Save for future late sign-ups and the regular trigger
+          cache.setProperty(linkKey, result.joinUrl);
+          cache.setProperty('meet_event_' + cls.day + '_' + classDate, result.meetingId);
+          // Mark as sent so the regular trigger doesn't create a second meeting
+          cache.setProperty('meet_sent_' + cls.day + '_' + classDate, new Date().toISOString());
+          Logger.log('Created Zoom meeting for late sign-up: ' + meetLink);
         }
       } catch (createErr) {
-        Logger.log('Error creating Meet event for late sign-up: ' + createErr.toString());
+        Logger.log('Error creating Zoom meeting for late sign-up: ' + createErr.toString());
       }
     }
   }
@@ -925,66 +910,115 @@ function checkAndCreateMeetForLateSignup(rows) {
   return meetLink;
 }
 
-// Shared function to create a Google Calendar event with Meet link
-function createMeetEvent(cls, dateRef, studentEmails) {
+// Get a Zoom API access token via Server-to-Server OAuth
+function getZoomAccessToken() {
+  var props = PropertiesService.getScriptProperties();
+  var accountId    = props.getProperty('ZOOM_ACCOUNT_ID');
+  var clientId     = props.getProperty('ZOOM_CLIENT_ID');
+  var clientSecret = props.getProperty('ZOOM_CLIENT_SECRET');
+
+  var credentials = Utilities.base64Encode(clientId + ':' + clientSecret);
+  var response = UrlFetchApp.fetch(
+    'https://zoom.us/oauth/token?grant_type=account_credentials&account_id=' + accountId,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + credentials,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      muteHttpExceptions: true
+    }
+  );
+  var data = JSON.parse(response.getContentText());
+  if (!data.access_token) {
+    throw new Error('Zoom token error: ' + response.getContentText());
+  }
+  return data.access_token;
+}
+
+// Create a scheduled Zoom meeting and return { joinUrl, meetingId }
+function createZoomMeeting(cls, dateRef, durationMins) {
+  var token = getZoomAccessToken();
+
   var startTime = new Date(dateRef);
   startTime.setHours(cls.startH, cls.startM, 0, 0);
+  var startStr = Utilities.formatDate(startTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss");
 
-  var endTime = new Date(dateRef);
-  endTime.setHours(cls.endH, cls.endM, 0, 0);
-
-  var attendees = [];
-  for (var s = 0; s < studentEmails.length; s++) {
-    attendees.push({ email: studentEmails[s] });
-  }
-
-  var event = {
-    summary: 'Yoga with Jessica — ' + cls.name,
-    description: 'Join us for yoga class! Please have your camera on with good lighting. Microphones will be muted to minimize noise.\n\nProps to bring: Check https://yogawithjessica.com/schedule.html',
-    start: {
-      dateTime: Utilities.formatDate(startTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
-      timeZone: MEET_TZ
-    },
-    end: {
-      dateTime: Utilities.formatDate(endTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss"),
-      timeZone: MEET_TZ
-    },
-    attendees: attendees,
-    conferenceData: {
-      createRequest: {
-        conferenceSolutionKey: { type: 'hangoutsMeet' },
-        requestId: 'yoga-' + cls.day + '-' + Date.now()
-      }
-    },
-    reminders: {
-      useDefault: false,
-      overrides: [
-        { method: 'popup', minutes: 5 }
-      ]
+  var payload = {
+    topic: 'Yoga with Jessica \u2014 ' + cls.name,
+    type: 2,
+    start_time: startStr,
+    duration: durationMins || 75,
+    timezone: MEET_TZ,
+    settings: {
+      join_before_host: false,
+      waiting_room: true,
+      host_video: true,
+      participant_video: true
     }
   };
 
-  var createdEvent = Calendar.Events.insert(event, 'primary', { conferenceDataVersion: 1, sendUpdates: 'all' });
+  var response = UrlFetchApp.fetch('https://api.zoom.us/v2/users/me/meetings', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
 
-  var meetLink = '';
-  if (createdEvent.conferenceData && createdEvent.conferenceData.entryPoints) {
-    for (var ep = 0; ep < createdEvent.conferenceData.entryPoints.length; ep++) {
-      if (createdEvent.conferenceData.entryPoints[ep].entryPointType === 'video') {
-        meetLink = createdEvent.conferenceData.entryPoints[ep].uri;
-        break;
-      }
-    }
+  var meeting = JSON.parse(response.getContentText());
+  if (!meeting.join_url) {
+    throw new Error('Zoom meeting creation failed: ' + response.getContentText());
   }
-
-  return { meetLink: meetLink, eventId: createdEvent.id };
+  Logger.log('Created Zoom meeting: ' + meeting.join_url);
+  return { joinUrl: meeting.join_url, meetingId: String(meeting.id) };
 }
 
-// ========== GOOGLE MEET INVITE AUTOMATION ==========
+// Email the Zoom join link to all registered students for a class
+function sendZoomLinkToStudents(emails, cls, zoomLink) {
+  var subject = 'Your Zoom link for today\'s Yoga with Jessica class';
+  for (var i = 0; i < emails.length; i++) {
+    try {
+      var body =
+        '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+        '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
+          '<h1 style="margin:0;font-family:Georgia,serif;color:#5B7553;font-size:24px;">Yoga with Jessica</h1>' +
+          '<p style="margin:6px 0 0;color:#888;font-size:13px;">Class Starting Soon</p>' +
+        '</div>' +
+        '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
+          '<p style="font-size:15px;">Hi there,</p>' +
+          '<p style="font-size:15px;line-height:1.6;">Your <strong>' + escHtml(cls.name) + '</strong> class starts in about 30 minutes. Here\'s your Zoom link:</p>' +
+          '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
+            '<strong>&#x1F4F9; Your Zoom link is ready!</strong>' +
+            '<div style="text-align:center;margin:12px 0;">' +
+              '<a href="' + zoomLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
+            '</div>' +
+            '<p style="margin:8px 0 0;color:#555;">Please have your camera on with good lighting. Microphones will be muted to minimize noise.</p>' +
+          '</div>' +
+          '<p style="font-size:14px;color:#555;">See you soon! &mdash; Jessica</p>' +
+        '</div>' +
+        '<div style="padding:16px;text-align:center;font-size:12px;color:#999;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
+          '<p style="margin:0;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
+          '<p style="margin:4px 0 0;"><a href="' + SITE_URL + '" style="color:#5B7553;">yogawithjessica.com</a></p>' +
+        '</div>' +
+        '</div>';
+      MailApp.sendEmail({ to: emails[i], subject: subject, htmlBody: body });
+      Logger.log('Sent Zoom link to: ' + emails[i]);
+    } catch (mailErr) {
+      Logger.log('Error sending Zoom email to ' + emails[i] + ': ' + mailErr.toString());
+    }
+  }
+}
+
+// ========== ZOOM INVITE AUTOMATION ==========
 // Set up as a time-driven trigger (every 5 minutes).
 // Checks if any class is starting within 30 minutes, then creates a
-// Google Calendar event with a Meet link and adds all registered students as guests.
+// Zoom meeting and emails the join link to all registered students.
 //
-// REQUIRES: Enable "Google Calendar API" in Apps Script sidebar > Services > "+"
+// REQUIRES: Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET
+//           in Apps Script Project Settings → Script Properties
 //
 // Class schedule (PST / America/Los_Angeles):
 //   Sunday    6:00 PM - 7:15 PM  Online
@@ -992,7 +1026,7 @@ function createMeetEvent(cls, dateRef, studentEmails) {
 //   Wednesday 6:00 PM - 7:15 PM  Online
 
 var CLASS_SCHEDULE = [
-  { day: 0, name: 'Sunday Evening — Online via Google Meet',    startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
+  { day: 0, name: 'Sunday Evening — Online via Zoom',           startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
   { day: 2, name: 'Tuesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' },
   { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' }
 ];
@@ -1009,13 +1043,13 @@ function sendMeetInvites() {
   var currentMin = pstNow.getMinutes();
   var currentTotalMin = currentHour * 60 + currentMin;
 
-  Logger.log('Meet check at PST: ' + pstNow.toLocaleString() + ' (day=' + currentDay + ', time=' + currentHour + ':' + currentMin + ')');
+  Logger.log('Zoom invite check at PST: ' + pstNow.toLocaleString() + ' (day=' + currentDay + ', time=' + currentHour + ':' + currentMin + ')');
 
   for (var c = 0; c < CLASS_SCHEDULE.length; c++) {
     var cls = CLASS_SCHEDULE[c];
 
-    // Only process if today matches the class day
-    if (currentDay !== cls.day) continue;
+    // Only process online classes today
+    if (currentDay !== cls.day || cls.type !== 'online') continue;
 
     var classStartMin = cls.startH * 60 + cls.startM;
     var minutesUntilClass = classStartMin - currentTotalMin;
@@ -1026,7 +1060,7 @@ function sendMeetInvites() {
       continue;
     }
 
-    Logger.log('Class ' + cls.name + ' starts in ' + minutesUntilClass + ' min — preparing Meet invite');
+    Logger.log('Class ' + cls.name + ' starts in ' + minutesUntilClass + ' min — preparing Zoom invite');
 
     // Build the class date string to match what's in the spreadsheet (e.g., "Sun, Apr 6")
     var classDate = formatClassDate(pstNow);
@@ -1035,7 +1069,7 @@ function sendMeetInvites() {
     var sentKey = 'meet_sent_' + cls.day + '_' + classDate;
     var cache = PropertiesService.getScriptProperties();
     if (cache.getProperty(sentKey)) {
-      Logger.log('Already sent invite for ' + cls.name + ' on ' + classDate);
+      Logger.log('Already sent Zoom invite for ' + cls.name + ' on ' + classDate);
       continue;
     }
 
@@ -1048,23 +1082,25 @@ function sendMeetInvites() {
 
     Logger.log('Found ' + students.length + ' student(s) for ' + cls.name);
 
-    // Create Calendar event with Meet link using shared function
+    // Create Zoom meeting and email the link to all registered students
     try {
-      var result = createMeetEvent(cls, pstNow, students);
+      var result = createZoomMeeting(cls, pstNow, 75);
 
-      Logger.log('Created event with Meet link: ' + result.meetLink + ' for ' + students.length + ' students');
+      Logger.log('Created Zoom meeting: ' + result.joinUrl + ' for ' + students.length + ' students');
 
-      // Save Meet link and event ID so late sign-ups can use them
+      // Save Zoom link so late sign-ups can use it
       var linkKey = 'meet_link_' + cls.day + '_' + classDate;
-      var eventIdKey = 'meet_event_' + cls.day + '_' + classDate;
-      cache.setProperty(linkKey, result.meetLink);
-      cache.setProperty(eventIdKey, result.eventId);
+      cache.setProperty(linkKey, result.joinUrl);
+      cache.setProperty('meet_event_' + cls.day + '_' + classDate, result.meetingId);
 
       // Mark as sent to avoid duplicates
       cache.setProperty(sentKey, new Date().toISOString());
 
-    } catch (calErr) {
-      Logger.log('Error creating calendar event for ' + cls.name + ': ' + calErr.toString());
+      // Email all registered students the Zoom link
+      sendZoomLinkToStudents(students, cls, result.joinUrl);
+
+    } catch (zoomErr) {
+      Logger.log('Error creating Zoom meeting for ' + cls.name + ': ' + zoomErr.toString());
     }
   }
 }

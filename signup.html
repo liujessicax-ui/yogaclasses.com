@@ -566,7 +566,7 @@
     const CLASS_DEFS = [
       {
         id: 'sunday-online',
-        label: 'Sunday Evening &mdash; Online via Google Meet',
+        label: 'Sunday Evening &mdash; Online via Zoom',
         day: 0, startHour: 18, startMin: 0, endHour: 19, endMin: 15,
         duration: '6:00 PM – 7:15 PM PST',
         type: 'online',
@@ -780,15 +780,26 @@
         const g = getGuestEls();
         if (g.checkbox.checked) {
           g.nameWrap.classList.add('visible');
+          if (saved && saved.guestFirstName) g.nameInput.value     = saved.guestFirstName;
+          if (saved && saved.guestLastName)  g.lastNameInput.value = saved.guestLastName;
         } else {
           g.nameWrap.classList.remove('visible');
           g.nameInput.value = '';
+          g.lastNameInput.value = '';
         }
       }
     });
 
     // Run on load in case a class was pre-selected via URL param
     updateGuestVisibility();
+
+    // ========== AUTO-FILL FOR RETURNING VISITORS ==========
+    const saved = JSON.parse(localStorage.getItem('yogaSignupInfo') || 'null');
+    if (saved) {
+      if (saved.firstName) document.getElementById('firstName').value = saved.firstName;
+      if (saved.lastName)  document.getElementById('lastName').value  = saved.lastName;
+      if (saved.email)     document.getElementById('email').value     = saved.email;
+    }
 
     // ========== FORM SUBMISSION ==========
     const form = document.getElementById('signupForm');
@@ -1239,6 +1250,15 @@
     }
 
     function showSuccess(data) {
+      // Save info for returning visitors
+      localStorage.setItem('yogaSignupInfo', JSON.stringify({
+        firstName:     data.firstName,
+        lastName:      data.lastName,
+        email:         data.email,
+        guestFirstName: data.bringingGuest ? data.guestFirstName : (saved && saved.guestFirstName) || '',
+        guestLastName:  data.bringingGuest ? data.guestLastName  : (saved && saved.guestLastName)  || ''
+      }));
+
       // Populate confirmation summary
       document.getElementById('confirmName').textContent =
         'Thank you, ' + data.firstName + '!';
