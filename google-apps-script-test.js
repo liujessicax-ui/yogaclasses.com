@@ -1,39 +1,47 @@
 /**
- * Google Apps Script — Yoga Signup Sheet Writer
+ * Google Apps Script — TEST VERSION for Yoga Signup
  *
- * SETUP INSTRUCTIONS:
- * 1. Go to https://script.google.com and create a new project
- * 2. Paste this entire file into the editor (replace any existing code)
- * 3. Click "Deploy" → "New deployment"
- * 4. Choose type: "Web app"
- * 5. Set "Execute as": Me (your Google account)
- * 6. Set "Who has access": Anyone
- * 7. Click "Deploy" and authorize when prompted
- * 8. Copy the web app URL
- * 9. Paste it into signup.html where it says:
- *      const SHEETS_WEB_APP_URL = '';
+ * This is the TEST deployment of the Apps Script backend.
+ * It is identical to the production script EXCEPT:
  *
- * The script will automatically create a spreadsheet called "Yoga Signup"
- * in your Google Drive if one doesn't already exist.
+ *   1. Uses "Test Yoga Signup" and "Test Yoga Waitlist" spreadsheets
+ *   2. Logs emails to "Test Email Log" sheet instead of calling MailApp.sendEmail()
+ *   3. Exposes test-only endpoints:
+ *      - GET  ?action=read_sheet&sheet=SheetName  — Read all rows from a sheet
+ *      - GET  ?action=cleanup                     — Wipe all data rows (keep headers)
+ *      - GET  ?action=trigger_archive             — Run archive function on demand
+ *      - POST action=seed                         — Insert test data rows directly
  *
- * FEATURES:
- * - POST: Writes sign-up rows to the spreadsheet
- * - POST with action='waitlist': Writes to Yoga Waitlist spreadsheet
- * - GET with ?action=check: Checks for duplicate registrations
- * - GET with ?action=capacity: Returns current sign-up count for a class+date
+ * SETUP:
+ *   1. Create a NEW Apps Script project (separate from production)
+ *   2. Paste this entire file
+ *   3. Deploy as Web app (Execute as: Me, Access: Anyone)
+ *   4. Create two Google Sheets manually:
+ *      - "Test Yoga Signup"   (with a "Sign-Ups" tab and "Archive" tab)
+ *      - "Test Yoga Waitlist" (with a "Waitlist" tab and "Waitlist Archive" tab)
+ *      OR let the script auto-create them on first run
+ *   5. Copy the deployment URL into test.config.js (or set TEST_APPS_SCRIPT_URL env var)
  */
 
-// ========== WRITE SIGN-UPS ==========
-// YOUR WEBSITE URL — update this when you deploy the site
-var SITE_URL = 'https://yogawithjessica.com'; // change to your actual domain
+// ========== TEST CONFIGURATION ==========
+var TEST_SIGNUP_SS_NAME   = 'Test Yoga Signup';
+var TEST_WAITLIST_SS_NAME = 'Test Yoga Waitlist';
+var SITE_URL = 'https://yogawithjessica.com';
 var ADMIN_EMAIL = 'xiaojing25@gmail.com';
+
+// ========== WRITE SIGN-UPS ==========
 
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     var rows = data.rows;
 
-    // Check if this is a waitlist submission
+    // Test-only: seed action — insert rows directly into any sheet
+    if (data.action === 'seed') {
+      return handleSeed(data);
+    }
+
+    // Waitlist submission
     if (data.action === 'waitlist') {
       return handleWaitlist(rows);
     }
@@ -82,14 +90,14 @@ function doPost(e) {
     }
 
     // Check if any online classes in this sign-up are starting within 30 minutes
-    // If so, ensure a Meet event exists and add the student to it
+    // In test mode, this uses a mock that checks Script Properties for simulated Meet state
     var meetLink = checkAndCreateMeetForLateSignup(rows);
 
-    // Send confirmation email with cancel link (and Meet link if applicable)
-    sendConfirmationEmail(rows, cancelToken, meetLink);
+    // Log confirmation email instead of sending (with Meet link if applicable)
+    logConfirmationEmail(rows, cancelToken, meetLink);
 
-    // Notify admin of new sign-up
-    sendAdminSignupNotification(rows);
+    // Log admin sign-up notification
+    logAdminSignupNotification(rows);
 
     var result = { status: 'ok', cancelToken: cancelToken };
     if (meetLink) result.meetLink = meetLink;
@@ -115,8 +123,30 @@ function generateCancelToken() {
   return token;
 }
 
-// ========== CONFIRMATION EMAIL ==========
-function sendConfirmationEmail(rows, cancelToken, meetLink) {
+// ========== EMAIL LOGGING (replaces MailApp.sendEmail) ==========
+// Instead of sending real emails, logs them to a "Test Email Log" sheet
+// in the Test Yoga Signup spreadsheet.
+
+function getOrCreateEmailLogSheet() {
+  var ss = getOrCreateSpreadsheet();
+  var sheet = ss.getSheetByName('Test Email Log');
+  if (!sheet) {
+    sheet = ss.insertSheet('Test Email Log');
+    sheet.appendRow([
+      'Timestamp',
+      'To',
+      'Subject',
+      'Body (HTML)',
+      'Cancel Token',
+      'Type'
+    ]);
+    sheet.getRange(1, 1, 1, 6).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function logConfirmationEmail(rows, cancelToken, meetLink) {
   if (!rows || rows.length === 0) return;
 
   var firstName = rows[0].firstName;
@@ -140,29 +170,19 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
     if (r.classType === 'In-Person') hasInPerson = true;
   }
 
-  // Cancel link — points to cancel.html on the website
   var cancelUrl = SITE_URL + '/cancel.html?token=' + cancelToken;
-
   var subject = 'Yoga with Jessica — Sign-Up Confirmation';
 
   var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
-
-    // Header
     '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
       '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
         '<a href="' + SITE_URL + '" style="color:#5B7553;text-decoration:none;">yogawithjessica.com</a>' +
       '</h1>' +
       '<p style="margin:6px 0 0;color:#888;font-size:13px;">Sign-Up Confirmation</p>' +
     '</div>' +
-
-    // Body
     '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
-
       '<p style="font-size:15px;">Hi ' + escHtml(firstName) + ',</p>' +
-
       '<p style="font-size:15px;line-height:1.6;">Thank you for signing up! Here are your confirmed classes:</p>' +
-
-      // Class table
       '<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;">' +
         '<tr style="background:#f5f0e8;">' +
           '<th style="padding:8px 12px;text-align:left;">Class</th>' +
@@ -171,16 +191,12 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
         '</tr>' +
         classLines +
       '</table>' +
-
-      // Guest info
       (hasGuest ?
         '<div style="background:#f9f7f2;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;">' +
           '<strong>Guest:</strong> ' + escHtml(guestFirst) + ' ' + escHtml(guestLast) +
           '<br><span style="color:#777;">Your guest will need to sign a liability waiver upon arrival to class.</span>' +
         '</div>'
       : '') +
-
-      // Online class note — with or without immediate Zoom link
       (meetLink ?
         '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
           '<strong>&#x1F4F9; Your Zoom link is ready!</strong><br>' +
@@ -196,47 +212,74 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
           'Please have your camera on with good lighting. Microphones will be muted to minimize noise.' +
         '</div>'
       ) +
-
-      // Props reminder
       '<p style="font-size:14px;color:#555;line-height:1.6;">' +
         'Don\'t forget to check the <a href="' + SITE_URL + '/props.html" style="color:#5B7553;">Props page</a> for recommended props to bring.' +
       '</p>' +
-
-      // Divider
       '<hr style="border:none;border-top:1px solid #e8e4dc;margin:24px 0;" />' +
-
-      // Cancel section
       '<div style="text-align:center;margin:16px 0;">' +
         '<p style="font-size:14px;color:#555;margin-bottom:12px;">Need to cancel? Click below to cancel your registration' +
           (hasGuest ? ' (this will cancel both your spot and your guest\'s spot).' : '.') +
         '</p>' +
         '<a href="' + cancelUrl + '" style="display:inline-block;background:#b44;color:#fff;padding:10px 28px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;">Cancel Registration</a>' +
       '</div>' +
-
     '</div>' +
-
-    // Footer
     '<div style="padding:16px;text-align:center;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
       '<p style="margin:0;font-size:12px;color:#999;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
       '<p style="margin:6px 0 0;"><a href="' + SITE_URL + '" style="color:#5B7553;font-size:15px;font-weight:600;text-decoration:none;">yogawithjessica.com</a></p>' +
     '</div>' +
-
   '</div>';
 
-  MailApp.sendEmail({
-    to: email,
-    subject: subject,
-    htmlBody: body
-  });
+  // LOG to sheet instead of sending
+  var logSheet = getOrCreateEmailLogSheet();
+  logSheet.appendRow([
+    new Date().toISOString(),
+    email,
+    subject,
+    body,
+    cancelToken,
+    'Confirmation'
+  ]);
+}
+
+function logWaitlistNotificationEmail(email, firstName, className, classDate) {
+  var logSheet = getOrCreateEmailLogSheet();
+  var subject = 'Yoga with Jessica — A Spot Opened Up!';
+  var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+    '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
+      '<h1 style="margin:0;font-family:Georgia,serif;color:#5B7553;font-size:24px;">Yoga with Jessica</h1>' +
+    '</div>' +
+    '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
+      '<p style="font-size:15px;">Hi ' + escHtml(firstName) + ',</p>' +
+      '<p style="font-size:15px;line-height:1.6;">A spot has opened up for <strong>' +
+        escHtml(className) + '</strong> on <strong>' + escHtml(classDate) + '</strong>!</p>' +
+      '<p style="font-size:15px;line-height:1.6;">Spots are first come, first served, so sign up soon before it fills up again.</p>' +
+      '<div style="text-align:center;margin:24px 0;">' +
+        '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Sign Up Now</a>' +
+      '</div>' +
+    '</div>' +
+    '<div style="padding:16px;text-align:center;font-size:12px;color:#999;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
+      '<p style="margin:0;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
+    '</div>' +
+  '</div>';
+
+  logSheet.appendRow([
+    new Date().toISOString(),
+    email,
+    subject,
+    body,
+    '',
+    'Waitlist Notification'
+  ]);
 }
 
 function escHtml(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ========== ADMIN NOTIFICATION EMAILS ==========
+// ========== ADMIN NOTIFICATION LOGGING ==========
+// Test version: logs to Test Email Log sheet instead of sending via MailApp
 
-function sendAdminSignupNotification(rows) {
+function logAdminSignupNotification(rows) {
   if (!rows || rows.length === 0) return;
   try {
     var firstName = rows[0].firstName || '';
@@ -271,17 +314,21 @@ function sendAdminSignupNotification(rows) {
       '</div>' +
     '</div>';
 
-    MailApp.sendEmail({
-      to: ADMIN_EMAIL,
-      subject: subject,
-      htmlBody: body
-    });
+    var logSheet = getOrCreateEmailLogSheet();
+    logSheet.appendRow([
+      new Date().toISOString(),
+      ADMIN_EMAIL,
+      subject,
+      body,
+      '',
+      'Admin - Signup'
+    ]);
   } catch (err) {
-    Logger.log('Admin signup notification error: ' + err.toString());
+    Logger.log('Admin signup notification log error: ' + err.toString());
   }
 }
 
-function sendAdminCancelNotification(studentName, studentEmail, guestName, cancelledClasses, count) {
+function logAdminCancelNotification(studentName, studentEmail, guestName, cancelledClasses, count) {
   try {
     var now = new Date();
     var timestamp = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }) + ' PST';
@@ -309,13 +356,17 @@ function sendAdminCancelNotification(studentName, studentEmail, guestName, cance
       '</div>' +
     '</div>';
 
-    MailApp.sendEmail({
-      to: ADMIN_EMAIL,
-      subject: subject,
-      htmlBody: body
-    });
+    var logSheet = getOrCreateEmailLogSheet();
+    logSheet.appendRow([
+      new Date().toISOString(),
+      ADMIN_EMAIL,
+      subject,
+      body,
+      '',
+      'Admin - Cancel'
+    ]);
   } catch (err) {
-    Logger.log('Admin cancel notification error: ' + err.toString());
+    Logger.log('Admin cancel notification log error: ' + err.toString());
   }
 }
 
@@ -326,7 +377,8 @@ function handleWaitlist(rows) {
     var sheet = getOrCreateWaitlistSheet(ss);
 
     rows.forEach(function(row) {
-      sheet.appendRow([
+      var newRow = sheet.getLastRow() + 1;
+      var values = [[
         row.timestamp,
         row.firstName,
         row.lastName,
@@ -343,7 +395,10 @@ function handleWaitlist(rows) {
         row.city || '',
         row.state || '',
         row.zip || ''
-      ]);
+      ]];
+      var range = sheet.getRange(newRow, 1, 1, 16);
+      range.setNumberFormat('@');
+      range.setValues(values);
     });
 
     return ContentService
@@ -358,8 +413,6 @@ function handleWaitlist(rows) {
 }
 
 // ========== CANCELLATION HANDLER ==========
-// Called via GET with action=cancel&token=ABC123
-// Deletes ALL rows matching the cancel token (covers registrant + guest, all classes in that batch)
 function handleCancellation(token) {
   try {
     var ss = getOrCreateSpreadsheet();
@@ -373,7 +426,6 @@ function handleCancellation(token) {
     var numCols = sheet.getLastColumn();
     var data = sheet.getRange(2, 1, lastRow - 1, numCols).getValues();
 
-    // Find rows matching this token (column 12 = index 11)
     var rowsToDelete = [];
     var cancelledClasses = [];
     var studentName = '';
@@ -383,7 +435,7 @@ function handleCancellation(token) {
     for (var i = 0; i < data.length; i++) {
       var rowToken = (data[i][11] || '').toString().trim();
       if (rowToken === token) {
-        rowsToDelete.push(i + 2); // +2 for header and 0-index
+        rowsToDelete.push(i + 2);
         cancelledClasses.push({
           className: (data[i][4] || '').toString(),
           classDate: (data[i][5] || '').toString(),
@@ -403,11 +455,14 @@ function handleCancellation(token) {
       return { status: 'not_found', message: 'This cancellation link has already been used or the registration was not found.' };
     }
 
-    // Delete rows bottom-up to preserve indices (protect last non-frozen row)
+    // Delete rows bottom-up to preserve indices
+    // Google Sheets throws "not possible to delete all non-frozen rows" if
+    // deleting would leave zero non-frozen rows. Clear content instead for the last row.
     rowsToDelete.sort(function(a, b) { return b - a; });
-    var totalDataRows = sheet.getLastRow() - 1;
+    var totalDataRows = sheet.getLastRow() - 1; // exclude header
     for (var d = 0; d < rowsToDelete.length; d++) {
       if (totalDataRows <= 1) {
+        // Last data row — clear content instead of deleting to avoid Sheets error
         sheet.getRange(rowsToDelete[d], 1, 1, sheet.getLastColumn()).clearContent();
       } else {
         sheet.deleteRow(rowsToDelete[d]);
@@ -415,8 +470,8 @@ function handleCancellation(token) {
       totalDataRows--;
     }
 
-    // Notify admin of cancellation
-    sendAdminCancelNotification(studentName.trim(), studentEmail, guestName, cancelledClasses, rowsToDelete.length);
+    // Log admin cancel notification
+    logAdminCancelNotification(studentName.trim(), studentEmail, guestName, cancelledClasses, rowsToDelete.length);
 
     return {
       status: 'cancelled',
@@ -432,11 +487,127 @@ function handleCancellation(token) {
   }
 }
 
-// ========== DUPLICATE CHECK ==========
+// ========== DUPLICATE CHECK & ALL GET HANDLERS ==========
+// ========== MOCK MEET LINK FOR TESTING ==========
+// In test mode, we simulate Zoom behavior using Script Properties.
+// Tests can set up Zoom state via ?action=set_meet_link and ?action=clear_meet_state
+// The mock checks if a class is online, starts within 30 min, and has simulated Zoom state.
+
+var TEST_MEET_TZ = 'America/Los_Angeles';
+
+var TEST_CLASS_SCHEDULE = [
+  { day: 0, name: 'Sunday Evening — Online via Zoom',           startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
+  { day: 2, name: 'Tuesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' },
+  { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' }
+];
+
+function checkAndCreateMeetForLateSignup(rows) {
+  if (!rows || rows.length === 0) return '';
+
+  var now = new Date();
+  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: TEST_MEET_TZ }));
+  var currentDay = pstNow.getDay();
+  var currentTotalMin = pstNow.getHours() * 60 + pstNow.getMinutes();
+  var cache = PropertiesService.getScriptProperties();
+  var meetLink = '';
+
+  // Also check for test-forced Zoom state (set via ?action=set_meet_link)
+  var forcedLink = cache.getProperty('test_force_meet_link');
+  if (forcedLink) {
+    Logger.log('Test: forced Zoom link found: ' + forcedLink);
+    return forcedLink;
+  }
+
+  for (var c = 0; c < TEST_CLASS_SCHEDULE.length; c++) {
+    var cls = TEST_CLASS_SCHEDULE[c];
+
+    if (cls.type !== 'online' || cls.day !== currentDay) continue;
+
+    var classStartMin = cls.startH * 60 + cls.startM;
+    var minutesUntilClass = classStartMin - currentTotalMin;
+
+    if (minutesUntilClass > 30 || minutesUntilClass < -15) continue;
+
+    // Check if this student signed up for this class
+    var signedUpForThis = false;
+    for (var r = 0; r < rows.length; r++) {
+      if (rows[r].classType === 'Online') {
+        signedUpForThis = true;
+        break;
+      }
+    }
+    if (!signedUpForThis) continue;
+
+    // Check for existing mock Zoom link
+    var classDate = formatClassDate(pstNow);
+    var linkKey = 'meet_link_' + cls.day + '_' + classDate;
+    var existingLink = cache.getProperty(linkKey);
+
+    if (existingLink) {
+      meetLink = existingLink;
+      Logger.log('Test: found existing mock Zoom link: ' + meetLink);
+    } else {
+      // Create a mock Zoom link
+      meetLink = 'https://zoom.us/j/test-yoga-' + cls.day + '-' + Date.now();
+      cache.setProperty(linkKey, meetLink);
+      var sentKey = 'meet_sent_' + cls.day + '_' + classDate;
+      cache.setProperty(sentKey, new Date().toISOString());
+      Logger.log('Test: created mock Zoom link: ' + meetLink);
+    }
+  }
+
+  return meetLink;
+}
+
+function formatClassDate(date) {
+  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return days[date.getDay()] + ', ' + months[date.getMonth()] + ' ' + date.getDate();
+}
+
 function doGet(e) {
   var params = e ? e.parameter : {};
 
-  // If action=cancel_preview, look up the token without deleting
+  // ===== TEST-ONLY: Read sheet data =====
+  if (params.action === 'read_sheet') {
+    return handleReadSheet(params);
+  }
+
+  // ===== TEST-ONLY: Cleanup all test sheets =====
+  if (params.action === 'cleanup') {
+    return handleCleanup();
+  }
+
+  // ===== TEST-ONLY: Trigger archive on demand =====
+  if (params.action === 'trigger_archive') {
+    return handleTriggerArchive();
+  }
+
+  // ===== TEST-ONLY: Set a forced Zoom link (simulates Zoom meeting existing) =====
+  if (params.action === 'set_meet_link') {
+    var link = (params.link || '').trim();
+    if (!link) link = 'https://zoom.us/j/test-forced-' + Date.now();
+    PropertiesService.getScriptProperties().setProperty('test_force_meet_link', link);
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', meetLink: link }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ===== TEST-ONLY: Clear all Meet state =====
+  if (params.action === 'clear_meet_state') {
+    var cache = PropertiesService.getScriptProperties();
+    var allKeys = cache.getKeys();
+    for (var k = 0; k < allKeys.length; k++) {
+      if (allKeys[k].indexOf('meet_') === 0 || allKeys[k] === 'test_force_meet_link') {
+        cache.deleteProperty(allKeys[k]);
+      }
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', message: 'Meet state cleared' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Cancel preview
   if (params.action === 'cancel_preview') {
     var token = (params.token || '').trim();
     if (!token) {
@@ -486,7 +657,7 @@ function doGet(e) {
     }
   }
 
-  // If action=cancel, process a cancellation request (actually deletes rows)
+  // Cancel (actually deletes rows)
   if (params.action === 'cancel') {
     var token = (params.token || '').trim();
     if (!token) {
@@ -500,8 +671,7 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // If action=capacity, return confirmed sign-up count for a class+date.
-  // Only counts the Sign-Ups sheet (no held spots — waitlist is first-come-first-served).
+  // Capacity check
   if (params.action === 'capacity') {
     try {
       var className = (params.className || '').trim();
@@ -541,13 +711,12 @@ function doGet(e) {
     }
   }
 
-  // If action=check, look for duplicates
+  // Duplicate / waiver check
   if (params.action === 'check') {
     try {
       var firstName = (params.firstName || '').trim().toLowerCase();
       var lastName  = (params.lastName || '').trim().toLowerCase();
       var email     = (params.email || '').trim().toLowerCase();
-      // classDates is a ;;-separated list of "className|classDate" pairs
       var classDates = (params.classDates || '').split(';;').filter(Boolean);
 
       var ss = getOrCreateSpreadsheet();
@@ -558,11 +727,8 @@ function doGet(e) {
       var hasPriorWaiver = false;
 
       if (lastRow > 1) {
-        // Read all data rows (skip header)
-        // Columns: Timestamp(0), First(1), Last(2), Email(3), Class(4), Date(5), Type(6), Waiver(7), GuestName(8), GuestOf(9)
         var data = sheet.getRange(2, 1, lastRow - 1, 11).getValues();
 
-        // Check for duplicate class registrations
         classDates.forEach(function(cd) {
           var parts = cd.split('|');
           var checkClass = (parts[0] || '').trim();
@@ -586,8 +752,6 @@ function doGet(e) {
           }
         });
 
-        // Check if this person has EVER signed the liability waiver before
-        // (same first name + last name + email, waiver column = "YES — Accepted")
         for (var j = 0; j < data.length; j++) {
           var rFirst  = (data[j][1] || '').toString().trim().toLowerCase();
           var rLast   = (data[j][2] || '').toString().trim().toLowerCase();
@@ -622,28 +786,259 @@ function doGet(e) {
 
   // Default GET response
   return ContentService
-    .createTextOutput('Yoga Signup endpoint is running.')
+    .createTextOutput('Test Yoga Signup endpoint is running.')
     .setMimeType(ContentService.MimeType.TEXT);
 }
 
-// ========== WAITLIST PROCESSOR ==========
-// Call processAllWaitlists() on a time-driven trigger (e.g., every 10 min).
-//
-// SIMPLIFIED LOGIC (no holds, no party-size matching):
-// 1. Count confirmed sign-ups for the class+date
-// 2. Clean up waitlist: delete entries for people who already signed up
-// 3. If spots are available, notify ALL remaining waitlisted people for that class
-// 4. First-come-first-served: whoever signs up first gets the spot(s)
-//
-// Waitlist statuses:
-//   (blank)     = waiting, not yet notified
-//   Notified    = has been told a spot is open (no time limit)
+// ========== TEST-ONLY HANDLERS ==========
 
+/**
+ * Read all rows from a named sheet.
+ * GET ?action=read_sheet&sheet=Sign-Ups
+ * GET ?action=read_sheet&sheet=Archive
+ * GET ?action=read_sheet&sheet=Waitlist
+ * GET ?action=read_sheet&sheet=Waitlist Archive
+ * GET ?action=read_sheet&sheet=Test Email Log
+ */
+function handleReadSheet(params) {
+  try {
+    var sheetName = (params.sheet || '').trim();
+    if (!sheetName) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'error', message: 'Missing sheet parameter' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Determine which spreadsheet to look in
+    var ss;
+    if (sheetName === 'Waitlist' || sheetName === 'Waitlist Archive') {
+      ss = getOrCreateWaitlistSpreadsheet();
+    } else {
+      ss = getOrCreateSpreadsheet();
+    }
+
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'ok', headers: [], rows: [] }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'ok', headers: headers, rows: [] }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var allData = sheet.getDataRange().getValues();
+    var headers = allData[0];
+    var rows = [];
+
+    for (var i = 1; i < allData.length; i++) {
+      var rowObj = {};
+      for (var j = 0; j < headers.length; j++) {
+        rowObj[headers[j]] = (allData[i][j] || '').toString();
+      }
+      rows.push(rowObj);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', headers: headers, rows: rows }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Cleanup: wipe all data rows from all test sheets (keep headers).
+ * GET ?action=cleanup
+ */
+function handleCleanup() {
+  try {
+    var signupCounts = { signups: 0, archive: 0, emailLog: 0 };
+    var waitlistCounts = { waitlist: 0, waitlistArchive: 0 };
+
+    // Clean signup spreadsheet sheets
+    var signupSS = getOrCreateSpreadsheet();
+    signupCounts.signups = clearSheetData_(signupSS, 'Sign-Ups');
+    signupCounts.archive = clearSheetData_(signupSS, 'Archive');
+    signupCounts.emailLog = clearSheetData_(signupSS, 'Test Email Log');
+
+    // Clean waitlist spreadsheet sheets
+    var waitlistSS = getOrCreateWaitlistSpreadsheet();
+    waitlistCounts.waitlist = clearSheetData_(waitlistSS, 'Waitlist');
+    waitlistCounts.waitlistArchive = clearSheetData_(waitlistSS, 'Waitlist Archive');
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'ok',
+        signups: signupCounts.signups,
+        archive: signupCounts.archive,
+        emailLog: signupCounts.emailLog,
+        waitlist: waitlistCounts.waitlist,
+        waitlistArchive: waitlistCounts.waitlistArchive
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Clear all data rows from a sheet, preserving headers.
+ * Returns number of rows deleted.
+ */
+function clearSheetData_(ss, sheetName) {
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return 0;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return 0;
+
+  var rowsDeleted = lastRow - 1;
+
+  // Google Sheets throws "not possible to delete all non-frozen rows" if
+  // deleting rows would leave zero non-frozen rows (even with a frozen header).
+  // Fix: keep one blank data row, delete the rest, then clear it.
+  if (rowsDeleted === 1) {
+    // Only one data row — just clear its content (don't delete it)
+    sheet.getRange(2, 1, 1, sheet.getLastColumn()).clearContent();
+  } else {
+    // Delete all but one data row, then clear the remaining one
+    sheet.deleteRows(3, rowsDeleted - 1);
+    sheet.getRange(2, 1, 1, sheet.getLastColumn()).clearContent();
+  }
+  return rowsDeleted;
+}
+
+/**
+ * Seed: insert test data rows directly into a named sheet.
+ * POST { action: 'seed', sheet: 'Sign-Ups', rows: [...] }
+ */
+function handleSeed(data) {
+  try {
+    var sheetName = (data.sheet || '').trim();
+    var rows = data.rows || [];
+
+    if (!sheetName || rows.length === 0) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'error', message: 'Missing sheet or rows' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Determine spreadsheet
+    var ss;
+    if (sheetName === 'Waitlist' || sheetName === 'Waitlist Archive') {
+      ss = getOrCreateWaitlistSpreadsheet();
+    } else {
+      ss = getOrCreateSpreadsheet();
+    }
+
+    // Get or create sheet with appropriate headers
+    var sheet;
+    if (sheetName === 'Sign-Ups') {
+      sheet = getOrCreateSheet(ss);
+    } else if (sheetName === 'Waitlist') {
+      sheet = getOrCreateWaitlistSheet(ss);
+    } else {
+      sheet = ss.getSheetByName(sheetName);
+      if (!sheet) {
+        sheet = ss.insertSheet(sheetName);
+      }
+    }
+
+    // Append rows based on sheet type (using setValues to prevent date auto-formatting)
+    rows.forEach(function(row) {
+      var newRow = sheet.getLastRow() + 1;
+      if (sheetName === 'Sign-Ups' || sheetName === 'Archive') {
+        var values = [[
+          row.timestamp || new Date().toISOString(),
+          row.firstName || '',
+          row.lastName || '',
+          row.email || '',
+          row.className || '',
+          row.classDate || '',
+          row.classType || 'In-Person',
+          row.liabilityWaiver || 'YES — Accepted',
+          row.guestFirstName || '',
+          row.guestLastName || '',
+          row.guestOf || '',
+          row.cancelToken || '',
+          row.device || '',
+          row.browser || '',
+          row.city || '',
+          row.state || '',
+          row.zip || ''
+        ]];
+        var range = sheet.getRange(newRow, 1, 1, 17);
+        range.setNumberFormat('@');
+        range.setValues(values);
+      } else if (sheetName === 'Waitlist' || sheetName === 'Waitlist Archive') {
+        var values = [[
+          row.timestamp || new Date().toISOString(),
+          row.firstName || '',
+          row.lastName || '',
+          row.email || '',
+          row.className || '',
+          row.classDate || '',
+          row.classType || 'In-Person',
+          row.guestFirstName || '',
+          row.guestLastName || '',
+          row.status || '',
+          row.notifiedAt || '',
+          row.device || '',
+          row.browser || '',
+          row.city || '',
+          row.state || '',
+          row.zip || ''
+        ]];
+        var range = sheet.getRange(newRow, 1, 1, 16);
+        range.setNumberFormat('@');
+        range.setValues(values);
+      }
+    });
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', rowsInserted: rows.length }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Trigger archive on demand (for testing).
+ * GET ?action=trigger_archive
+ */
+function handleTriggerArchive() {
+  try {
+    archivePastSignups();
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', message: 'Archive triggered' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// ========== WAITLIST PROCESSOR ==========
 var MAX_CAPACITY = 10;
 
 function processWaitlistForClass(className, classDate) {
-
-  // 1. Count confirmed registrations from the Sign-Ups sheet
   var signupSS = getOrCreateSpreadsheet();
   var signupSheet = getOrCreateSheet(signupSS);
   var signupLastRow = signupSheet.getLastRow();
@@ -663,15 +1058,11 @@ function processWaitlistForClass(className, classDate) {
     }
   }
 
-  // 2. Read the waitlist
   var waitlistSS = getOrCreateWaitlistSpreadsheet();
   var waitlistSheet = getOrCreateWaitlistSheet(waitlistSS);
   var waitlistLastRow = waitlistSheet.getLastRow();
 
-  if (waitlistLastRow <= 1) {
-    Logger.log('Waitlist is empty for ' + className + ' on ' + classDate);
-    return { notified: 0 };
-  }
+  if (waitlistLastRow <= 1) return { notified: 0 };
 
   var headers = waitlistSheet.getRange(1, 1, 1, waitlistSheet.getLastColumn()).getValues()[0];
   var statusColIndex = headers.indexOf('Status');
@@ -685,7 +1076,7 @@ function processWaitlistForClass(className, classDate) {
   var numCols = waitlistSheet.getLastColumn();
   var waitlistData = waitlistSheet.getRange(2, 1, waitlistLastRow - 1, numCols).getValues();
 
-  // 3. Clean up: delete waitlist entries for people who already signed up
+  // Clean up: delete waitlist entries for people who already signed up
   var rowsToDelete = [];
   for (var e = 0; e < waitlistData.length; e++) {
     var eClass = (waitlistData[e][4] || '').toString().trim();
@@ -706,13 +1097,11 @@ function processWaitlistForClass(className, classDate) {
       if (sFirst === eName && sLast === eLast && sEmail === eEmail &&
           sClass === className && sDate === classDate) {
         rowsToDelete.push(e + 2);
-        Logger.log('Removing from waitlist (already signed up): ' + waitlistData[e][1] + ' ' + waitlistData[e][2]);
         break;
       }
     }
   }
 
-  // Delete bottom-up (protect last non-frozen row)
   rowsToDelete.sort(function(a, b) { return b - a; });
   var wlDataRows = waitlistSheet.getLastRow() - 1;
   for (var d = 0; d < rowsToDelete.length; d++) {
@@ -724,14 +1113,9 @@ function processWaitlistForClass(className, classDate) {
     wlDataRows--;
   }
 
-  // 4. Check if spots are available
   var availableSpots = MAX_CAPACITY - confirmedCount;
-  if (availableSpots <= 0) {
-    Logger.log('No spots for ' + className + ' on ' + classDate + ' (confirmed: ' + confirmedCount + ')');
-    return { notified: 0 };
-  }
+  if (availableSpots <= 0) return { notified: 0 };
 
-  // 5. Re-read waitlist after cleanup and notify ALL remaining people for this class
   waitlistLastRow = waitlistSheet.getLastRow();
   if (waitlistLastRow <= 1) return { notified: 0 };
 
@@ -746,63 +1130,28 @@ function processWaitlistForClass(className, classDate) {
     var wStatus = (waitlistData[w][statusColIndex] || '').toString().trim();
 
     if (wClass !== className || wDate !== classDate) continue;
-    if (wStatus === 'Notified') continue; // Already notified, skip
+    if (wStatus === 'Notified') continue;
 
-    // Notify this person
     var rowNum = w + 2;
     waitlistSheet.getRange(rowNum, statusColIndex + 1).setValue('Notified');
 
     var firstName = (waitlistData[w][1] || '').toString().trim();
-    var lastName  = (waitlistData[w][2] || '').toString().trim();
     var email     = (waitlistData[w][3] || '').toString().trim();
 
-    // Send notification email
-    try {
-      MailApp.sendEmail({
-        to: email,
-        subject: 'Yoga with Jessica — A Spot Opened Up!',
-        htmlBody: '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
-          '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
-            '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
-              '<a href="' + SITE_URL + '" style="color:#5B7553;text-decoration:none;">yogawithjessica.com</a>' +
-            '</h1>' +
-          '</div>' +
-          '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
-            '<p style="font-size:15px;">Hi ' + escHtml(firstName) + ',</p>' +
-            '<p style="font-size:15px;line-height:1.6;">A spot has opened up for <strong>' +
-              escHtml(wClass) + '</strong> on <strong>' + escHtml(wDate) + '</strong>!</p>' +
-            '<p style="font-size:15px;line-height:1.6;">Spots are first come, first served, so sign up soon before it fills up again.</p>' +
-            '<div style="text-align:center;margin:24px 0;">' +
-              '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Sign Up Now</a>' +
-            '</div>' +
-          '</div>' +
-          '<div style="padding:16px;text-align:center;font-size:12px;color:#999;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
-            '<p style="margin:0;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
-          '</div>' +
-        '</div>'
-      });
-    } catch (mailErr) {
-      Logger.log('Failed to email ' + email + ': ' + mailErr.toString());
-    }
+    // LOG email instead of sending (test mode)
+    logWaitlistNotificationEmail(email, firstName, wClass, wDate);
 
     notifiedCount++;
-    Logger.log('Notified: ' + firstName + ' ' + lastName + ' (' + email + ')');
   }
-
-  Logger.log('Waitlist processing done for ' + className + ' on ' + classDate +
-             '. Available: ' + availableSpots + ', Notified: ' + notifiedCount);
 
   return { notified: notifiedCount, available: availableSpots };
 }
 
-// Process waitlist for ALL upcoming in-person classes.
-// Set up as a time-driven trigger (e.g., every 10 minutes).
 function processAllWaitlists() {
   var waitlistSS;
   try {
     waitlistSS = getOrCreateWaitlistSpreadsheet();
   } catch (e) {
-    Logger.log('No waitlist spreadsheet found. Nothing to process.');
     return;
   }
 
@@ -815,11 +1164,9 @@ function processAllWaitlists() {
   var numCols = waitlistSheet.getLastColumn();
   var data = waitlistSheet.getRange(2, 1, lastRow - 1, numCols).getValues();
 
-  // Get unique class+date combinations from the waitlist (skip already-notified)
   var classDatePairs = {};
   for (var i = 0; i < data.length; i++) {
     var status = statusColIndex >= 0 ? (data[i][statusColIndex] || '').toString().trim() : '';
-    // Process classes that have at least one un-notified entry
     if (status === 'Notified') continue;
 
     var cls = (data[i][4] || '').toString().trim();
@@ -836,358 +1183,97 @@ function processAllWaitlists() {
   }
 }
 
-// ========== LATE SIGN-UP ZOOM LINK ==========
-// Called at sign-up time. For each online class in the sign-up, checks if class
-// starts within 30 minutes. If so, ensures a Zoom meeting exists (creating one if
-// needed) and returns the join URL for the confirmation email.
+// ========== AUTO-ARCHIVE PAST SIGN-UPS ==========
+var ARCHIVE_TZ = 'America/Los_Angeles';
 
-function checkAndCreateMeetForLateSignup(rows) {
-  if (!rows || rows.length === 0) return '';
+var CLASS_START_TIMES = {
+  'Sunday':    { startH: 18, startM: 0 },
+  'Tuesday':   { startH: 18, startM: 0 },
+  'Wednesday': { startH: 18, startM: 0 }
+};
+
+function archivePastSignups() {
+  archiveSheet_(TEST_SIGNUP_SS_NAME, 'Sign-Ups', 'Archive', 6);
+  archiveSheet_(TEST_WAITLIST_SS_NAME, 'Waitlist', 'Waitlist Archive', 6);
+}
+
+function archiveSheet_(ssName, sheetName, archiveName, dateCol) {
+  var files = DriveApp.getFilesByName(ssName);
+  if (!files.hasNext()) return;
+  var ss = SpreadsheetApp.open(files.next());
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return;
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return;
+
+  var archive = ss.getSheetByName(archiveName);
+  if (!archive) {
+    archive = ss.insertSheet(archiveName);
+    archive.appendRow(data[0]);
+    archive.getRange(1, 1, 1, data[0].length).setFontWeight('bold');
+    archive.setFrozenRows(1);
+  }
 
   var now = new Date();
-  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: MEET_TZ }));
-  var currentDay = pstNow.getDay();
-  var currentTotalMin = pstNow.getHours() * 60 + pstNow.getMinutes();
-  var cache = PropertiesService.getScriptProperties();
-  var meetLink = '';
+  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: ARCHIVE_TZ }));
 
-  for (var c = 0; c < CLASS_SCHEDULE.length; c++) {
-    var cls = CLASS_SCHEDULE[c];
+  var rowsToArchive = [];
+  for (var i = data.length - 1; i >= 1; i--) {
+    var classDateStr = data[i][dateCol - 1];
+    var className = data[i][dateCol - 2] || '';
 
-    // Only care about online classes happening today
-    if (cls.type !== 'online' || cls.day !== currentDay) continue;
+    if (!classDateStr) continue;
 
-    var classStartMin = cls.startH * 60 + cls.startM;
-    var minutesUntilClass = classStartMin - currentTotalMin;
+    var classDate = new Date(classDateStr);
+    if (isNaN(classDate.getTime())) continue;
 
-    // Only trigger for sign-ups within 30 minutes of class start
-    // (and not after class has already started by more than 15 min)
-    if (minutesUntilClass > 30 || minutesUntilClass < -15) continue;
-
-    // Check if this student actually signed up for this class
-    var classDate = formatClassDate(pstNow);
-    var signedUpForThis = false;
-    for (var r = 0; r < rows.length; r++) {
-      if (rows[r].classType === 'Online' && rows[r].classDate &&
-          rows[r].className && rows[r].className.indexOf(cls.name.split(' ')[0]) !== -1) {
-        signedUpForThis = true;
+    var startH = 18, startM = 0;
+    for (var key in CLASS_START_TIMES) {
+      if (className.indexOf(key) !== -1) {
+        startH = CLASS_START_TIMES[key].startH;
+        startM = CLASS_START_TIMES[key].startM;
         break;
       }
     }
-    if (!signedUpForThis) continue;
 
-    Logger.log('Late sign-up for ' + cls.name + ' (' + minutesUntilClass + ' min away) — checking Zoom meeting');
+    var cutoff = new Date(classDate);
+    cutoff.setHours(startH, startM + 15, 0, 0);
 
-    var linkKey = 'meet_link_' + cls.day + '_' + classDate;
-    var existingLink = cache.getProperty(linkKey);
+    if (pstNow > cutoff) {
+      rowsToArchive.push({ index: i, row: data[i] });
+    }
+  }
 
-    if (existingLink) {
-      // Zoom meeting already exists — return the cached link
-      Logger.log('Zoom meeting exists, returning link for late sign-up');
-      meetLink = existingLink;
+  var archiveDataRows = sheet.getLastRow() - 1;
+  for (var j = 0; j < rowsToArchive.length; j++) {
+    archive.appendRow(rowsToArchive[j].row);
+    if (archiveDataRows <= 1) {
+      sheet.getRange(rowsToArchive[j].index + 1, 1, 1, sheet.getLastColumn()).clearContent();
     } else {
-      // No Zoom meeting yet — create one now
-      Logger.log('No Zoom meeting exists yet — creating for late sign-up');
-      try {
-        var result = createZoomMeeting(cls, pstNow, 75);
-        if (result.joinUrl) {
-          meetLink = result.joinUrl;
-          // Save for future late sign-ups and the regular trigger
-          cache.setProperty(linkKey, result.joinUrl);
-          cache.setProperty('meet_event_' + cls.day + '_' + classDate, result.meetingId);
-          // Mark as sent so the regular trigger doesn't create a second meeting
-          cache.setProperty('meet_sent_' + cls.day + '_' + classDate, new Date().toISOString());
-          Logger.log('Created Zoom meeting for late sign-up: ' + meetLink);
-        }
-      } catch (createErr) {
-        Logger.log('Error creating Zoom meeting for late sign-up: ' + createErr.toString());
-      }
+      sheet.deleteRow(rowsToArchive[j].index + 1);
     }
+    archiveDataRows--;
   }
-
-  return meetLink;
-}
-
-// Get a Zoom API access token via Server-to-Server OAuth
-function getZoomAccessToken() {
-  var props = PropertiesService.getScriptProperties();
-  var accountId    = props.getProperty('ZOOM_ACCOUNT_ID');
-  var clientId     = props.getProperty('ZOOM_CLIENT_ID');
-  var clientSecret = props.getProperty('ZOOM_CLIENT_SECRET');
-
-  var credentials = Utilities.base64Encode(clientId + ':' + clientSecret);
-  var response = UrlFetchApp.fetch(
-    'https://zoom.us/oauth/token?grant_type=account_credentials&account_id=' + accountId,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + credentials,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      muteHttpExceptions: true
-    }
-  );
-  var data = JSON.parse(response.getContentText());
-  if (!data.access_token) {
-    throw new Error('Zoom token error: ' + response.getContentText());
-  }
-  return data.access_token;
-}
-
-// Create a scheduled Zoom meeting and return { joinUrl, meetingId }
-function createZoomMeeting(cls, dateRef, durationMins) {
-  var token = getZoomAccessToken();
-
-  var startTime = new Date(dateRef);
-  startTime.setHours(cls.startH, cls.startM, 0, 0);
-  var startStr = Utilities.formatDate(startTime, MEET_TZ, "yyyy-MM-dd'T'HH:mm:ss");
-
-  var payload = {
-    topic: 'Yoga with Jessica \u2014 ' + cls.name,
-    type: 2,
-    start_time: startStr,
-    duration: durationMins || 75,
-    timezone: MEET_TZ,
-    settings: {
-      join_before_host: false,
-      waiting_room: true,
-      host_video: true,
-      participant_video: true
-    }
-  };
-
-  var response = UrlFetchApp.fetch('https://api.zoom.us/v2/users/me/meetings', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'application/json'
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
-
-  var meeting = JSON.parse(response.getContentText());
-  if (!meeting.join_url) {
-    throw new Error('Zoom meeting creation failed: ' + response.getContentText());
-  }
-  Logger.log('Created Zoom meeting: ' + meeting.join_url);
-  return { joinUrl: meeting.join_url, meetingId: String(meeting.id) };
-}
-
-// Email the Zoom join link to all registered students for a class
-function sendZoomLinkToStudents(emails, cls, zoomLink) {
-  var subject = 'Your Zoom link for today\'s Yoga with Jessica class';
-  for (var i = 0; i < emails.length; i++) {
-    try {
-      var body =
-        '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
-        '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
-          '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
-            '<a href="' + SITE_URL + '" style="color:#5B7553;text-decoration:none;">yogawithjessica.com</a>' +
-          '</h1>' +
-          '<p style="margin:6px 0 0;color:#888;font-size:13px;">Class Starting Soon</p>' +
-        '</div>' +
-        '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
-          '<p style="font-size:15px;">Hi there,</p>' +
-          '<p style="font-size:15px;line-height:1.6;">Your <strong>' + escHtml(cls.name) + '</strong> class starts in about 30 minutes. Here\'s your Zoom link:</p>' +
-          '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
-            '<strong>&#x1F4F9; Your Zoom link is ready!</strong>' +
-            '<div style="text-align:center;margin:12px 0;">' +
-              '<a href="' + zoomLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
-            '</div>' +
-            '<p style="margin:8px 0 0;color:#555;">Please have your camera on with good lighting. Microphones will be muted to minimize noise.</p>' +
-          '</div>' +
-          '<p style="font-size:14px;color:#555;">See you soon! &mdash; Jessica</p>' +
-        '</div>' +
-        '<div style="padding:16px;text-align:center;font-size:12px;color:#999;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
-          '<p style="margin:0;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
-          '<p style="margin:4px 0 0;"><a href="' + SITE_URL + '" style="color:#5B7553;">yogawithjessica.com</a></p>' +
-        '</div>' +
-        '</div>';
-      MailApp.sendEmail({ to: emails[i], subject: subject, htmlBody: body });
-      Logger.log('Sent Zoom link to: ' + emails[i]);
-    } catch (mailErr) {
-      Logger.log('Error sending Zoom email to ' + emails[i] + ': ' + mailErr.toString());
-    }
-  }
-}
-
-// ========== ZOOM INVITE AUTOMATION ==========
-// Set up as a time-driven trigger (every 5 minutes).
-// Checks if any class is starting within 30 minutes, then creates a
-// Zoom meeting and emails the join link to all registered students.
-//
-// REQUIRES: Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET
-//           in Apps Script Project Settings → Script Properties
-//
-// Class schedule (PST / America/Los_Angeles):
-//   Sunday    6:00 PM - 7:15 PM  Online
-//   Tuesday   6:00 PM - 7:15 PM  In-Person (CCV)
-//   Wednesday 6:00 PM - 7:15 PM  Online
-
-var CLASS_SCHEDULE = [
-  { day: 0, name: 'Sunday Evening — Online via Zoom',           startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
-  { day: 2, name: 'Tuesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' },
-  { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' }
-];
-
-var MEET_TZ = 'America/Los_Angeles';
-
-function sendMeetInvites() {
-  var now = new Date();
-
-  // Convert "now" to PST to figure out what day/time it is in class timezone
-  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: MEET_TZ }));
-  var currentDay = pstNow.getDay();       // 0=Sun, 1=Mon, ...
-  var currentHour = pstNow.getHours();
-  var currentMin = pstNow.getMinutes();
-  var currentTotalMin = currentHour * 60 + currentMin;
-
-  Logger.log('Zoom invite check at PST: ' + pstNow.toLocaleString() + ' (day=' + currentDay + ', time=' + currentHour + ':' + currentMin + ')');
-
-  for (var c = 0; c < CLASS_SCHEDULE.length; c++) {
-    var cls = CLASS_SCHEDULE[c];
-
-    // Only process online classes today
-    if (currentDay !== cls.day || cls.type !== 'online') continue;
-
-    var classStartMin = cls.startH * 60 + cls.startM;
-    var minutesUntilClass = classStartMin - currentTotalMin;
-
-    // Send invite when class is 25-35 minutes away (covers the 5-min trigger interval)
-    if (minutesUntilClass < 25 || minutesUntilClass > 35) {
-      Logger.log('Skipping ' + cls.name + ': ' + minutesUntilClass + ' min away (not in 25-35 min window)');
-      continue;
-    }
-
-    Logger.log('Class ' + cls.name + ' starts in ' + minutesUntilClass + ' min — preparing Zoom invite');
-
-    // Build the class date string to match what's in the spreadsheet (e.g., "Sun, Apr 6")
-    var classDate = formatClassDate(pstNow);
-
-    // Check if we already sent an invite for this class+date (avoid duplicates)
-    var sentKey = 'meet_sent_' + cls.day + '_' + classDate;
-    var cache = PropertiesService.getScriptProperties();
-    if (cache.getProperty(sentKey)) {
-      Logger.log('Already sent Zoom invite for ' + cls.name + ' on ' + classDate);
-      continue;
-    }
-
-    // Get registered students for this class
-    var students = getRegisteredStudents(cls.name, classDate);
-    if (students.length === 0) {
-      Logger.log('No students registered for ' + cls.name + ' on ' + classDate);
-      continue;
-    }
-
-    Logger.log('Found ' + students.length + ' student(s) for ' + cls.name);
-
-    // Create Zoom meeting and email the link to all registered students
-    try {
-      var result = createZoomMeeting(cls, pstNow, 75);
-
-      Logger.log('Created Zoom meeting: ' + result.joinUrl + ' for ' + students.length + ' students');
-
-      // Save Zoom link so late sign-ups can use it
-      var linkKey = 'meet_link_' + cls.day + '_' + classDate;
-      cache.setProperty(linkKey, result.joinUrl);
-      cache.setProperty('meet_event_' + cls.day + '_' + classDate, result.meetingId);
-
-      // Mark as sent to avoid duplicates
-      cache.setProperty(sentKey, new Date().toISOString());
-
-      // Email all registered students the Zoom link
-      sendZoomLinkToStudents(students, cls, result.joinUrl);
-
-    } catch (zoomErr) {
-      Logger.log('Error creating Zoom meeting for ' + cls.name + ': ' + zoomErr.toString());
-    }
-  }
-}
-
-// Get all registered student emails for a class name + date
-function getRegisteredStudents(className, classDate) {
-  var emails = [];
-  try {
-    var ss = getOrCreateSpreadsheet();
-    var sheet = getOrCreateSheet(ss);
-    var lastRow = sheet.getLastRow();
-    if (lastRow <= 1) return emails;
-
-    var data = sheet.getRange(2, 1, lastRow - 1, 11).getValues();
-    var seen = {};
-
-    for (var i = 0; i < data.length; i++) {
-      var rowClass = (data[i][4] || '').toString().trim();
-      var rowDate  = (data[i][5] || '').toString().trim();
-      var rowEmail = (data[i][3] || '').toString().trim().toLowerCase();
-
-      // Match by class date (the class name in the sheet may be abbreviated)
-      if (rowDate === classDate && rowEmail && !seen[rowEmail]) {
-        // Check the class type matches — only send Meet invites for online classes
-        var rowType = (data[i][6] || '').toString().trim().toLowerCase();
-        if (rowType === 'online') {
-          emails.push(rowEmail);
-          seen[rowEmail] = true;
-        }
-      }
-    }
-  } catch (err) {
-    Logger.log('Error getting registered students: ' + err.toString());
-  }
-  return emails;
-}
-
-// Format a date to match the spreadsheet format (e.g., "Sun, Apr 6")
-function formatClassDate(date) {
-  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return days[date.getDay()] + ', ' + months[date.getMonth()] + ' ' + date.getDate();
 }
 
 // ========== HELPERS ==========
+// These point to TEST spreadsheets (not production!)
+
 function getOrCreateSpreadsheet() {
-  var files = DriveApp.getFilesByName('Yoga Signup');
+  var files = DriveApp.getFilesByName(TEST_SIGNUP_SS_NAME);
   if (files.hasNext()) {
     return SpreadsheetApp.open(files.next());
   }
-  return SpreadsheetApp.create('Yoga Signup');
+  return SpreadsheetApp.create(TEST_SIGNUP_SS_NAME);
 }
 
 function getOrCreateWaitlistSpreadsheet() {
-  var files = DriveApp.getFilesByName('Yoga Waitlist');
+  var files = DriveApp.getFilesByName(TEST_WAITLIST_SS_NAME);
   if (files.hasNext()) {
     return SpreadsheetApp.open(files.next());
   }
-  return SpreadsheetApp.create('Yoga Waitlist');
-}
-
-function getOrCreateWaitlistSheet(ss) {
-  var sheet = ss.getSheetByName('Waitlist');
-  if (!sheet) {
-    sheet = ss.insertSheet('Waitlist');
-    sheet.appendRow([
-      'Timestamp',
-      'First Name',
-      'Last Name',
-      'Email',
-      'Class',
-      'Class Date',
-      'Class Type',
-      'Guest First Name',
-      'Guest Last Name',
-      'Status',
-      'Notified At',
-      'Device',
-      'Browser',
-      'City',
-      'State',
-      'Zip Code'
-    ]);
-    sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
-    sheet.setFrozenRows(1);
-  }
-  return sheet;
+  return SpreadsheetApp.create(TEST_WAITLIST_SS_NAME);
 }
 
 function getOrCreateSheet(ss) {
@@ -1219,98 +1305,30 @@ function getOrCreateSheet(ss) {
   return sheet;
 }
 
-// ========== AUTO-ARCHIVE PAST SIGN-UPS ==========
-// Run this on a time-driven trigger every 10 minutes.
-// Moves rows to Archive / Waitlist Archive once the class cutoff has passed.
-
-var ARCHIVE_TZ = 'America/Los_Angeles';
-
-// Class start times by keyword (used to determine cutoff)
-var CLASS_START_TIMES = {
-  'Sunday':    { startH: 18, startM: 0 },
-  'Tuesday':   { startH: 18, startM: 0 },
-  'Wednesday': { startH: 18, startM: 0 }
-};
-
-function archivePastSignups() {
-  archiveSheet_('Yoga Signup', 'Sign-Ups', 'Archive', 6);   // Class Date in col 6
-  archiveSheet_('Yoga Waitlist', 'Waitlist', 'Waitlist Archive', 6);
-}
-
-function archiveSheet_(ssName, sheetName, archiveName, dateCol) {
-  var files = DriveApp.getFilesByName(ssName);
-  if (!files.hasNext()) return;
-  var ss = SpreadsheetApp.open(files.next());
-  var sheet = ss.getSheetByName(sheetName);
-  if (!sheet) return;
-
-  var data = sheet.getDataRange().getValues();
-  if (data.length <= 1) return; // header only
-
-  // Get or create the archive sheet
-  var archive = ss.getSheetByName(archiveName);
-  if (!archive) {
-    archive = ss.insertSheet(archiveName);
-    archive.appendRow(data[0]); // copy headers
-    archive.getRange(1, 1, 1, data[0].length).setFontWeight('bold');
-    archive.setFrozenRows(1);
+function getOrCreateWaitlistSheet(ss) {
+  var sheet = ss.getSheetByName('Waitlist');
+  if (!sheet) {
+    sheet = ss.insertSheet('Waitlist');
+    sheet.appendRow([
+      'Timestamp',
+      'First Name',
+      'Last Name',
+      'Email',
+      'Class',
+      'Class Date',
+      'Class Type',
+      'Guest First Name',
+      'Guest Last Name',
+      'Status',
+      'Notified At',
+      'Device',
+      'Browser',
+      'City',
+      'State',
+      'Zip Code'
+    ]);
+    sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
+    sheet.setFrozenRows(1);
   }
-
-  // Current time in Pacific
-  var now = new Date();
-  var pstNow = new Date(now.toLocaleString('en-US', { timeZone: ARCHIVE_TZ }));
-
-  // Check rows bottom-to-top so deletions don't shift indices
-  var rowsToArchive = [];
-  for (var i = data.length - 1; i >= 1; i--) {
-    var classDateStr = data[i][dateCol - 1]; // 0-indexed
-    var className = data[i][dateCol - 2] || ''; // Class name column (col 5)
-
-    if (!classDateStr) continue;
-
-    // Parse the class date string (e.g., "Sunday, Apr 6, 2026")
-    var classDate = new Date(classDateStr);
-    if (isNaN(classDate.getTime())) continue;
-
-    // Determine start time from class name
-    var startH = 18, startM = 0; // default
-    for (var key in CLASS_START_TIMES) {
-      if (className.indexOf(key) !== -1) {
-        startH = CLASS_START_TIMES[key].startH;
-        startM = CLASS_START_TIMES[key].startM;
-        break;
-      }
-    }
-
-    // Build cutoff: class date + start time + 15 minutes (sign-up cutoff)
-    var cutoff = new Date(classDate);
-    cutoff.setHours(startH, startM + 15, 0, 0);
-
-    // If cutoff has passed, archive this row
-    if (pstNow > cutoff) {
-      rowsToArchive.push({ index: i, row: data[i] });
-    }
-  }
-
-  if (rowsToArchive.length === 0) return;
-
-  // BATCH WRITE to archive (much faster than appendRow in a loop)
-  var archiveData = [];
-  for (var j = 0; j < rowsToArchive.length; j++) {
-    archiveData.push(rowsToArchive[j].row);
-  }
-  var archiveLastRow = archive.getLastRow();
-  archive.getRange(archiveLastRow + 1, 1, archiveData.length, archiveData[0].length).setValues(archiveData);
-
-  // BATCH DELETE from source (bottom-to-top, handling last-row protection)
-  var totalDataRows = sheet.getLastRow() - 1; // exclude header
-  for (var j = 0; j < rowsToArchive.length; j++) {
-    if (totalDataRows <= 1) {
-      // Can't delete the last non-frozen row — clear it instead
-      sheet.getRange(rowsToArchive[j].index + 1, 1, 1, sheet.getLastColumn()).clearContent();
-    } else {
-      sheet.deleteRow(rowsToArchive[j].index + 1);
-    }
-    totalDataRows--;
-  }
+  return sheet;
 }
