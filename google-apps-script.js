@@ -1268,8 +1268,31 @@ function archiveSheet_(ssName, sheetName, archiveName, dateCol) {
 
     if (!classDateStr) continue;
 
-    // Parse the class date string (e.g., "Sunday, Apr 6, 2026")
-    var classDate = new Date(classDateStr);
+    // Parse the class date string robustly.
+    // Stored as "Sunday, April 13, 2026" (new format) or "Sunday, April 13" (old, no year).
+    // new Date() chokes on the weekday prefix, so strip it first.
+    var classDate;
+    if (classDateStr instanceof Date) {
+      // Sheets auto-converted the cell to a Date object — use it directly
+      classDate = classDateStr;
+    } else {
+      var s = String(classDateStr).trim();
+      // Strip leading weekday (e.g. "Sunday, " or "Mon, ")
+      s = s.replace(/^[A-Za-z]+,\s*/, '');
+      // s is now "April 13, 2026" or "April 13"
+      if (!/\d{4}/.test(s)) {
+        // No year stored — infer it: use current year, but if that date is
+        // already more than a week in the past, try next year instead
+        var inferYear = pstNow.getFullYear();
+        var attempt = new Date(s + ', ' + inferYear);
+        if (!isNaN(attempt.getTime()) && (pstNow - attempt) > 7 * 24 * 3600 * 1000) {
+          attempt = new Date(s + ', ' + (inferYear + 1));
+        }
+        classDate = attempt;
+      } else {
+        classDate = new Date(s);
+      }
+    }
     if (isNaN(classDate.getTime())) continue;
 
     // Determine start time from class name

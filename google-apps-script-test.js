@@ -1225,7 +1225,26 @@ function archiveSheet_(ssName, sheetName, archiveName, dateCol) {
 
     if (!classDateStr) continue;
 
-    var classDate = new Date(classDateStr);
+    // Parse the class date string robustly.
+    // Stored as "Sunday, April 13, 2026" (new format) or "Sunday, April 13" (old, no year).
+    // new Date() chokes on the weekday prefix, so strip it first.
+    var classDate;
+    if (classDateStr instanceof Date) {
+      classDate = classDateStr;
+    } else {
+      var s = String(classDateStr).trim();
+      s = s.replace(/^[A-Za-z]+,\s*/, ''); // strip weekday prefix
+      if (!/\d{4}/.test(s)) {
+        var inferYear = pstNow.getFullYear();
+        var attempt = new Date(s + ', ' + inferYear);
+        if (!isNaN(attempt.getTime()) && (pstNow - attempt) > 7 * 24 * 3600 * 1000) {
+          attempt = new Date(s + ', ' + (inferYear + 1));
+        }
+        classDate = attempt;
+      } else {
+        classDate = new Date(s);
+      }
+    }
     if (isNaN(classDate.getTime())) continue;
 
     var startH = 18, startM = 0;

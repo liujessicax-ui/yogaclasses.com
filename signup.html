@@ -672,7 +672,7 @@
 
     // Format a Date for display — always show the Pacific time date
     function formatDate(date) {
-      const opts = { weekday: 'long', month: 'long', day: 'numeric', timeZone: LA_TZ };
+      const opts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: LA_TZ };
       return date.toLocaleDateString('en-US', opts);
     }
 
