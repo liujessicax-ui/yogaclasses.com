@@ -559,10 +559,28 @@ function checkAndCreateMeetForLateSignup(rows) {
   return meetLink;
 }
 
+// Returns "Sunday, April 13, 2026" — matches what signup.html stores.
 function formatClassDate(date) {
-  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return days[date.getDay()] + ', ' + months[date.getMonth()] + ' ' + date.getDate();
+  return Utilities.formatDate(date, MEET_TZ, "EEEE, MMMM d, yyyy");
+}
+
+// Tolerant date extraction — returns "April 13" from any stored format.
+function extractMonthDay_(s) {
+  if (s instanceof Date) {
+    var fullMonths = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+    return fullMonths[s.getMonth()] + ' ' + s.getDate();
+  }
+  var FULL = 'January|February|March|April|May|June|July|August|September|October|November|December';
+  var SHORT = 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec';
+  var shortToFull = {Jan:'January',Feb:'February',Mar:'March',Apr:'April',May:'May',
+                     Jun:'June',Jul:'July',Aug:'August',Sep:'September',
+                     Oct:'October',Nov:'November',Dec:'December'};
+  var m = String(s).match(new RegExp('\\b(' + FULL + ')\\s+(\\d{1,2})\\b', 'i'));
+  if (m) return m[1] + ' ' + parseInt(m[2]);
+  m = String(s).match(new RegExp('\\b(' + SHORT + ')\\s+(\\d{1,2})\\b', 'i'));
+  if (m) return shortToFull[m[1]] + ' ' + parseInt(m[2]);
+  return String(s).trim();
 }
 
 function doGet(e) {

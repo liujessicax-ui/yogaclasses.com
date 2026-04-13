@@ -514,10 +514,12 @@ function doGet(e) {
 
       if (lastRow > 1) {
         var data = sheet.getRange(2, 1, lastRow - 1, 11).getValues();
+        var targetMonthDay = extractMonthDay_(classDate);
         for (var i = 0; i < data.length; i++) {
           var rowClass = (data[i][4] || '').toString().trim();
           var rowDate  = (data[i][5] || '').toString().trim();
-          if (rowClass === className && rowDate === classDate) {
+          var dateMatch = (rowDate === classDate) || (extractMonthDay_(rowDate) === targetMonthDay);
+          if (rowClass === className && dateMatch) {
             count++;
             var guestName = (data[i][8] || '').toString().trim();
             if (guestName) count++;
@@ -652,10 +654,12 @@ function processWaitlistForClass(className, classDate) {
 
   if (signupLastRow > 1) {
     signupData = signupSheet.getRange(2, 1, signupLastRow - 1, 11).getValues();
+    var targetMD = extractMonthDay_(classDate);
     for (var i = 0; i < signupData.length; i++) {
       var rowClass = (signupData[i][4] || '').toString().trim();
       var rowDate  = (signupData[i][5] || '').toString().trim();
-      if (rowClass === className && rowDate === classDate) {
+      var dateMatch = (rowDate === classDate) || (extractMonthDay_(rowDate) === targetMD);
+      if (rowClass === className && dateMatch) {
         confirmedCount++;
         var guestName = (signupData[i][8] || '').toString().trim();
         if (guestName) confirmedCount++;
@@ -1122,8 +1126,11 @@ function getRegisteredStudents(className, classDate) {
       var rowDate  = (data[i][5] || '').toString().trim();
       var rowEmail = (data[i][3] || '').toString().trim().toLowerCase();
 
-      // Match by class date (the class name in the sheet may be abbreviated)
-      if (rowDate === classDate && rowEmail && !seen[rowEmail]) {
+      // Match by class date — use tolerant comparison to handle both old
+      // ("Sunday, April 13") and new ("Sunday, April 13, 2026") stored formats.
+      var dateMatch = (rowDate === classDate) ||
+                      (extractMonthDay_(rowDate) === extractMonthDay_(classDate));
+      if (dateMatch && rowEmail && !seen[rowEmail]) {
         // Check the class type matches — only send Meet invites for online classes
         var rowType = (data[i][6] || '').toString().trim().toLowerCase();
         if (rowType === 'online') {
@@ -1138,11 +1145,31 @@ function getRegisteredStudents(className, classDate) {
   return emails;
 }
 
-// Format a date to match the spreadsheet format (e.g., "Sun, Apr 6")
+// Format a date to match the spreadsheet format.
+// Returns "Sunday, April 13, 2026" — matches what signup.html stores.
 function formatClassDate(date) {
-  var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return days[date.getDay()] + ', ' + months[date.getMonth()] + ' ' + date.getDate();
+  return Utilities.formatDate(date, MEET_TZ, "EEEE, MMMM d, yyyy");
+}
+
+// Extract a canonical "MonthName Day" string from any of the date formats
+// we have stored: "Sunday, April 13, 2026", "Sunday, April 13", "Sun, Apr 13".
+// Used for tolerant matching in getRegisteredStudents.
+function extractMonthDay_(s) {
+  if (s instanceof Date) {
+    var fullMonths = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+    return fullMonths[s.getMonth()] + ' ' + s.getDate();
+  }
+  var FULL = 'January|February|March|April|May|June|July|August|September|October|November|December';
+  var SHORT = 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec';
+  var shortToFull = {Jan:'January',Feb:'February',Mar:'March',Apr:'April',May:'May',
+                     Jun:'June',Jul:'July',Aug:'August',Sep:'September',
+                     Oct:'October',Nov:'November',Dec:'December'};
+  var m = String(s).match(new RegExp('\\b(' + FULL + ')\\s+(\\d{1,2})\\b', 'i'));
+  if (m) return m[1] + ' ' + parseInt(m[2]);
+  m = String(s).match(new RegExp('\\b(' + SHORT + ')\\s+(\\d{1,2})\\b', 'i'));
+  if (m) return shortToFull[m[1]] + ' ' + parseInt(m[2]);
+  return String(s).trim();
 }
 
 // ========== HELPERS ==========
@@ -1336,4 +1363,33 @@ function archiveSheet_(ssName, sheetName, archiveName, dateCol) {
     }
     totalDataRows--;
   }
+}
+
+// ========== TRIGGER SETUP ==========
+// Run this function ONCE manually (from Apps Script editor: Run → setupTriggers)
+// to install all required time-driven triggers. Safe to re-run — deletes old
+// copies of the same functions before creating new ones to avoid duplicates.
+function setupTriggers() {
+  var TRIGGER_FUNCTIONS = ['sendMeetInvites', 'processAllWaitlists', 'archivePastSignups'];
+
+  // Delete any existing triggers for our functions
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (TRIGGER_FUNCTIONS.indexOf(t.getHandlerFunction()) !== -1) {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+
+  // sendMeetInvites — every 5 minutes (Zoom link email 30 min before online class)
+  ScriptApp.newTrigger('sendMeetInvites')
+    .timeBased().everyMinutes(5).create();
+
+  // processAllWaitlists — every 10 minutes (promote waitlist when spots open)
+  ScriptApp.newTrigger('processAllWaitlists')
+    .timeBased().everyMinutes(10).create();
+
+  // archivePastSignups — every hour (move past classes to Archive tab)
+  ScriptApp.newTrigger('archivePastSignups')
+    .timeBased().everyHours(1).create();
+
+  Logger.log('Triggers installed: sendMeetInvites (5 min), processAllWaitlists (10 min), archivePastSignups (1 hour)');
 }
