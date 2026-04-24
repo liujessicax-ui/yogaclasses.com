@@ -271,6 +271,10 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
   border-radius: 20px; font-size: .75rem; font-weight: 600; color: var(--olive-dk);
   border: 1px solid rgba(122,139,111,.2);
 }
+.schedule-card__tag--zoom {
+  background: rgba(74,114,163,.1); color: #3d6ba3;
+  border-color: rgba(74,114,163,.25);
+}
 .schedule-card__action {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;

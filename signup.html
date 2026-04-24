@@ -76,8 +76,9 @@
       padding: .1rem .4rem; border-radius: 10px;
       text-transform: uppercase; letter-spacing: .02em;
     }
-    .tag-badge--open { background: rgba(122,139,111,.15); color: var(--olive-dk); }
-    .tag-badge--inperson { background: rgba(196,120,90,.12); color: #a0603e; }
+    .class-option-info .tag-badge--open { background: rgba(122,139,111,.15); color: var(--olive-dk); }
+    .class-option-info .tag-badge--inperson { background: rgba(196,120,90,.12); color: #a0603e; }
+    .class-option-info .tag-badge--zoom { background: rgba(74,114,163,.12); color: #3d6ba3; }
 
     .no-classes-msg {
       text-align: center; padding: 1.5rem;
@@ -696,6 +697,7 @@
                 <div class="class-option-info">
                   <strong>${dateStr}</strong>
                   <span>${cls.duration}</span>
+                  ${cls.type === 'online' ? '<span class="tag-badge tag-badge--zoom">Via Zoom</span>' : ''}
                   ${cls.tags.map(t => `<span class="tag-badge ${t === 'In Person' ? 'tag-badge--inperson' : 'tag-badge--open'}">${t}</span>`).join('')}
                 </div>
               </label>
