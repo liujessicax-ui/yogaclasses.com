@@ -130,15 +130,59 @@
       border-top: 1px solid var(--sand);
     }
     .signup-link {
+      display: inline-block;
       font-family: var(--font-heading);
-      font-size: 1.25rem;
-      color: var(--olive-dk);
+      font-size: 1.5rem;
+      color: var(--white);
       font-weight: 600;
-      border-bottom: 2px solid var(--warm);
+      background: linear-gradient(135deg, var(--olive) 0%, var(--olive-dk) 100%);
+      padding: 1.1rem 2.4rem;
+      border-radius: 50px;
+      box-shadow: 0 6px 20px rgba(122,139,111,.35);
+      letter-spacing: .02em;
+      position: relative;
+      transform-origin: center;
+      animation: signupBounce 1.4s cubic-bezier(.5,.05,.4,1.2) infinite;
+      transition: box-shadow .2s ease;
+    }
+    .signup-link:hover {
+      box-shadow: 0 14px 34px rgba(122,139,111,.55);
+      animation-play-state: paused;
+      transform: scale(1.08);
+    }
+    @keyframes signupBounce {
+      0% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 6px 20px rgba(122,139,111,.35);
+      }
+      30% {
+        transform: translateY(-14px) scale(1.06);
+        box-shadow: 0 18px 30px rgba(122,139,111,.25);
+      }
+      55% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 6px 20px rgba(122,139,111,.35);
+      }
+      70% {
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 12px 24px rgba(122,139,111,.3);
+      }
+      85%, 100% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 6px 20px rgba(122,139,111,.35);
+      }
+    }
+    .secondary-link {
+      display: inline-block;
+      margin-top: 1.4rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      color: var(--olive-dk);
+      border-bottom: 1px solid var(--warm);
       padding-bottom: 2px;
       transition: color .2s, border-color .2s;
     }
-    .signup-link:hover {
+    .secondary-link:hover {
       color: var(--olive);
       border-bottom-color: var(--olive);
     }
@@ -300,6 +344,9 @@
 
         <div class="cta-block">
           <a href="../signup.html?class=tuesday-ccv" class="signup-link">Sign up for the Tuesday class &rarr;</a>
+          <div>
+            <a href="../schedule.html" class="secondary-link">Check out other online classes &rarr;</a>
+          </div>
         </div>
       </div>
     </div>
