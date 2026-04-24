@@ -45,7 +45,7 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
 .section--alt { background: var(--sand); }
 
 /* ========== Decorative SVG elements ========== */
-.decor-lotus { display: block; margin: 0 auto; opacity: .15; }
+.decor-lotus { display: block; margin: 0 auto; opacity: .55; }
 .decor-lotus--sm { width: 48px; height: 48px; }
 .decor-lotus--md { width: 80px; height: 80px; }
 .decor-lotus--lg { width: 120px; height: 120px; }
@@ -82,7 +82,7 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
   color: var(--olive);
   display: flex; align-items: center; gap: .5rem;
 }
-.nav__logo svg { width: 28px; height: 28px; }
+.nav__logo svg, .nav__logo-img { width: 28px; height: 28px; }
 .nav__links { display: flex; gap: 1.8rem; list-style: none; }
 .nav__links a {
   font-size: .85rem; font-weight: 600; letter-spacing: .05em;
@@ -137,7 +137,7 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
 .hero__bg-art {
   position: absolute; inset: 0; pointer-events: none; overflow: hidden;
 }
-.hero__bg-art svg { position: absolute; }
+.hero__bg-art svg, .hero__bg-art img { position: absolute; }
 
 .hero__inner { max-width: 700px; position: relative; z-index: 1; }
 .hero__tagline {
@@ -380,7 +380,7 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
   position: relative;
 }
 .footer a { color: var(--warm-lt); }
-.footer__lotus { margin: 0 auto 1rem; opacity: .2; }
+.footer__lotus { display: block; margin: 0 auto 1rem; opacity: .55; width: 120px; height: 120px; }
 .footer__links {
   display: flex; justify-content: center; gap: 1.5rem;
   margin-bottom: 1rem; flex-wrap: wrap;
@@ -464,7 +464,7 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
 .bg-art {
   position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
 }
-.bg-art svg {
+.bg-art svg, .bg-art img {
   position: absolute;
 }
 
@@ -585,7 +585,9 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
   /* Background art — scale down decorative SVGs */
   .bg-art svg[style*="width:700px"],
   .bg-art svg[style*="width:450px"],
-  .bg-art svg[style*="width:300px"] {
+  .bg-art svg[style*="width:300px"],
+  .bg-art img[style*="width:450px"],
+  .bg-art img[style*="width:320px"] {
     display: none;
   }
 }

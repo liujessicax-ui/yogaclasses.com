@@ -28,6 +28,29 @@
 var SITE_URL = 'https://yogawithjessica.com'; // change to your actual domain
 var ADMIN_EMAIL = 'xiaojing25@gmail.com';
 
+// ========== EMAIL HELPER ==========
+
+function stripHtml(html) {
+  return (html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '  - ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&mdash;/g, '—')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x1F3E0;/g, '')
+    .replace(/&#x1F4BB;/g, '')
+    .replace(/&#x1F4F9;/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
@@ -183,7 +206,7 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
       // Online class note — with or without immediate Zoom link
       (meetLink ?
         '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
-          '<strong>&#x1F4F9; Your Zoom link is ready!</strong><br>' +
+          '<strong>&#x1F4F9; Your Zoom link is ready</strong><br>' +
           '<p style="margin:8px 0;">Class is starting soon — join here:</p>' +
           '<div style="text-align:center;margin:12px 0;">' +
             '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
@@ -226,7 +249,10 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
   MailApp.sendEmail({
     to: email,
     subject: subject,
-    htmlBody: body
+    body: stripHtml(body),
+    htmlBody: body,
+    name: 'Yoga with Jessica',
+    replyTo: ADMIN_EMAIL
   });
 }
 
@@ -274,7 +300,10 @@ function sendAdminSignupNotification(rows) {
     MailApp.sendEmail({
       to: ADMIN_EMAIL,
       subject: subject,
-      htmlBody: body
+      body: stripHtml(body),
+      htmlBody: body,
+      name: 'Yoga with Jessica',
+      replyTo: ADMIN_EMAIL
     });
   } catch (err) {
     Logger.log('Admin signup notification error: ' + err.toString());
@@ -312,7 +341,10 @@ function sendAdminCancelNotification(studentName, studentEmail, guestName, cance
     MailApp.sendEmail({
       to: ADMIN_EMAIL,
       subject: subject,
-      htmlBody: body
+      body: stripHtml(body),
+      htmlBody: body,
+      name: 'Yoga with Jessica',
+      replyTo: ADMIN_EMAIL
     });
   } catch (err) {
     Logger.log('Admin cancel notification error: ' + err.toString());
@@ -762,10 +794,7 @@ function processWaitlistForClass(className, classDate) {
 
     // Send notification email
     try {
-      MailApp.sendEmail({
-        to: email,
-        subject: 'Yoga with Jessica — A Spot Opened Up!',
-        htmlBody: '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+      var waitlistHtml = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
           '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
             '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
               '<a href="' + SITE_URL + '" style="color:#5B7553;text-decoration:none;">yogawithjessica.com</a>' +
@@ -774,7 +803,7 @@ function processWaitlistForClass(className, classDate) {
           '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
             '<p style="font-size:15px;">Hi ' + escHtml(firstName) + ',</p>' +
             '<p style="font-size:15px;line-height:1.6;">A spot has opened up for <strong>' +
-              escHtml(wClass) + '</strong> on <strong>' + escHtml(wDate) + '</strong>!</p>' +
+              escHtml(wClass) + '</strong> on <strong>' + escHtml(wDate) + '</strong>.</p>' +
             '<p style="font-size:15px;line-height:1.6;">Spots are first come, first served, so sign up soon before it fills up again.</p>' +
             '<div style="text-align:center;margin:24px 0;">' +
               '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Sign Up Now</a>' +
@@ -783,7 +812,14 @@ function processWaitlistForClass(className, classDate) {
           '<div style="padding:16px;text-align:center;font-size:12px;color:#999;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
             '<p style="margin:0;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
           '</div>' +
-        '</div>'
+        '</div>';
+      MailApp.sendEmail({
+        to: email,
+        subject: 'Yoga with Jessica — A Spot Opened Up',
+        body: stripHtml(waitlistHtml),
+        htmlBody: waitlistHtml,
+        name: 'Yoga with Jessica',
+        replyTo: ADMIN_EMAIL
       });
     } catch (mailErr) {
       Logger.log('Failed to email ' + email + ': ' + mailErr.toString());
@@ -995,7 +1031,7 @@ function sendZoomLinkToStudents(emails, cls, zoomLink) {
           '<p style="font-size:15px;">Hi there,</p>' +
           '<p style="font-size:15px;line-height:1.6;">Your <strong>' + escHtml(cls.name) + '</strong> class starts in about 30 minutes. Here\'s your Zoom link:</p>' +
           '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
-            '<strong>&#x1F4F9; Your Zoom link is ready!</strong>' +
+            '<strong>&#x1F4F9; Your Zoom link is ready</strong>' +
             '<div style="text-align:center;margin:12px 0;">' +
               '<a href="' + zoomLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
             '</div>' +
@@ -1008,7 +1044,14 @@ function sendZoomLinkToStudents(emails, cls, zoomLink) {
           '<p style="margin:4px 0 0;"><a href="' + SITE_URL + '" style="color:#5B7553;">yogawithjessica.com</a></p>' +
         '</div>' +
         '</div>';
-      MailApp.sendEmail({ to: emails[i], subject: subject, htmlBody: body });
+      MailApp.sendEmail({
+        to: emails[i],
+        subject: subject,
+        body: stripHtml(body),
+        htmlBody: body,
+        name: 'Yoga with Jessica',
+        replyTo: ADMIN_EMAIL
+      });
       Logger.log('Sent Zoom link to: ' + emails[i]);
     } catch (mailErr) {
       Logger.log('Error sending Zoom email to ' + emails[i] + ': ' + mailErr.toString());

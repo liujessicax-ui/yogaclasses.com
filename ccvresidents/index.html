@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NVBH3J0L7M"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-NVBH3J0L7M');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yoga in the Clubhouse &mdash; For CCV Residents | Yoga with Jessica</title>
+  <meta name="description" content="Free weekly yoga right in our CCV clubhouse. Every Tuesday, 6:00 &ndash; 7:15 PM. No experience needed. A practice of coming home to your body, steps from your front door." />
+  <link rel="icon" type="image/png" href="../lotus.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    /* Page-specific styles */
+    .ccv-hero h1 { max-width: 760px; margin-left: auto; margin-right: auto; }
+    .ccv-hero .hero__tagline {
+      font-size: clamp(1.35rem, 3vw, 1.85rem);
+      font-weight: 600;
+      color: var(--olive-dk);
+      letter-spacing: .22em;
+      margin-bottom: 1.8rem;
+      text-shadow: 0 1px 0 rgba(255,255,255,.6);
+    }
+    .ccv-hero .hero__tagline svg { width: 26px; height: 26px; opacity: .85; }
+    .ccv-hero .hero__tagline::before,
+    .ccv-hero .hero__tagline::after {
+      width: 60px; height: 2px; background: var(--warm); opacity: .7;
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .why-card {
+      text-align: left;
+      padding: 2rem 1.8rem;
+      border-left: 3px solid var(--warm);
+      background: rgba(255,255,255,.6);
+    }
+    .why-card h3 {
+      font-size: 1.15rem;
+      color: var(--olive-dk);
+      margin-bottom: .5rem;
+    }
+    .why-card p {
+      color: #555;
+      font-size: .95rem;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .sanskrit {
+      font-family: var(--font-heading);
+      font-style: italic;
+      color: var(--warm-dk);
+    }
+
+    .details-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 2.5rem 2.5rem;
+      box-shadow: 0 4px 30px rgba(0,0,0,.06);
+      border: 1px solid rgba(232,221,211,.6);
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .details-card h2 {
+      text-align: center;
+      color: var(--olive-dk);
+      margin-bottom: 1.5rem;
+    }
+    .details-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.8rem;
+    }
+    .details-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: .9rem 0;
+      border-bottom: 1px solid var(--sand);
+      font-size: 1rem;
+      color: #444;
+    }
+    .details-list li:last-child { border-bottom: none; }
+    .details-list .label {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      color: var(--olive-dk);
+      min-width: 110px;
+      flex-shrink: 0;
+      font-size: 1.05rem;
+    }
+    .details-list .value strong {
+      color: var(--charcoal);
+    }
+    .details-list .value small {
+      display: block;
+      color: #777;
+      font-size: .85rem;
+      margin-top: .15rem;
+    }
+
+    .registration-note {
+      text-align: center;
+      background: rgba(122,139,111,.07);
+      border-radius: 12px;
+      padding: 1.4rem 1.6rem;
+      margin-top: 2rem;
+      color: #555;
+      font-size: .95rem;
+      line-height: 1.7;
+    }
+    .registration-note strong { color: var(--olive-dk); }
+
+    .cta-block {
+      text-align: center;
+      margin-top: 2.2rem;
+      padding-top: 1.8rem;
+      border-top: 1px solid var(--sand);
+    }
+    .signup-link {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      color: var(--olive-dk);
+      font-weight: 600;
+      border-bottom: 2px solid var(--warm);
+      padding-bottom: 2px;
+      transition: color .2s, border-color .2s;
+    }
+    .signup-link:hover {
+      color: var(--olive);
+      border-bottom-color: var(--olive);
+    }
+
+    .welcome-note {
+      background: rgba(196,168,130,.08);
+      border: 1px solid rgba(196,168,130,.2);
+      border-radius: 12px;
+      padding: 1.3rem 1.8rem;
+      text-align: center;
+      max-width: 580px;
+      margin: 2rem auto 0;
+      color: #555;
+      font-size: .95rem;
+      font-style: italic;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 560px) {
+      .details-card { padding: 2rem 1.5rem; }
+      .details-list li {
+        flex-direction: column;
+        gap: .25rem;
+        padding: .9rem 0;
+      }
+      .details-list .label {
+        min-width: 0;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        color: var(--warm-dk);
+        font-family: var(--font-body);
+        font-weight: 700;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="container">
+      <a href="../index.html" class="nav__logo">
+        <img src="../lotus.png" alt="" class="nav__logo-img" />
+        Yoga with Jessica
+      </a>
+      <button class="nav__toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav__links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../about.html">About Me</a></li>
+        <li><a href="../schedule.html">Class Schedule</a></li>
+        <li><a href="../privates.html">Private Sessions</a></li>
+        <li><a href="../props.html">Props</a></li>
+        <li><a href="../donations.html">Donations</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero ccv-hero">
+    <div class="bg-art">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;top:0;left:0;">
+        <path d="M-50,600 C200,550 400,700 600,620 S900,500 1100,580 S1350,650 1500,600" stroke="#7a8b6f" stroke-width="2.5" fill="none" opacity=".25"/>
+        <path d="M-50,640 C180,590 380,730 580,650 S880,540 1080,620 S1330,680 1500,640" stroke="#7a8b6f" stroke-width="1.8" fill="none" opacity=".18"/>
+        <path d="M-50,680 C220,630 420,760 620,680 S920,560 1120,640 S1370,710 1500,670" stroke="#c4a882" stroke-width="1.2" fill="none" opacity=".14"/>
+        <path d="M-50,650 C200,600 400,750 650,660 S950,550 1200,640 S1400,700 1500,670 L1500,900 L-50,900 Z" fill="#7a8b6f" opacity=".07"/>
+        <path d="M-50,700 C300,660 500,780 700,700 S1000,600 1250,680 S1420,740 1500,720 L1500,900 L-50,900 Z" fill="#7a8b6f" opacity=".05"/>
+        <circle cx="300" cy="680" r="40" stroke="#7a8b6f" stroke-width="1" fill="none" opacity=".15"/>
+        <circle cx="300" cy="680" r="65" stroke="#7a8b6f" stroke-width=".7" fill="none" opacity=".1"/>
+        <circle cx="900" cy="620" r="35" stroke="#c4a882" stroke-width="1" fill="none" opacity=".15"/>
+        <circle cx="900" cy="620" r="55" stroke="#c4a882" stroke-width=".6" fill="none" opacity=".1"/>
+      </svg>
+      <svg viewBox="0 0 800 800" style="width:700px;height:700px;top:-150px;right:-150px;opacity:.12;">
+        <circle cx="400" cy="400" r="380" stroke="#7a8b6f" stroke-width="1.5" fill="none"/>
+        <circle cx="400" cy="400" r="320" stroke="#7a8b6f" stroke-width="1" fill="none"/>
+        <circle cx="400" cy="400" r="260" stroke="#7a8b6f" stroke-width=".8" fill="none"/>
+        <circle cx="400" cy="400" r="200" stroke="#7a8b6f" stroke-width=".8" fill="none"/>
+        <circle cx="400" cy="400" r="140" stroke="#7a8b6f" stroke-width=".6" fill="none"/>
+        <circle cx="400" cy="400" r="80" stroke="#7a8b6f" stroke-width=".6" fill="none"/>
+        <g stroke="#7a8b6f" stroke-width=".6" fill="none">
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(0 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(22.5 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(45 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(67.5 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(90 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(112.5 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(135 400 400)"/>
+          <ellipse cx="400" cy="400" rx="50" ry="380" transform="rotate(157.5 400 400)"/>
+        </g>
+      </svg>
+      <img src="../lotus.png" alt="" style="width:450px;height:450px;bottom:-100px;left:-80px;opacity:.35;" />
+    </div>
+
+    <div class="hero__inner">
+      <p class="hero__tagline">
+        <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+        For Our CCV Neighbors
+      </p>
+      <h1>Yoga. In Our Clubhouse. Every Tuesday Evening.</h1>
+    </div>
+  </section>
+
+  <!-- Wave divider -->
+  <div class="wave-divider">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none"><path d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z" fill="#faf7f2"/></svg>
+  </div>
+
+  <!-- Class Details -->
+  <section class="section" id="class-details">
+    <div class="container">
+      <div class="section-heading">
+        <h2>The Details</h2>
+        <div class="section-heading__ornament">
+          <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
+        </div>
+        <p style="color:#6b6b6b;font-size:1rem;margin-top:.4rem;">Everything you need to know before you walk in the door.</p>
+      </div>
+
+      <div class="details-card">
+        <ul class="details-list">
+          <li>
+            <span class="label">When</span>
+            <span class="value"><strong>Every Tuesday</strong>, 6:00 &ndash; 7:15 PM</span>
+          </li>
+          <li>
+            <span class="label">Where</span>
+            <span class="value"><strong>Our CCV Clubhouse</strong><small>Just walk over &mdash; no commute required.</small></span>
+          </li>
+          <li>
+            <span class="label">Level</span>
+            <span class="value"><strong>All levels &mdash; no experience necessary</strong><small>If you can breathe, you can practice. Modifications offered for every pose.</small></span>
+          </li>
+          <li>
+            <span class="label">Bring</span>
+            <span class="value"><strong>A yoga mat, two blocks, and a yoga strap</strong></span>
+          </li>
+          <li>
+            <span class="label">Capacity</span>
+            <span class="value"><strong>Space is limited</strong><small>Registering guarantees your spot &mdash; highly recommended so you're not turned away at the door.</small></span>
+          </li>
+          <li>
+            <span class="label">Cost</span>
+            <span class="value"><strong>Free</strong> for CCV residents</span>
+          </li>
+        </ul>
+
+        <div class="registration-note">
+          <strong>Registration is encouraged, not required.</strong><br/>
+          Space is limited, so signing up is the best way to lock in a spot.
+          You'll also get on the <strong>waitlist notification</strong> list &mdash; if a registered student cancels, we'll let you know a seat just opened up.
+          Walk-ins are still welcome when space allows.
+        </div>
+
+        <div class="cta-block">
+          <a href="../signup.html?class=tuesday-ccv" class="signup-link">Sign up for the Tuesday class &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <img class="footer__lotus" src="../lotus.png" alt="" />
+      <div class="footer__links">
+        <a href="../about.html">About</a>
+        <a href="../schedule.html">Schedule</a>
+        <a href="../privates.html">Privates</a>
+        <a href="../props.html">Props</a>
+        <a href="../donations.html">Donate</a>
+      </div>
+      <p>&copy; 2026 Yoga with Jessica. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.nav__toggle');
+    const links  = document.querySelector('.nav__links');
+    toggle.addEventListener('click', () => links.classList.toggle('open'));
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+  </script>
+</body>
+</html>

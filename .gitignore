@@ -9,3 +9,17 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Local dev artifacts
+node_modules/
+playwright-report/
+playwright.config.js
+test-results/
+tests/
+package.json
+package-lock.json
+
+# Backups & previews (not for live site)
+lotus-original.png
+ccvresidents/lotus-preview.html
+*.md

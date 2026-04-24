@@ -199,7 +199,7 @@ function logConfirmationEmail(rows, cancelToken, meetLink) {
       : '') +
       (meetLink ?
         '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
-          '<strong>&#x1F4F9; Your Zoom link is ready!</strong><br>' +
+          '<strong>&#x1F4F9; Your Zoom link is ready</strong><br>' +
           '<p style="margin:8px 0;">Class is starting soon — join here:</p>' +
           '<div style="text-align:center;margin:12px 0;">' +
             '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
@@ -243,7 +243,7 @@ function logConfirmationEmail(rows, cancelToken, meetLink) {
 
 function logWaitlistNotificationEmail(email, firstName, className, classDate) {
   var logSheet = getOrCreateEmailLogSheet();
-  var subject = 'Yoga with Jessica — A Spot Opened Up!';
+  var subject = 'Yoga with Jessica — A Spot Opened Up';
   var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
     '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
       '<h1 style="margin:0;font-family:Georgia,serif;color:#5B7553;font-size:24px;">Yoga with Jessica</h1>' +
@@ -251,7 +251,7 @@ function logWaitlistNotificationEmail(email, firstName, className, classDate) {
     '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
       '<p style="font-size:15px;">Hi ' + escHtml(firstName) + ',</p>' +
       '<p style="font-size:15px;line-height:1.6;">A spot has opened up for <strong>' +
-        escHtml(className) + '</strong> on <strong>' + escHtml(classDate) + '</strong>!</p>' +
+        escHtml(className) + '</strong> on <strong>' + escHtml(classDate) + '</strong>.</p>' +
       '<p style="font-size:15px;line-height:1.6;">Spots are first come, first served, so sign up soon before it fills up again.</p>' +
       '<div style="text-align:center;margin:24px 0;">' +
         '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Sign Up Now</a>' +
