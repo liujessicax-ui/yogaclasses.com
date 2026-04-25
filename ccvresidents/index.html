@@ -205,17 +205,57 @@
       .details-card { padding: 2rem 1.5rem; }
       .details-list li {
         flex-direction: column;
-        gap: .25rem;
-        padding: .9rem 0;
+        gap: .35rem;
+        padding: 1.1rem 0;
+        font-size: 1.15rem;
+        color: #333;
       }
       .details-list .label {
         min-width: 0;
-        font-size: .8rem;
+        font-size: .95rem;
         text-transform: uppercase;
-        letter-spacing: .1em;
+        letter-spacing: .12em;
         color: var(--warm-dk);
         font-family: var(--font-body);
+        font-weight: 800;
+      }
+      .details-list .value {
+        font-weight: 500;
+      }
+      .details-list .value strong {
         font-weight: 700;
+        font-size: 1.18rem;
+      }
+      .details-list .value small {
+        font-size: 1rem;
+        color: #555;
+        line-height: 1.55;
+        margin-top: .25rem;
+      }
+      .registration-note {
+        font-size: 1.08rem;
+        line-height: 1.7;
+        color: #444;
+        font-weight: 500;
+        padding: 1.5rem 1.4rem;
+      }
+      .registration-note strong { font-weight: 800; }
+      .details-card h2 { font-size: 1.7rem; }
+      .section-heading p,
+      .section p[style*="color"] {
+        font-size: 1.05rem !important;
+      }
+      .ccv-hero .hero__tagline {
+        font-size: clamp(1.1rem, 4.5vw, 1.4rem);
+        font-weight: 700;
+      }
+      .signup-link {
+        font-size: 1.35rem;
+        padding: 1rem 2rem;
+      }
+      .secondary-link {
+        font-size: 1.05rem;
+        font-weight: 600;
       }
     }
   </style>
@@ -295,14 +335,6 @@
   <!-- Class Details -->
   <section class="section" id="class-details">
     <div class="container">
-      <div class="section-heading">
-        <h2>The Details</h2>
-        <div class="section-heading__ornament">
-          <svg viewBox="0 0 24 24" fill="none"><g transform="rotate(180 12 12)"><path d="M12 2c-.6 2.4-2.4 4.2-2.4 7.2s1.8 4.8 2.4 7.2c.6-2.4 2.4-4.2 2.4-7.2S12.6 4.4 12 2z" fill="#c4a882"/></g></svg>
-        </div>
-        <p style="color:#6b6b6b;font-size:1rem;margin-top:.4rem;">Everything you need to know before you walk in the door.</p>
-      </div>
-
       <div class="details-card">
         <ul class="details-list">
           <li>
