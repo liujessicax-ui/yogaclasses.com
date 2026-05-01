@@ -133,6 +133,9 @@ body:has(.page-header) .bg-pink-lotus {
   letter-spacing: 0.02em;
 }
 
+/* Match the welcome paragraph size to the hero paragraph (1.1rem) */
+.welcome-section .container > p { font-size: 1.1rem !important; }
+
 /* ---------- Page-header titles in Allura script (every page except home) ---------- */
 .page-header h1 {
   font-family: 'Allura', cursive !important;
@@ -403,6 +406,19 @@ a.btn:focus-visible {
 
 /* Always keep breathing room between the logo and the nav links */
 .nav .container { gap: 1.5rem; }
+
+/* On mobile, bump the logo MUCH larger — there's only the hamburger next to it */
+@media (max-width: 768px) {
+  .nav__logo {
+    font-size: clamp(1.5rem, 5.5vw, 1.9rem) !important;
+    gap: 0.6rem !important;
+  }
+  .nav__logo svg,
+  .nav__logo-img {
+    width: clamp(52px, 14vw, 68px) !important;
+    height: clamp(52px, 14vw, 68px) !important;
+  }
+}
 
 /* Prevent individual nav link text from breaking mid-word */
 .nav__links a { white-space: nowrap; }
