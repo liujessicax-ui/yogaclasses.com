@@ -26,7 +26,7 @@
   <title>Sign Up | Yoga with Jessica</title>
   <link rel="icon" type="image/png" href="lotus.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* ===== Sign-up form styles ===== */
@@ -350,8 +350,12 @@
       .success-message svg { width: 48px; height: 48px; }
     }
   </style>
+  <link rel="stylesheet" href="preview-styles.css" />
 </head>
 <body>
+
+  <!-- Faded pink lotus background (preview) -->
+  <div class="bg-pink-lotus" aria-hidden="true"></div>
 
   <!-- Navigation -->
   <nav class="nav">
@@ -442,14 +446,16 @@
             For in-person classes, walk-ins are welcome, but I encourage signing up ahead of time in case space is limited.
           </p>
 
-          <div class="form-group">
-            <label for="firstName">First Name <span style="color:#c47d5a;">*</span></label>
-            <input type="text" id="firstName" name="firstName" required autocomplete="given-name" />
-          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name <span style="color:#c47d5a;">*</span></label>
+              <input type="text" id="firstName" name="firstName" required autocomplete="given-name" />
+            </div>
 
-          <div class="form-group">
-            <label for="lastName">Last Name <span style="color:#c47d5a;">*</span></label>
-            <input type="text" id="lastName" name="lastName" required autocomplete="family-name" />
+            <div class="form-group">
+              <label for="lastName">Last Name <span style="color:#c47d5a;">*</span></label>
+              <input type="text" id="lastName" name="lastName" required autocomplete="family-name" />
+            </div>
           </div>
 
           <div class="form-group">
@@ -722,12 +728,10 @@
                 <div class="guest-name-wrap" id="guestNameWrap">
                   <div style="display:flex;gap:.5rem;">
                     <div style="flex:1;">
-                      <label for="guestFirstName">Guest&rsquo;s First Name <span style="color:#c47d5a;">*</span></label>
-                      <input type="text" id="guestFirstName" name="guestFirstName" placeholder="First name" autocomplete="off" />
+                      <input type="text" id="guestFirstName" name="guestFirstName" placeholder="Guest's First Name *" autocomplete="off" aria-label="Guest's First Name" />
                     </div>
                     <div style="flex:1;">
-                      <label for="guestLastName">Guest&rsquo;s Last Name <span style="color:#c47d5a;">*</span></label>
-                      <input type="text" id="guestLastName" name="guestLastName" placeholder="Last name" autocomplete="off" />
+                      <input type="text" id="guestLastName" name="guestLastName" placeholder="Guest's Last Name *" autocomplete="off" aria-label="Guest's Last Name" />
                     </div>
                   </div>
                 </div>

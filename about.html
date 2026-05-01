@@ -26,10 +26,14 @@
   <title>About Me | Yoga with Jessica</title>
   <link rel="icon" type="image/png" href="lotus.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="preview-styles.css" />
 </head>
 <body>
+
+  <!-- Faded pink lotus background (preview) -->
+  <div class="bg-pink-lotus" aria-hidden="true"></div>
 
   <!-- Navigation -->
   <nav class="nav">
@@ -175,6 +179,48 @@
     const links  = document.querySelector('.nav__links');
     toggle.addEventListener('click', () => links.classList.toggle('open'));
     links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+  </script>
+
+  <!-- Gallery lightbox (desktop only) -->
+  <script>
+    (function() {
+      // Skip on mobile / narrow screens
+      if (window.matchMedia('(max-width: 768px)').matches) return;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'lightbox-overlay';
+      overlay.innerHTML = `
+        <button class="lightbox-close" aria-label="Close">&times;</button>
+        <div class="lightbox-frame"><img src="" alt="" /></div>
+      `;
+      document.body.appendChild(overlay);
+
+      const overlayImg = overlay.querySelector('.lightbox-frame img');
+      const closeBtn = overlay.querySelector('.lightbox-close');
+
+      function open(src, alt) {
+        overlayImg.src = src;
+        overlayImg.alt = alt || '';
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function close() {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('.gallery-grid img').forEach(img => {
+        img.addEventListener('click', () => open(img.src, img.alt));
+      });
+
+      // Close on backdrop or close button click; ignore clicks on the framed image
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay || e.target === closeBtn) close();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('active')) close();
+      });
+    })();
   </script>
 </body>
 </html>

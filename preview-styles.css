@@ -1,0 +1,546 @@
+/* =========================================================
+   PREVIEW ONLY — faded pink lotus background design system
+   Shared across index.html, about.html, etc.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&display=swap');
+
+/* Move the cream canvas color from body to html so the
+   fixed lotus background isn't covered. */
+html { background: #faf7f2; }
+body { background: transparent !important; }
+
+/* Strip page-specific gradient backgrounds so the pink lotus
+   shows through behind the headlines. */
+.hero { background: transparent !important; }
+.page-header { background: transparent !important; }
+
+/* ---------- Faded pink lotus full-page background ---------- */
+.bg-pink-lotus {
+  position: fixed;
+  inset: 0;
+  background-image: url('pinklotus.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Rectangular vignette: two linear gradients (H + V) intersected so the
+     visible region is a soft-edged rectangle rather than an oval */
+  -webkit-mask-image:
+    linear-gradient(to right,  transparent 0%, black 15%, black 85%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+          mask-image:
+    linear-gradient(to right,  transparent 0%, black 15%, black 85%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-composite: source-in;
+          mask-composite: intersect;
+  animation: pinkLotusFadeIn 3s ease-out 0.3s forwards;
+}
+@keyframes pinkLotusFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 0.95; }
+}
+/* Skip the fade-in on inner pages (which use .page-header) — only the home page animates */
+body:has(.page-header) .bg-pink-lotus {
+  opacity: 0.95 !important;
+  animation: none !important;
+}
+@media (max-width: 768px) {
+  .bg-pink-lotus { display: none; }
+}
+
+/* ---------- Elegant divider (replaces wave dividers) ---------- */
+.elegant-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.elegant-divider__line { flex: 1; height: 1px; }
+.elegant-divider__line:first-child {
+  background: linear-gradient(90deg, transparent, rgba(196,168,130,0.55));
+}
+.elegant-divider__line:last-child {
+  background: linear-gradient(90deg, rgba(196,168,130,0.55), transparent);
+}
+.elegant-divider__lotus {
+  width: 22px; height: 22px; opacity: 0.85; flex-shrink: 0;
+}
+
+/* ---------- "What to Expect" section glow + frosted cards ---------- */
+.section--alt {
+  background: transparent !important;
+  position: relative;
+}
+.section--alt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 40%, rgba(196,168,130,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 60%, rgba(122,139,111,0.12) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+.section--alt > * { position: relative; z-index: 1; }
+.section--alt .feature-card {
+  background: rgba(255, 250, 244, 0.72) !important;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(196,168,130,0.25);
+  box-shadow:
+    0 12px 40px rgba(122,139,111,0.10),
+    0 2px 8px rgba(0,0,0,0.04);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.section--alt .feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 18px 48px rgba(122,139,111,0.18),
+    0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* ---------- Hero typographic accent ---------- */
+.hero h1 em {
+  font-style: italic;
+  font-weight: 400;
+  background: linear-gradient(120deg, #c4a882 0%, #b89668 60%, #d4b893 100%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Script accent (Allura) ---------- */
+.script-accent {
+  font-family: 'Allura', cursive;
+  font-weight: 400;
+  color: #7a5a28;          /* deeper gold/bronze — stands out from the cream + lotus */
+  line-height: 1;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(196, 168, 130, 0.45);
+}
+.welcome-section__accent {
+  font-size: clamp(3.5rem, 7vw, 5rem);
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Page-header titles in Allura script (every page except home) ---------- */
+.page-header h1 {
+  font-family: 'Allura', cursive !important;
+  font-size: clamp(3rem, 5.5vw, 4.5rem) !important;
+  font-weight: 400 !important;
+  color: #7a5a28 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.3rem !important;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.13),
+    0 1px 2px rgba(196, 168, 130, 0.45);
+}
+
+/* ---------- Tighten spacing BELOW the fold only ---------- */
+.welcome-section { padding: 2rem 1rem !important; }
+.section--alt    { padding: 2.5rem 1rem !important; }
+.quote-section   { padding: 2.5rem 1rem !important; }
+
+/* ---------- Quote on background (no card frame) ---------- */
+.quote-card {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3.5rem 3rem 3rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+  text-align: center;
+}
+.quote-card::before,
+.quote-card::after {
+  font-family: 'Cormorant Garamond', serif;
+  position: absolute;
+  font-size: 7rem;
+  line-height: 1;
+  color: rgba(196,168,130,0.45);
+  pointer-events: none;
+}
+.quote-card::before { content: '\201C'; top: 0.3rem; left: 1.5rem; }
+.quote-card::after  { content: '\201D'; bottom: -2.2rem; right: 1.5rem; }
+.quote-card__text {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+  line-height: 1.55;
+  color: #3a3f38;
+  margin: 0 0 1.5rem;
+}
+
+/* ---------- About page: hide decorative artwork ---------- */
+.bg-art { display: none !important; }
+.decor-mandala { display: none !important; }
+
+/* ---------- About page: gallery cards as frosted glass ---------- */
+.gallery-grid > div {
+  background: rgba(255, 250, 244, 0.72) !important;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(196,168,130,0.25);
+  box-shadow: 0 12px 40px rgba(122,139,111,0.10) !important;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.gallery-grid > div:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 18px 48px rgba(122,139,111,0.18) !important,
+    0 4px 12px rgba(0,0,0,0.06) !important;
+}
+
+/* ---------- About page: tighter gap between photo and paragraph (desktop only) ---------- */
+@media (min-width: 769px) {
+  .about-layout { gap: 1.5rem !important; }
+}
+
+/* ---------- About page: profile photo frame matches gallery, slightly wider ---------- */
+.about-photo {
+  justify-self: center;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 14px;                                            /* gallery uses 8px — this is wider */
+  background: rgba(255, 250, 244, 0.72);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(196, 168, 130, 0.25);
+  border-radius: 14px;                                      /* gallery uses 12px */
+  box-shadow: 0 12px 40px rgba(122, 139, 111, 0.10);
+}
+.about-photo img {
+  display: block !important;
+  border-radius: 10px !important;                           /* gallery uses 8px */
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  /* Subtle warm overcast — gently pulls the blue tones toward the page palette */
+  filter:
+    sepia(0.20)
+    saturate(0.92)
+    contrast(1.12)
+    brightness(1.10) !important;
+}
+
+/* ---------- Hide wave dividers globally (pink lotus gives continuity) ---------- */
+.wave-divider { display: none !important; }
+
+/* ---------- Frosted glass on every base card (schedule, prop, privates, contact) ---------- */
+.card {
+  background: rgba(255, 250, 244, 0.72) !important;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(196,168,130,0.25) !important;
+  box-shadow:
+    0 12px 40px rgba(122,139,111,0.10),
+    0 2px 8px rgba(0,0,0,0.04) !important;
+  transition: transform 0.35s ease, box-shadow 0.35s ease !important;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 18px 48px rgba(122,139,111,0.18),
+    0 4px 12px rgba(0,0,0,0.06) !important;
+}
+
+/* ---------- Donation block: keep its bg readable but soften ---------- */
+.donate-section {
+  background: transparent !important;
+}
+
+/* ---------- Pullquote: show on lotus background cleanly ---------- */
+.pullquote {
+  background: transparent;
+}
+
+/* ---------- Remove the default focus ring (black/blue browser outline) ---------- */
+.btn:focus,
+.btn:focus-visible,
+a.btn:focus,
+a.btn:focus-visible {
+  outline: none !important;
+}
+
+/* ---------- Remove the default <button> border that shows around solid btns ---------- */
+.btn:not(.btn--outline) { border: 0 !important; }
+
+/* ---------- Sign-up form: bump font sizes for readability ---------- */
+.form-group input,
+.form-group select             { font-size: 1.1rem  !important; }
+.form-hint                     { font-size: 0.95rem !important; }
+.class-option-info strong      { font-size: 1.0rem  !important; }
+.class-option-info span        { font-size: 0.92rem !important; }
+.class-option .tag-badge       { font-size: 0.75rem !important; padding: 0.15rem 0.5rem !important; }
+.guest-name-wrap input         { font-size: 1.05rem !important; }
+.guest-hint                    { font-size: 0.92rem !important; }
+
+/* ---------- Slightly widen the sign-up form so text wraps less ---------- */
+.signup-form-wrap { max-width: 760px !important; }
+
+/* ---------- First name + Last name on one row ---------- */
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.form-row > .form-group {
+  flex: 1;
+  margin-bottom: 0 !important;
+}
+@media (max-width: 600px) {
+  .form-row { flex-direction: column; gap: 0; }
+  .form-row > .form-group { margin-bottom: 1.25rem !important; }
+}
+
+/* ---------- Class options: no checkbox, click anywhere on the info box to select ---------- */
+.class-option-wrap {
+  border: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+  margin-bottom: 0.5rem;
+}
+/* Hide the checkbox — label still toggles it on click for multi-select to work */
+.class-option input[type="checkbox"] {
+  display: none !important;
+}
+/* Label becomes the click target (full width) */
+.class-option {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  display: block !important;
+}
+/* Class info box: pure white background, click target */
+.class-option-info {
+  background: #ffffff !important;
+  border: 1px solid rgba(196, 168, 130, 0.35);
+  border-radius: 8px;
+  padding: 0.8rem 1.1rem;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center;
+  gap: 0.5rem;
+  row-gap: 0.3rem;
+  min-width: 0;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.class-option-info strong { white-space: nowrap; }
+/* Hover state */
+.class-option:hover .class-option-info {
+  border-color: rgba(122, 139, 111, 0.5);
+  background: #fdfdfb !important;
+}
+/* Selected state: olive border + soft ring + faint sage wash */
+.class-option.selected .class-option-info {
+  border-color: var(--olive) !important;
+  box-shadow: 0 0 0 1px var(--olive), 0 4px 12px rgba(122, 139, 111, 0.12);
+  background: rgba(122, 139, 111, 0.06) !important;
+}
+/* Override the wrap's old highlight rule */
+.class-option-wrap:has(.class-option.selected) {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+/* ---------- Caveat font on top-level form labels only (First Name / Last Name / Email / Select Classes) ---------- */
+.form-group > label {
+  font-family: 'Caveat', cursive !important;
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: #4a4d46 !important;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.3rem !important;
+}
+
+/* ---------- Schedule cards: "In Person" tag in terracotta (matches sign-up page) ---------- */
+.schedule-card__tag--inperson {
+  background: rgba(196, 120, 90, 0.12) !important;
+  color: #a0603e !important;
+  border-color: rgba(196, 120, 90, 0.25) !important;
+}
+
+/* ---------- Schedule cards: bump font sizes for readability ---------- */
+.schedule-card__details h3 { font-size: 1.35rem !important; }
+.schedule-card__details p  { font-size: 1.0rem  !important; }
+.schedule-card__tag        { font-size: 0.85rem !important; padding: 0.25rem 0.7rem !important; }
+.schedule-card__props h4   { font-size: 0.95rem !important; }
+.schedule-card__props li   { font-size: 0.92rem !important; }
+.schedule-card__action .btn { font-size: 0.85rem !important; padding: 0.6rem 1.4rem !important; }
+
+/* ---------- Tighten page-header → content gap (non-home pages) ---------- */
+.page-header { padding: 3rem 0 0.5rem !important; }
+.page-header + .section,
+.page-header + section { padding-top: 1.5rem !important; }
+
+/* ---------- Fluid nav logo sizing — smoothly scales with viewport ---------- */
+.nav__logo {
+  font-size: clamp(1.2rem, 1.6vw + 0.5rem, 1.8rem) !important;
+  gap: clamp(0.4rem, 0.6vw + 0.2rem, 0.7rem) !important;
+  white-space: nowrap !important;          /* keep "Yoga with Jessica" on one line */
+  flex-shrink: 0;                           /* logo never squeezes */
+}
+.nav__logo svg,
+.nav__logo-img {
+  width: clamp(32px, 3.5vw + 8px, 50px) !important;
+  height: clamp(32px, 3.5vw + 8px, 50px) !important;
+}
+
+/* Always keep breathing room between the logo and the nav links */
+.nav .container { gap: 1.5rem; }
+
+/* Prevent individual nav link text from breaking mid-word */
+.nav__links a { white-space: nowrap; }
+
+/* Tighten nav links at the cramped middle desktop range (960-1199px) */
+@media (min-width: 960px) and (max-width: 1199px) {
+  .nav__links { gap: 1rem !important; }
+  .nav__links a { font-size: 0.78rem !important; letter-spacing: 0.04em !important; }
+}
+
+/* Move hamburger breakpoint up to 960px — kills the cramped 769-959px state */
+@media (max-width: 959px) {
+  .nav__toggle { display: block !important; position: relative; z-index: 10000; }
+  .nav__links {
+    position: fixed !important; top: 0; left: 0;
+    width: 100%; height: 100vh; height: 100dvh;
+    background: #f8f6f1;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 2rem; transform: translateX(100%); transition: transform 0.35s;
+    z-index: 9999;
+    margin: 0; padding: 0;
+    box-sizing: border-box;
+  }
+  .nav__links.open { transform: translateX(0); }
+  .nav__links a { font-size: 1.2rem; }
+}
+
+/* Punchier lotus icon: richer color, layered white glow */
+.nav__logo-img {
+  filter:
+    saturate(1.55)
+    brightness(1.04)
+    drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 14px rgba(255, 255, 255, 0.75))
+    drop-shadow(0 0 24px rgba(255, 255, 255, 0.45));
+}
+
+/* ---------- Frosted text containers for About + Donations readability ---------- */
+.about-text,
+.donate-intro {
+  background: rgba(255, 250, 244, 0.80);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  border: 1px solid rgba(196, 168, 130, 0.22);
+  border-radius: 10px;
+  padding: 2.25rem 2.5rem !important;
+  box-shadow: 0 12px 40px rgba(122, 139, 111, 0.10);
+}
+
+/* "To donate, please Venmo me at..." — bold, no backdrop */
+.donate-intro + div,
+.donate-intro + div p {
+  font-weight: 700 !important;
+}
+
+/* "Any amount is appreciated..." — bold, no backdrop */
+.donate-note {
+  font-weight: 700 !important;
+}
+
+/* ---------- Mobile-only: shrink donations + How It Works paragraph text ---------- */
+@media (max-width: 768px) {
+  /* Donations intro paragraphs */
+  .donate-intro p { font-size: 0.92rem !important; line-height: 1.6 !important; }
+  /* "How It Works" card on schedule page (matched by its inline border-left style) */
+  .card[style*="border-left"] h3 { font-size: 1.25rem !important; }
+  .card[style*="border-left"] p  { font-size: 0.9rem  !important; line-height: 1.6 !important; }
+}
+
+/* ---------- Gallery lightbox (about page) ---------- */
+.gallery-grid img { cursor: pointer; }
+
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.lightbox-overlay.active { opacity: 1; pointer-events: auto; }
+
+/* Frame matches the gallery thumbnail style (cream mat + gold border) */
+.lightbox-frame {
+  background: rgba(255, 250, 244, 0.95);
+  border: 1px solid rgba(196, 168, 130, 0.4);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  cursor: default;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+}
+.lightbox-frame img {
+  display: block;
+  max-width: calc(90vw - 28px);
+  max-height: calc(90vh - 28px);
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+/* Close button */
+.lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.lightbox-close:hover { background: rgba(255, 255, 255, 0.25); }
+
+/* Disable lightbox + clickability on mobile */
+@media (max-width: 768px) {
+  .gallery-grid img { cursor: default; }
+  .lightbox-overlay { display: none !important; }
+}
+
+/* ---------- Remove redundant hover-lift across every box/card/button site-wide
+              (gallery photos kept — lift signals they're clickable) ---------- */
+.btn:hover,
+.card:hover,
+.feature-card:hover,
+.section--alt .feature-card:hover,
+.donate-btn:hover {
+  transform: none !important;
+}
