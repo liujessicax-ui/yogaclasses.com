@@ -498,6 +498,22 @@
     </div>
   </div>
 
+  <!-- Validation popup (themed) — replaces native browser alerts for missing fields -->
+  <div class="validation-overlay" id="validationOverlay" aria-hidden="true">
+    <div class="validation-modal" role="dialog" aria-labelledby="validationTitle">
+      <div class="validation-modal__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="13"/>
+          <circle cx="12" cy="16.4" r="0.6" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <h3 class="validation-modal__title" id="validationTitle">A gentle reminder</h3>
+      <p class="validation-modal__text" id="validationText"></p>
+      <button type="button" class="validation-modal__close" id="validationClose">Got it</button>
+    </div>
+  </div>
+
   <!-- Capacity / Waitlist Popup -->
   <div class="cap-overlay" id="capOverlay">
     <div class="cap-modal">
@@ -858,6 +874,26 @@
       if (e.target === dupOverlay) dupOverlay.classList.remove('active');
     });
 
+    // ========== Validation modal (replaces native alert) ==========
+    const validationOverlay = document.getElementById('validationOverlay');
+    const validationText    = document.getElementById('validationText');
+    function showValidationModal(message) {
+      validationText.textContent = message;
+      validationOverlay.classList.add('active');
+      validationOverlay.setAttribute('aria-hidden', 'false');
+    }
+    function closeValidationModal() {
+      validationOverlay.classList.remove('active');
+      validationOverlay.setAttribute('aria-hidden', 'true');
+    }
+    document.getElementById('validationClose').addEventListener('click', closeValidationModal);
+    validationOverlay.addEventListener('click', (e) => {
+      if (e.target === validationOverlay) closeValidationModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && validationOverlay.classList.contains('active')) closeValidationModal();
+    });
+
     // ========== FORM SUBMIT ==========
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -869,13 +905,13 @@
       const selectedClasses = Array.from(document.querySelectorAll('input[name="classes"]:checked'));
 
       if (!firstName || !lastName || !email || selectedClasses.length === 0) {
-        alert('Please fill out all required fields and select at least one class.');
+        showValidationModal('Please fill out all required fields and select at least one class.');
         return;
       }
 
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailPattern.test(email)) {
-        alert('Please enter a valid email address.');
+        showValidationModal('Please enter a valid email address.');
         return;
       }
 
@@ -887,12 +923,12 @@
       const guestFirstName = bringingGuest ? _g.nameInput.value.trim() : '';
       const guestLastName = bringingGuest ? (_g.lastNameInput ? _g.lastNameInput.value.trim() : '') : '';
       if (bringingGuest && !guestFirstName) {
-        alert('Please enter your guest\'s first name.');
+        showValidationModal('Please enter your guest\'s first name.');
         _g.nameInput.focus();
         return;
       }
       if (bringingGuest && !guestLastName) {
-        alert('Please enter your guest\'s last name.');
+        showValidationModal('Please enter your guest\'s last name.');
         _g.lastNameInput.focus();
         return;
       }
