@@ -47,8 +47,19 @@ body:has(.page-header) .bg-pink-lotus {
   opacity: 0.95 !important;
   animation: none !important;
 }
+/* Mobile: show a featured portion of the lotus + leaves (experiment — easy to revert) */
 @media (max-width: 768px) {
-  .bg-pink-lotus { display: none; }
+  .bg-pink-lotus {
+    display: block !important;
+    opacity: 0.55;
+    background-size: cover;
+    background-position: 90% center;     /* features the lotus on the right + leaf shadows */
+    /* Replace the rectangular vignette with a single soft radial fade */
+    -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 85%) !important;
+            mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 85%) !important;
+    -webkit-mask-composite: source-over !important;
+            mask-composite: add !important;
+  }
 }
 
 /* ---------- Elegant divider (replaces wave dividers) ---------- */
@@ -133,8 +144,14 @@ body:has(.page-header) .bg-pink-lotus {
   letter-spacing: 0.02em;
 }
 
-/* Match the welcome paragraph size to the hero paragraph (1.1rem) */
+/* Match the welcome paragraph size to the hero paragraph at every breakpoint */
 .welcome-section .container > p { font-size: 1.1rem !important; }
+@media (max-width: 768px) {
+  .welcome-section .container > p { font-size: 1rem !important; }
+}
+@media (max-width: 480px) {
+  .welcome-section .container > p { font-size: 0.92rem !important; }
+}
 
 /* ---------- Page-header titles in Allura script (every page except home) ---------- */
 .page-header h1 {
@@ -371,6 +388,36 @@ a.btn:focus-visible {
   margin-bottom: 0.3rem !important;
 }
 
+/* ---------- Mobile only: prop card titles in playful Caveat ---------- */
+@media (max-width: 768px) {
+  .prop-card__body h3 {
+    font-family: 'Caveat', cursive !important;
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    margin-bottom: 0.6rem !important;
+  }
+}
+
+/* ---------- Mobile only: subtle elegant glow on the donations heart ---------- */
+@media (max-width: 768px) {
+  .donate-heart {
+    width: 52px !important;
+    height: 52px !important;
+    fill: #c4a882 !important;        /* warm tan from site palette */
+    stroke: #8a6d3a !important;
+    stroke-width: 1 !important;
+    opacity: 0.9 !important;
+    margin-bottom: 1.2rem !important;
+    animation: heartSoftGlow 4s ease-in-out infinite;
+  }
+}
+@keyframes heartSoftGlow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(196, 168, 130, 0.25)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(196, 168, 130, 0.65)); }
+}
+
 /* ---------- Schedule cards: "In Person" tag in terracotta (matches sign-up page) ---------- */
 .schedule-card__tag--inperson {
   background: rgba(196, 120, 90, 0.12) !important;
@@ -407,16 +454,47 @@ a.btn:focus-visible {
 /* Always keep breathing room between the logo and the nav links */
 .nav .container { gap: 1.5rem; }
 
-/* On mobile, bump the logo MUCH larger — there's only the hamburger next to it */
+/* On mobile, bump the logo larger — there's only the hamburger next to it.
+   Tighter vertical padding to keep the header from feeling bulky. */
 @media (max-width: 768px) {
+  .nav .container { padding: 0.5rem 0 !important; }
   .nav__logo {
-    font-size: clamp(1.5rem, 5.5vw, 1.9rem) !important;
-    gap: 0.6rem !important;
+    font-size: clamp(1.4rem, 5vw, 1.75rem) !important;
+    gap: 0.55rem !important;
   }
   .nav__logo svg,
   .nav__logo-img {
-    width: clamp(52px, 14vw, 68px) !important;
-    height: clamp(52px, 14vw, 68px) !important;
+    width: clamp(46px, 12vw, 60px) !important;
+    height: clamp(46px, 12vw, 60px) !important;
+  }
+  /* Stronger hero headline as a mobile statement */
+  .hero h1 { font-size: clamp(2rem, 8vw, 2.8rem) !important; }
+  /* Center the home-page hero in the viewport so it fits without scrolling */
+  .hero {
+    min-height: calc(100vh - 80px) !important;       /* fallback */
+    min-height: calc(100dvh - 80px) !important;      /* accounts for mobile address bar */
+    padding: 1rem 1rem !important;
+  }
+  /* Roomier spacing between the hero elements on mobile */
+  .hero__tagline { margin-bottom: 1.6rem !important; }
+  .hero h1       { margin-bottom: 1.5rem !important; }
+  .hero p        { margin-bottom: 2.5rem !important; }
+
+  /* Unify About-Me and Private Sessions boxes on mobile (same width, padding, text size) */
+  .about-text,
+  .privates-card {
+    background: rgba(255, 250, 244, 0.78) !important;
+    padding: 1.5rem 1.25rem !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  .about-text p,
+  .privates-card p {
+    font-size: 1rem !important;
+    line-height: 1.65 !important;
+    margin-bottom: 1rem !important;
   }
 }
 
