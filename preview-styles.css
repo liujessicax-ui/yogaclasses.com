@@ -54,6 +54,11 @@ body:has(.page-header) .bg-pink-lotus {
     opacity: 0.55;
     background-size: cover;
     background-position: 90% center;     /* features the lotus on the right + leaf shadows */
+    /* Lock the background size so it doesn't resize with the address bar
+       showing/hiding (which would otherwise cause a zoom effect on scroll) */
+    bottom: auto !important;
+    height: 100vh !important;            /* fallback */
+    height: 100lvh !important;           /* large viewport — stays put as URL bar collapses */
     /* Replace the rectangular vignette with a single soft radial fade */
     -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 85%) !important;
             mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 85%) !important;
