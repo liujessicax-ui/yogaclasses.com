@@ -526,7 +526,14 @@ a.btn:focus-visible {
     box-sizing: border-box;
   }
   .nav__links.open { transform: translateX(0); }
-  .nav__links a { font-size: 1.2rem; }
+  .nav__links a {
+    font-family: 'Caveat', cursive !important;
+    font-size: 1.7rem !important;
+    font-weight: 600 !important;
+    color: #6b4423 !important;             /* warm brown */
+    text-transform: none !important;        /* override uppercase from base styles */
+    letter-spacing: normal !important;
+  }
 }
 
 /* Punchier lotus icon: richer color, layered white glow */
