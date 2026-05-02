@@ -82,7 +82,9 @@ module.exports = {
     'straps.jpg',
     'yogablankets.jpg',
     'bolsters.jpg',
-    'Iyengar Yoga Chair.jpg'
+    'Iyengar Yoga Chair.jpg',
+    'pinklotus.png',
+    'og-image.jpg'
   ],
 
   // ========== ANALYTICS ==========

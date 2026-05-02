@@ -36,6 +36,17 @@
     .form-group {
       margin-bottom: 1.5rem;
     }
+    /* Side-by-side fields on wider viewports; stacks on narrow mobile */
+    .form-row {
+      display: flex; gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .form-row .form-group {
+      flex: 1; margin-bottom: 0;
+    }
+    @media (max-width: 480px) {
+      .form-row { flex-direction: column; gap: 0; }
+      .form-row .form-group { margin-bottom: 1.5rem; }
+    }
     .form-group label {
       display: block; font-weight: 600; font-size: .9rem;
       margin-bottom: .4rem; color: var(--charcoal);
