@@ -405,51 +405,11 @@ a.btn:focus-visible {
   }
 }
 
-/* ---------- Themed validation popup (sign-up page) ---------- */
-.validation-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(60, 50, 35, 0.45);
-  backdrop-filter: blur(6px) saturate(120%);
-  -webkit-backdrop-filter: blur(6px) saturate(120%);
-  z-index: 10000;
-}
-.validation-overlay.active {
-  display: block;
-  animation: validationFadeIn 0.25s ease-out;
-}
-@keyframes validationFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* Modal is fixed-positioned + centered via translate so it never depends on the
-   overlay's flex layout (which can be flaky on iOS Safari). */
-.validation-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(100vw - 2rem);
-  max-width: 420px;
-  background: rgba(255, 250, 244, 0.97);
-  backdrop-filter: blur(20px) saturate(120%);
-  -webkit-backdrop-filter: blur(20px) saturate(120%);
-  border: 1px solid rgba(196, 168, 130, 0.40);
-  border-radius: 14px;
-  padding: 2.25rem 1.75rem 1.75rem;
-  text-align: center;
-  box-sizing: border-box;
-  z-index: 10001;
-  box-shadow:
-    0 24px 60px rgba(122, 86, 45, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.08);
-  animation: validationModalIn 0.32s cubic-bezier(0.2, 0.8, 0.3, 1.1);
-}
+/* Validation popup reuses the working dup-overlay/dup-modal CSS from signup.html
+   (defined inline at signup.html, so no extra CSS needed here). */
 @keyframes validationModalIn {
-  from { opacity: 0; transform: translate(-50%, -45%) scale(0.95); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from { opacity: 0; transform: translateY(18px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .validation-modal__icon {

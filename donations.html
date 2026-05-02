@@ -106,7 +106,7 @@
       </div>
 
       <div style="text-align:center;margin:2rem 0;font-size:1.05rem;color:#555;line-height:1.8;">
-        <p>To donate, please Venmo me at <a href="https://venmo.com/Jessica-eifkc" target="_blank" rel="noopener" style="color:var(--olive);font-weight:700;text-decoration:underline;text-decoration-color:rgba(122,139,111,.4);text-underline-offset:3px;">@Jessica-eifkc</a></p>
+        <p>To donate, please Venmo me at <a id="venmoLink" href="https://venmo.com/u/Jessica-eifkc" target="_blank" rel="noopener" style="color:var(--olive);font-weight:700;text-decoration:underline;text-decoration-color:rgba(122,139,111,.4);text-underline-offset:3px;">@Jessica-eifkc</a></p>
       </div>
 
       <p class="donate-note">
@@ -135,6 +135,25 @@
     const links  = document.querySelector('.nav__links');
     toggle.addEventListener('click', () => links.classList.toggle('open'));
     links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+
+    // On mobile, try to open the Venmo app's pay screen directly.
+    // Falls back to the web profile (the href) if the app isn't installed.
+    const venmoLink = document.getElementById('venmoLink');
+    if (venmoLink && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      venmoLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const webURL = venmoLink.href;
+        const appURL = 'venmo://paycharge?txn=pay&recipients=Jessica-eifkc';
+        const start = Date.now();
+        // If the app opens, the page is backgrounded and the timeout fires late
+        // (or never). If it doesn't, fall through to the web URL within ~1.2s.
+        const fallback = setTimeout(() => {
+          if (Date.now() - start < 1500) window.location.href = webURL;
+        }, 1000);
+        window.addEventListener('pagehide', () => clearTimeout(fallback), { once: true });
+        window.location.href = appURL;
+      });
+    }
   </script>
 </body>
 </html>

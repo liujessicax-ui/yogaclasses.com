@@ -498,19 +498,21 @@
     </div>
   </div>
 
-  <!-- Validation popup (themed) — replaces native browser alerts for missing fields -->
-  <div class="validation-overlay" id="validationOverlay" aria-hidden="true">
-    <div class="validation-modal" role="dialog" aria-labelledby="validationTitle">
-      <div class="validation-modal__icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Validation popup — uses the same dup-overlay class so it inherits the working modal CSS -->
+  <div class="dup-overlay" id="validationOverlay">
+    <div class="dup-modal">
+      <div class="dup-modal__icon" style="background:rgba(196,120,90,.13);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c47d5a" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="13"/>
-          <circle cx="12" cy="16.4" r="0.6" fill="currentColor" stroke="none"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
       </div>
-      <h3 class="validation-modal__title" id="validationTitle">A gentle reminder</h3>
-      <p class="validation-modal__text" id="validationText"></p>
-      <button type="button" class="validation-modal__close" id="validationClose">Got it</button>
+      <h3>A gentle reminder</h3>
+      <p id="validationText"></p>
+      <div class="dup-modal__actions">
+        <button type="button" class="dup-modal__browse" id="validationClose">Got it</button>
+      </div>
     </div>
   </div>
 
@@ -874,17 +876,15 @@
       if (e.target === dupOverlay) dupOverlay.classList.remove('active');
     });
 
-    // ========== Validation modal (replaces native alert) ==========
+    // ========== Validation modal — reuses dup-modal styling (same .active class toggle pattern) ==========
     const validationOverlay = document.getElementById('validationOverlay');
     const validationText    = document.getElementById('validationText');
     function showValidationModal(message) {
       validationText.textContent = message;
       validationOverlay.classList.add('active');
-      validationOverlay.setAttribute('aria-hidden', 'false');
     }
     function closeValidationModal() {
       validationOverlay.classList.remove('active');
-      validationOverlay.setAttribute('aria-hidden', 'true');
     }
     document.getElementById('validationClose').addEventListener('click', closeValidationModal);
     validationOverlay.addEventListener('click', (e) => {
