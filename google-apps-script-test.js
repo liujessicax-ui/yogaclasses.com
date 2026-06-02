@@ -529,9 +529,14 @@ function checkAndCreateMeetForLateSignup(rows) {
     if (minutesUntilClass > 30 || minutesUntilClass < -15) continue;
 
     // Check if this student signed up for this class
+    var classDate = formatClassDate(pstNow);
     var signedUpForThis = false;
     for (var r = 0; r < rows.length; r++) {
-      if (rows[r].classType === 'Online') {
+      var rowType = (rows[r].classType || '').toString().trim().toLowerCase();
+      var rowDate = (rows[r].classDate || '').toString().trim();
+      var dateMatches = rowDate && (rowDate === classDate ||
+                                    extractMonthDay_(rowDate) === extractMonthDay_(classDate));
+      if (rowType === 'online' && dateMatches) {
         signedUpForThis = true;
         break;
       }
@@ -539,7 +544,6 @@ function checkAndCreateMeetForLateSignup(rows) {
     if (!signedUpForThis) continue;
 
     // Check for existing mock Zoom link
-    var classDate = formatClassDate(pstNow);
     var linkKey = 'meet_link_' + cls.day + '_' + classDate;
     var existingLink = cache.getProperty(linkKey);
 

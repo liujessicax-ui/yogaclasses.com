@@ -908,7 +908,11 @@ function checkAndCreateMeetForLateSignup(rows) {
     var classDate = formatClassDate(pstNow);
     var signedUpForThis = false;
     for (var r = 0; r < rows.length; r++) {
-      if (rows[r].classType === 'Online' && rows[r].classDate &&
+      var rowType = (rows[r].classType || '').toString().trim().toLowerCase();
+      var rowDate = (rows[r].classDate || '').toString().trim();
+      var dateMatches = rowDate && (rowDate === classDate ||
+                                    extractMonthDay_(rowDate) === extractMonthDay_(classDate));
+      if (rowType === 'online' && dateMatches &&
           rows[r].className && rows[r].className.indexOf(cls.name.split(' ')[0]) !== -1) {
         signedUpForThis = true;
         break;
