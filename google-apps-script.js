@@ -1074,12 +1074,12 @@ function sendZoomLinkToStudents(emails, cls, zoomLink) {
 // Class schedule (PST / America/Los_Angeles):
 //   Sunday    6:00 PM - 7:15 PM  Online
 //   Tuesday   6:00 PM - 7:15 PM  In-Person (CCV)
-//   Wednesday 6:00 PM - 7:15 PM  Online
+//   Wednesday 8:00 PM - 9:15 PM  Online
 
 var CLASS_SCHEDULE = [
   { day: 0, name: 'Sunday Evening — Online via Zoom',           startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
   { day: 2, name: 'Tuesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' },
-  { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' }
+  { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 20, startM: 0, endH: 21, endM: 15, type: 'online' }
 ];
 
 var MEET_TZ = 'America/Los_Angeles';
@@ -1303,7 +1303,7 @@ var ARCHIVE_TZ = 'America/Los_Angeles';
 var CLASS_START_TIMES = {
   'Sunday':    { startH: 18, startM: 0 },
   'Tuesday':   { startH: 18, startM: 0 },
-  'Wednesday': { startH: 18, startM: 0 }
+  'Wednesday': { startH: 20, startM: 0 }
 };
 
 function archivePastSignups() {

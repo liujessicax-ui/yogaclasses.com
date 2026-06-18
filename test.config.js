@@ -50,9 +50,9 @@ module.exports = {
       id: 'wednesday-restorative',
       label: 'Wednesday Evening — Restorative Yoga (Online)',
       day: 3,
-      startHour: 18, startMin: 0,
-      endHour: 19, endMin: 15,
-      duration: '6:00 PM – 7:15 PM PST',
+      startHour: 20, startMin: 0,
+      endHour: 21, endMin: 15,
+      duration: '8:00 PM – 9:15 PM PST',
       type: 'online',
       cutoffMinutesAfterStart: 15,
       tags: ['Restorative', 'Open to Everyone']

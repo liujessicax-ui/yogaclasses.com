@@ -498,7 +498,7 @@ var TEST_MEET_TZ = 'America/Los_Angeles';
 var TEST_CLASS_SCHEDULE = [
   { day: 0, name: 'Sunday Evening — Online via Zoom',           startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' },
   { day: 2, name: 'Tuesday Evening — CCV Clubhouse (In Person)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'in-person' },
-  { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 18, startM: 0, endH: 19, endM: 15, type: 'online' }
+  { day: 3, name: 'Wednesday Evening — Restorative Yoga (Online)', startH: 20, startM: 0, endH: 21, endM: 15, type: 'online' }
 ];
 
 function checkAndCreateMeetForLateSignup(rows) {
@@ -1211,7 +1211,7 @@ var ARCHIVE_TZ = 'America/Los_Angeles';
 var CLASS_START_TIMES = {
   'Sunday':    { startH: 18, startM: 0 },
   'Tuesday':   { startH: 18, startM: 0 },
-  'Wednesday': { startH: 18, startM: 0 }
+  'Wednesday': { startH: 20, startM: 0 }
 };
 
 function archivePastSignups() {
