@@ -590,6 +590,7 @@
     </div>
   </footer>
 
+  <script src="schedule-data.js"></script>
   <script>
     // ========== NAV TOGGLE ==========
     const toggle = document.querySelector('.nav__toggle');
@@ -597,155 +598,63 @@
     toggle.addEventListener('click', () => navLinks.classList.toggle('open'));
     navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
 
-    // ========== CLASS SCHEDULE DEFINITIONS ==========
-    // All times are in PST (UTC-8). The code converts to the user's
-    // local timezone for comparison so classes appear/disappear at
-    // the correct real-world moment regardless of the visitor's location.
-    // All class times are in America/Los_Angeles (handles PST/PDT automatically).
-    const LA_TZ = 'America/Los_Angeles';
+    // ========== CLASS SCHEDULE (from the Sheet via schedule-data.js) ==========
+    // Single source of truth is the Google Sheet, served at ?action=schedule.
+    // We render immediately from the cached/fallback copy, then refresh from the
+    // network below (after SHEETS_WEB_APP_URL is defined). All Pacific/DST date
+    // math lives in schedule-data.js.
+    let SCHEDULE   = YogaSchedule.current();
+    let CLASSES    = SCHEDULE.classes;
+    let EXCEPTIONS = SCHEDULE.exceptions;
 
-    // day: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat (in Pacific time)
-    const CLASS_DEFS = [
-      {
-        id: 'sunday-online',
-        label: 'Sunday Evening &mdash; Online via Zoom',
-        day: 0, startHour: 18, startMin: 0, endHour: 19, endMin: 15,
-        duration: '6:00 PM – 7:15 PM PST',
-        type: 'online',
-        tags: ['Open to Everyone']
-      },
-      {
-        id: 'tuesday-ccv',
-        label: 'Tuesday Evening &mdash; CCV Clubhouse (In Person)',
-        day: 2, startHour: 18, startMin: 0, endHour: 19, endMin: 15,
-        duration: '6:00 PM – 7:15 PM PST',
-        type: 'inperson',
-        tags: ['CCV Residents Only', 'In Person']
-      },
-      {
-        id: 'wednesday-restorative',
-        label: 'Wednesday Evening &mdash; Restorative Yoga (Online)',
-        day: 3, startHour: 20, startMin: 0, endHour: 21, endMin: 15,
-        duration: '8:00 PM – 9:15 PM PST',
-        type: 'online',
-        tags: ['Restorative', 'Open to Everyone']
-      }
-    ];
-
-    // ========== DATE UTILITIES (Pacific Time, DST-aware) ==========
-
-    // Get components of "now" in Pacific time using Intl
-    function getNowInPacific() {
-      const now = new Date();
-      const parts = {};
-      new Intl.DateTimeFormat('en-US', {
-        timeZone: LA_TZ,
-        year: 'numeric', month: 'numeric', day: 'numeric',
-        hour: 'numeric', minute: 'numeric', second: 'numeric',
-        hour12: false, weekday: 'short'
-      }).formatToParts(now).forEach(p => { parts[p.type] = p.value; });
-      return {
-        year: +parts.year,
-        month: +parts.month,
-        day: +parts.day,
-        hour: +parts.hour === 24 ? 0 : +parts.hour,
-        minute: +parts.minute,
-        weekday: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(
-          new Date(now.toLocaleString('en-US', { timeZone: LA_TZ })).toLocaleDateString('en-US', { weekday: 'short' })
-        ),
-        _date: now
-      };
-    }
-
-    // Create a Date for a specific Pacific time date+time (DST-aware).
-    // Tries both -08:00 and -07:00, keeps whichever lands on the right local hour.
-    function pacificDate(year, month, day, hour, minute) {
-      const m = String(month).padStart(2, '0');
-      const d = String(day).padStart(2, '0');
-      const h = String(hour).padStart(2, '0');
-      const min = String(minute).padStart(2, '0');
-      const base = year + '-' + m + '-' + d + 'T' + h + ':' + min + ':00';
-
-      // Try PST (-08:00) first, then PDT (-07:00)
-      for (const offset of ['-08:00', '-07:00']) {
-        const candidate = new Date(base + offset);
-        // Verify it resolves to the right hour in Pacific time
-        const checkHour = +new Intl.DateTimeFormat('en-US', {
-          timeZone: LA_TZ, hour: 'numeric', hour12: false
-        }).formatToParts(candidate).find(p => p.type === 'hour').value;
-        if (checkHour === hour || (checkHour === 24 && hour === 0)) {
-          return candidate;
-        }
-      }
-      // Fallback (shouldn't happen)
-      return new Date(base + '-08:00');
-    }
-
-    function getNextOccurrences(classDef, nowUTC, windowDays) {
-      const pac = getNowInPacific();
-      const results = [];
-
-      // Scan 9 calendar days to cover the full 7-day window
-      for (let offset = 0; offset <= windowDays + 1; offset++) {
-        // Build a date in Pacific time for scanning
-        const scanDate = new Date(pac.year, pac.month - 1, pac.day + offset);
-        // scanDate.getDay() gives the weekday (works because we just need day-of-week)
-
-        if (scanDate.getDay() === classDef.day) {
-          const classStart = pacificDate(
-            scanDate.getFullYear(), scanDate.getMonth() + 1, scanDate.getDate(),
-            classDef.startHour, classDef.startMin
-          );
-
-          // Sign-up cutoff: 15 minutes after class starts
-          const signupCutoff = new Date(classStart.getTime() + 15 * 60000);
-
-          // Window end: 7 days from now
-          const windowEnd = new Date(nowUTC.getTime() + windowDays * 86400000);
-
-          // Show if: we haven't passed the 15-min cutoff AND starts within 7 days
-          if (signupCutoff > nowUTC && classStart <= windowEnd) {
-            results.push(classStart);
-          }
-        }
-      }
-      return results;
-    }
-
-    // Format a Date for display — always show the Pacific time date
-    function formatDate(date) {
-      const opts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: LA_TZ };
-      return date.toLocaleDateString('en-US', opts);
-    }
+    // Maps a checkbox value ("id|ISOdate") to its occurrence details for submit.
+    const occurrenceByValue = {};
 
     // ========== BUILD CLASS OPTIONS ==========
     function buildClassOptions() {
       const container = document.getElementById('classOptions');
-      const now = new Date();
       let hasAny = false;
       let html = '';
+
+      // Reset occurrence lookup (rebuilt on each render, e.g. after a refresh)
+      Object.keys(occurrenceByValue).forEach(k => delete occurrenceByValue[k]);
 
       // Get pre-selected class from URL param (e.g. ?class=monday-online)
       const urlParams = new URLSearchParams(window.location.search);
       const preselectedClass = urlParams.get('class');
 
-      CLASS_DEFS.forEach(cls => {
-        const occurrences = getNextOccurrences(cls, now, 7);
-        occurrences.forEach(date => {
+      CLASSES.forEach(cls => {
+        const occurrences = YogaSchedule.upcomingOccurrences(cls, EXCEPTIONS, 7);
+        occurrences.forEach(occ => {
           hasAny = true;
-          const dateStr = formatDate(date);
-          const value = cls.id + '|' + date.toISOString();
+          const dateStr = YogaSchedule.formatDate(occ.date);
+          const durationStr = YogaSchedule.formatTimeRange(occ.startHour, occ.startMin, occ.durationMins);
+          const value = cls.id + '|' + occ.date.toISOString();
           const isInPerson = cls.type === 'inperson';
           const isPreselected = (preselectedClass === cls.id);
+
+          occurrenceByValue[value] = {
+            id: cls.id,
+            name: cls.label,
+            date: dateStr,
+            duration: durationStr,
+            type: cls.type,
+            capacity: cls.capacity
+          };
+
+          const tagBadges = cls.tags.map(t =>
+            `<span class="tag-badge ${t === 'In Person' ? 'tag-badge--inperson' : 'tag-badge--open'}">${t}</span>`
+          ).join('');
+
           html += `
             <div class="class-option-wrap">
               <label class="class-option${isPreselected ? ' selected' : ''}" data-type="${cls.type}">
                 <input type="checkbox" name="classes" value="${value}" data-type="${cls.type}" ${isPreselected ? 'checked' : ''} />
                 <div class="class-option-info">
                   <strong>${dateStr}</strong>
-                  <span>${cls.duration}</span>
+                  <span>${durationStr}</span>
                   ${cls.type === 'online' ? '<span class="tag-badge tag-badge--zoom">Via Zoom</span>' : ''}
-                  ${cls.tags.map(t => `<span class="tag-badge ${t === 'In Person' ? 'tag-badge--inperson' : 'tag-badge--open'}">${t}</span>`).join('')}
+                  ${tagBadges}
                 </div>
               </label>
               ${isInPerson ? `
@@ -945,16 +854,16 @@
       }
 
       const classEntries = selectedClasses.map(cb => {
-        const [id, isoDate] = cb.value.split('|');
-        const def = CLASS_DEFS.find(c => c.id === id);
-        const date = new Date(isoDate);
+        const occ = occurrenceByValue[cb.value];
+        const isoDate = cb.value.split('|')[1];
         return {
-          id,
-          name: def.label.replace(/&mdash;/g, '—').replace(/&amp;/g, '&'),
-          date: formatDate(date),
+          id: occ.id,
+          name: occ.name,
+          date: occ.date,
           isoDate: isoDate,
-          duration: def.duration,
-          type: def.type
+          duration: occ.duration,
+          type: occ.type,
+          capacity: occ.capacity
         };
       });
 
@@ -1091,7 +1000,8 @@
             const result = results[i];
             const cls = inPersonClasses[i];
             const count = result.count || 0;
-            const available = 10 - count;
+            const cap = (cls.capacity == null) ? Infinity : cls.capacity;
+            const available = cap - count;
 
             if (available <= 0) {
               // Class is full — offer waitlist
@@ -1219,6 +1129,15 @@
     // deploy as web app, and paste the URL here.
     const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx3qxkR_qLgCyy0LVmslaK2LHzGFJq5UMUwfvj5SFRqx_vZ5xlssCx_Ku2r_wVhhpU3/exec';
 
+    // Refresh the schedule from the network. The page already rendered from the
+    // cached/fallback copy; this updates the class options in place when it lands.
+    YogaSchedule.load(SHEETS_WEB_APP_URL).then(data => {
+      CLASSES = data.classes;
+      EXCEPTIONS = data.exceptions;
+      buildClassOptions();
+      updateGuestVisibility();
+    });
+
     // ========== DEVICE / BROWSER / LOCATION DETECTION ==========
     function detectDevice() {
       const ua = navigator.userAgent;
@@ -1249,13 +1168,21 @@
       })
       .catch(() => {}); // silently fail — location is optional
 
+    // The visitor's IANA timezone (e.g. "America/New_York"), used to show class
+    // times in their local zone in confirmation/reminder/cancel/move emails.
+    function detectTimezone() {
+      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }
+      catch (e) { return ''; }
+    }
+
     function getTrackingFields() {
       return {
         device: detectDevice(),
         browser: detectBrowser(),
         city: geoData.city,
         state: geoData.state,
-        zip: geoData.zip
+        zip: geoData.zip,
+        timezone: detectTimezone()
       };
     }
 
@@ -1286,7 +1213,8 @@
         browser: tracking.browser,
         city: tracking.city,
         state: tracking.state,
-        zip: tracking.zip
+        zip: tracking.zip,
+        timezone: tracking.timezone
       }));
 
       const payload = { rows };

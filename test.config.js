@@ -22,10 +22,12 @@ module.exports = {
   activeEnv: 'local',
 
   // ========== CLASS SCHEDULE ==========
+  // Mirror of the "Schedule" Sheet tab's seed (the real source of truth). Used
+  // as a synchronous fallback; call getScheduleFromApi() to read the live data.
   classes: {
     'sunday-online': {
       id: 'sunday-online',
-      label: 'Sunday Evening — Online via Google Meet',
+      label: 'Sunday Evening — Online via Zoom',
       day: 0,
       startHour: 18, startMin: 0,
       endHour: 19, endMin: 15,
@@ -134,5 +136,25 @@ module.exports = {
 
   getAppsScriptUrl() {
     return this.getEnv().appsScriptUrl;
+  },
+
+  // Fetch the live schedule from the deployed Apps Script (?action=schedule),
+  // reading the same Sheet the website does instead of hardcoding. Returns
+  // { classesById, classes, exceptions }. Falls back to the static `classes`
+  // mirror above if the endpoint is unreachable.
+  async getScheduleFromApi() {
+    const url = this.getAppsScriptUrl() + '?action=schedule';
+    try {
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json && json.status === 'ok' && Array.isArray(json.classes)) {
+        const byId = {};
+        json.classes.forEach(c => { byId[c.id] = c; });
+        return { classesById: byId, classes: json.classes, exceptions: json.exceptions || [] };
+      }
+    } catch (e) {
+      // fall through to the static mirror
+    }
+    return { classesById: this.classes, classes: Object.values(this.classes), exceptions: [] };
   }
 };

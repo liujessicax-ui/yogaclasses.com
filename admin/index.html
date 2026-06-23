@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Admin tool: keep it out of search engines and not linked from nav. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin · Yoga with Jessica</title>
+  <link rel="icon" type="image/png" href="../lotus.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <!-- Google Identity Services (renders the Sign-in button, returns an ID token) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    /* ===== Admin console — scoped styles (reuses palette vars from styles.css) ===== */
+    body { background: var(--cream); }
+
+    .admin-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: .9rem 1.5rem;
+      background: var(--white); border-bottom: 1px solid var(--sand);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .admin-topbar__brand { display: flex; align-items: center; gap: .6rem; }
+    .admin-topbar__brand img { width: 32px; height: 32px; }
+    .admin-topbar__brand strong {
+      font-family: var(--font-heading); font-size: 1.25rem; color: var(--olive-dk); font-weight: 600;
+    }
+    .admin-topbar__user { display: none; align-items: center; gap: .8rem; font-size: .85rem; color: #666; }
+    .admin-topbar__user.show { display: flex; }
+    .admin-topbar__user b { color: var(--charcoal); }
+    .admin-signout {
+      padding: .4rem 1rem; border-radius: 50px; border: 1px solid var(--sand-dk);
+      background: var(--white); color: var(--charcoal); font-size: .78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em; cursor: pointer; transition: all .2s;
+    }
+    .admin-signout:hover { background: var(--sand); }
+
+    .admin-wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+    /* Sign-in view */
+    .admin-signin {
+      max-width: 420px; margin: 4rem auto; text-align: center;
+      background: var(--white); border: 1px solid var(--sand);
+      border-radius: 16px; padding: 2.5rem 2rem;
+      box-shadow: 0 12px 40px rgba(0,0,0,.06);
+    }
+    .admin-signin h1 { font-size: 1.6rem; margin-bottom: .5rem; }
+    .admin-signin p { color: #777; font-size: .9rem; line-height: 1.6; margin-bottom: 1.6rem; }
+    #gsiButton { display: flex; justify-content: center; min-height: 44px; }
+    .cfg-warn {
+      color: #a0603e; font-size: .82rem; line-height: 1.5;
+      background: rgba(196,120,90,.1); border: 1px dashed rgba(196,120,90,.4);
+      border-radius: 8px; padding: .8rem 1rem; margin: 0;
+    }
+    .signin-note { margin-top: 1.4rem; font-size: .78rem; color: #999; }
+
+    /* App view */
+    #appView { display: none; }
+    #appView.show { display: block; }
+
+    .admin-section { margin-bottom: 2.5rem; }
+    .admin-section__head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .admin-section__head h2 { font-size: 1.5rem; margin: 0; }
+    .admin-section__head .sub { font-size: .82rem; color: #999; }
+
+    .admin-btn {
+      padding: .55rem 1.2rem; border-radius: 50px; border: none;
+      background: var(--olive); color: var(--white); font-size: .78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em; cursor: pointer; transition: all .2s;
+    }
+    .admin-btn:hover { background: var(--olive-dk); }
+    .admin-btn--ghost { background: var(--white); color: var(--olive-dk); border: 1px solid var(--sand-dk); }
+    .admin-btn--ghost:hover { background: var(--sand); }
+    .admin-btn--sm { padding: .4rem .9rem; font-size: .72rem; }
+    .admin-btn[disabled] { opacity: .55; cursor: not-allowed; }
+    .admin-btn[disabled]:hover { background: var(--olive); }
+    .admin-btn--ghost[disabled]:hover { background: var(--white); }
+
+    /* Series cards */
+    .series-card {
+      background: var(--white); border: 1px solid var(--sand);
+      border-radius: 12px; padding: 1.1rem 1.25rem; margin-bottom: .8rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .series-card.is-inactive { opacity: .6; }
+    .series-card__main { flex: 1; min-width: 200px; }
+    .series-card__name { font-weight: 700; font-size: .98rem; color: var(--charcoal); margin-bottom: .35rem; }
+    .series-card__meta { font-size: .8rem; color: #777; }
+    .series-card__badges { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .5rem; }
+    .badge {
+      display: inline-block; font-size: .62rem; font-weight: 700;
+      padding: .15rem .5rem; border-radius: 10px;
+      text-transform: uppercase; letter-spacing: .03em;
+    }
+    .badge--open { background: rgba(122,139,111,.15); color: var(--olive-dk); }
+    .badge--inperson { background: rgba(196,120,90,.12); color: #a0603e; }
+    .badge--zoom { background: rgba(74,114,163,.12); color: #3d6ba3; }
+    .badge--tag { background: var(--sand); color: #6b5d4a; }
+    .series-card__controls { display: flex; align-items: center; gap: .8rem; }
+
+    /* Read-only toggle */
+    .toggle {
+      position: relative; width: 42px; height: 24px; border-radius: 50px;
+      background: var(--sand-dk); transition: background .2s; flex-shrink: 0;
+    }
+    .toggle.on { background: var(--olive); }
+    .toggle::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; border-radius: 50%; background: var(--white);
+      transition: transform .2s;
+    }
+    .toggle.on::after { transform: translateX(18px); }
+    .toggle { cursor: pointer; }
+
+    /* Upcoming list */
+    .occ-card {
+      background: var(--white); border: 1px solid var(--sand);
+      border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: .7rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .occ-card__main { flex: 1; min-width: 220px; }
+    .occ-card__date { font-weight: 700; font-size: .95rem; color: var(--charcoal); }
+    .occ-card__time { font-size: .82rem; color: #777; margin-top: .2rem; }
+    .occ-card__counts { font-size: .82rem; color: var(--olive-dk); margin-top: .4rem; font-weight: 600; }
+    .occ-card__counts .wl { color: #a0603e; font-weight: 600; }
+    .occ-card__actions { display: flex; gap: .5rem; }
+
+    .empty-msg {
+      text-align: center; padding: 1.5rem; color: #999; font-style: italic;
+      border: 1px dashed var(--sand-dk); border-radius: 10px;
+    }
+
+    .status-banner {
+      display: none; padding: .9rem 1.1rem; border-radius: 10px; margin-bottom: 1.5rem;
+      font-size: .88rem; line-height: 1.5;
+    }
+    .status-banner.show { display: block; }
+    .status-banner--error { background: #fdecea; color: #b3261e; border: 1px solid #f5c2bd; }
+    .status-banner--warn  { background: rgba(196,120,90,.1); color: #a0603e; border: 1px solid rgba(196,120,90,.35); }
+
+    .readonly-note {
+      font-size: .78rem; color: #999; font-style: italic; margin-top: .4rem;
+    }
+
+    /* Form modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      z-index: 100; align-items: flex-start; justify-content: center;
+      padding: 2rem 1rem; overflow-y: auto;
+    }
+    .modal-overlay.active { display: flex; }
+    .form-modal {
+      background: var(--white); border-radius: 16px; max-width: 540px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25); overflow: hidden;
+    }
+    .form-modal__head {
+      padding: 1.3rem 1.6rem; border-bottom: 1px solid var(--sand);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .form-modal__head h3 { margin: 0; font-size: 1.3rem; }
+    .form-modal__close { background: none; border: none; font-size: 1.5rem; color: #999; cursor: pointer; line-height: 1; }
+    .form-modal__body { padding: 1.4rem 1.6rem; }
+    .fld { margin-bottom: 1.1rem; }
+    .fld label { display: block; font-weight: 600; font-size: .82rem; margin-bottom: .35rem; color: var(--charcoal); }
+    .fld input, .fld select {
+      width: 100%; padding: .6rem .8rem; border: 1px solid var(--sand-dk);
+      border-radius: 8px; font-size: .92rem; font-family: var(--font-body); background: var(--white);
+    }
+    .fld input:focus, .fld select:focus { outline: none; border-color: var(--olive); box-shadow: 0 0 0 3px rgba(122,139,111,.15); }
+    .fld-row { display: flex; gap: .8rem; }
+    .fld-row .fld { flex: 1; }
+    .fld-check { display: flex; align-items: center; gap: .5rem; }
+    .fld-check input { width: auto; }
+    .fld-check label { margin: 0; }
+    .form-modal__foot {
+      padding: 1.1rem 1.6rem; border-top: 1px solid var(--sand);
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(2rem);
+      background: var(--charcoal); color: var(--white); padding: .7rem 1.3rem;
+      border-radius: 50px; font-size: .85rem; opacity: 0; pointer-events: none;
+      transition: all .3s; z-index: 200; max-width: 90vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== Phase 3: cancel / delete / move-notify ===== */
+    .admin-btn--danger { background: #c0392b; }
+    .admin-btn--danger:hover { background: #a93226; }
+    .admin-btn--danger[disabled]:hover { background: #c0392b; }
+
+    /* Danger zone in the edit form */
+    .danger-zone { margin-top: 1.6rem; padding-top: 1.2rem; border-top: 1px dashed #e3b9b0; }
+    .danger-zone h4 {
+      margin: 0 0 .3rem; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em;
+      color: #b3261e; font-family: var(--font-body); font-weight: 700;
+    }
+    .danger-zone p { margin: 0 0 .8rem; font-size: .8rem; color: #888; line-height: 1.5; }
+    .danger-zone .danger-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+
+    /* Counts row in confirm modals */
+    .modal-counts { display: flex; gap: 1.4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: .85rem; color: #666; }
+    .modal-counts b { color: var(--olive-dk); font-size: 1.1rem; }
+    .modal-counts .wl b { color: #a0603e; }
+
+    /* Email preview */
+    .email-preview { border: 1px solid var(--sand); border-radius: 10px; overflow: hidden; margin: 0 0 1rem; }
+    .email-preview__bar {
+      background: #f5f0e8; padding: .45rem .9rem; font-size: .68rem; color: #999;
+      text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--sand);
+    }
+    .email-preview__subject { font-weight: 700; color: var(--charcoal); padding: .65rem .9rem .15rem; font-size: .86rem; }
+    .email-preview__body { padding: 0 .9rem .8rem; color: #666; line-height: 1.5; font-size: .82rem; }
+    .email-preview__body .pill {
+      display: block; background: #fdecea; color: #b3261e; border-left: 3px solid #c62828;
+      padding: .45rem .7rem; border-radius: 4px; margin: .5rem 0; font-size: .82rem;
+    }
+    .email-preview__body .pill--move { background: #f0f5ee; color: #3f5c34; border-left-color: #5B7553; }
+
+    /* Notify block (shared by move + cancel modals) */
+    .notify-block { background: var(--cream); border-radius: 10px; padding: .8rem 1rem; margin-top: .2rem; }
+    .notify-block .fld-check { margin: 0; }
+    .notify-block .fld-check + .fld-check { margin-top: .55rem; }
+    .notify-muted { font-size: .76rem; color: #999; margin: .5rem 0 0; }
+
+    /* "How this works" guide panel */
+    .admin-guide {
+      background: var(--white); border: 1px solid var(--sand);
+      border-radius: 12px; margin-bottom: 2rem; overflow: hidden;
+    }
+    .admin-guide > summary {
+      cursor: pointer; list-style: none; padding: .85rem 1.25rem;
+      font-family: var(--font-body); font-weight: 700; font-size: .88rem;
+      color: var(--olive-dk); display: flex; align-items: center; gap: .5rem;
+    }
+    .admin-guide > summary::-webkit-details-marker { display: none; }
+    .admin-guide > summary::before { content: '\24D8'; font-size: 1.05rem; } /* ⓘ */
+    .admin-guide > summary::after {
+      content: 'Show'; margin-left: auto; font-size: .7rem; color: #999;
+      font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .admin-guide[open] > summary::after { content: 'Hide'; }
+    .admin-guide[open] > summary { border-bottom: 1px solid var(--sand); }
+    .admin-guide__body { padding: 1rem 1.25rem 1.25rem; font-size: .85rem; color: #555; line-height: 1.55; }
+    .admin-guide__body h4 {
+      margin: 1.1rem 0 .3rem; font-size: .74rem; text-transform: uppercase; letter-spacing: .04em;
+      color: var(--charcoal); font-family: var(--font-body); font-weight: 700;
+    }
+    .admin-guide__body h4:first-child { margin-top: 0; }
+    .admin-guide__body p { margin: 0 0 .5rem; }
+    .admin-guide__body strong { color: var(--charcoal); }
+    .admin-guide__body .warn { color: #b3261e; }
+
+    /* Instant styled tooltips (driven by [data-tip]) */
+    .tip-wrap { display: inline-block; }
+    .tip-wrap > .admin-btn[disabled] { pointer-events: none; } /* let the wrapper catch hover */
+    .tip-pop {
+      position: fixed; z-index: 400; max-width: 260px;
+      background: var(--charcoal); color: #fff;
+      font-family: var(--font-body); font-size: .75rem; line-height: 1.45; font-weight: 400;
+      text-transform: none; letter-spacing: normal; text-align: left;
+      padding: .5rem .7rem; border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+      pointer-events: none; opacity: 0; display: none;
+      transition: opacity .06s ease;
+    }
+    .tip-pop.show { opacity: 1; }
+    .tip-pop::after {
+      content: ''; position: absolute; left: var(--arrow-left, 50%); margin-left: -5px;
+      border: 5px solid transparent;
+    }
+    .tip-pop[data-placement="top"]::after { top: 100%; border-top-color: var(--charcoal); }
+    .tip-pop[data-placement="bottom"]::after { bottom: 100%; border-bottom-color: var(--charcoal); }
+
+    @media (max-width: 600px) {
+      .admin-topbar { padding: .8rem 1rem; }
+      .admin-topbar__user span.email-text { display: none; }
+      .series-card, .occ-card { gap: .7rem; }
+      .fld-row { flex-direction: column; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-topbar">
+    <div class="admin-topbar__brand">
+      <img src="../lotus.png" alt="" />
+      <strong>Admin Console</strong>
+    </div>
+    <div class="admin-topbar__user" id="userBar">
+      <span>Signed in as <b><span id="userEmail"></span></b></span>
+      <button class="admin-signout" id="signOutBtn" type="button">Sign out</button>
+    </div>
+  </div>
+
+  <div class="admin-wrap">
+
+    <!-- ===== Sign-in view ===== -->
+    <div class="admin-signin" id="signinView">
+      <h1>Schedule Admin</h1>
+      <p>Sign in with the authorized Google account to manage your class schedule.</p>
+      <div id="gsiButton"></div>
+      <p class="signin-note">Only the allowlisted admin account can access this page.</p>
+    </div>
+
+    <!-- ===== App view (read-only this phase) ===== -->
+    <div id="appView">
+
+      <div class="status-banner" id="statusBanner"></div>
+
+      <!-- How-this-works guide (collapsible) -->
+      <details class="admin-guide">
+        <summary>How this works — read me first</summary>
+        <div class="admin-guide__body">
+          <h4>Two ways to turn a class off</h4>
+          <p><strong>Active toggle</strong> (on each class card): quietly hides it from the public site. <strong>No emails are sent and no sign-ups are removed.</strong> Use it to pause a class or hide one you’re still setting up.</p>
+          <p><strong>Edit → Cancel series &amp; notify:</strong> emails everyone signed up for upcoming dates, moves their sign-ups to the Archive, then turns the class off. Use this when you’re actually cancelling a class people registered for.</p>
+
+          <h4>Recurring series vs one-off</h4>
+          <p><strong>+ New series</strong> repeats weekly. Each week’s session opens for sign-up about <strong>7 days ahead</strong> — so a brand-new series won’t appear on the public schedule until roughly a week before its first session. That’s expected, not a bug.</p>
+          <p><strong>+ New one-off</strong> is a single date (a workshop, a special class). It’s signable <strong>as soon as you save it</strong>, right up to the date.</p>
+
+          <h4>Rescheduling a date</h4>
+          <p><strong>Move</strong> (on an upcoming date): reschedules just that date. If anyone is signed up, you’ll be asked whether to <strong>email them</strong> the new date/time.</p>
+          <p><strong>Edit → Date</strong> (one-offs only): changes the date <strong>quietly — no emails</strong>. Use Move instead if people are already signed up.</p>
+
+          <h4>Cancelling a single date</h4>
+          <p><strong>Cancel</strong> (on an upcoming date): emails the registered students (and the waitlist if you tick the box), then moves their sign-ups to the Archive. <span class="warn">This can’t be undone from here.</span></p>
+
+          <h4>Deleting a class</h4>
+          <p><strong>Edit → Delete series:</strong> permanently removes the class. It’s only allowed when <strong>no one is signed up</strong> for upcoming dates — cancel the series first if needed. Past sign-ups always stay in your Archive.</p>
+
+          <h4>When emails go out</h4>
+          <p>Sign-up confirmations and the Zoom link (30 min before online classes) are <strong>automatic</strong>. <strong>Cancel</strong> and <strong>Move</strong> only email when you confirm them here (you also get a summary). The <strong>active toggle, Edit, and Delete never email anyone.</strong></p>
+
+          <h4>Undoing a cancel or move</h4>
+          <p>Cancels and moves are stored as “exceptions.” To reverse one (un-cancel a date, revert a move), edit the <strong>Exceptions</strong> tab in the Google Sheet.</p>
+        </div>
+      </details>
+
+      <!-- Class series -->
+      <div class="admin-section">
+        <div class="admin-section__head">
+          <h2>Class series</h2>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button class="admin-btn admin-btn--ghost" id="newOneOffBtn" type="button"
+                    data-tip="A single-date class (e.g. a workshop). Signable as soon as you save it, right up to the date.">+ New one-off</button>
+            <button class="admin-btn" id="newClassBtn" type="button"
+                    data-tip="A weekly recurring class. Each session opens for sign-up about 7 days before it happens.">+ New series</button>
+          </div>
+        </div>
+        <div id="seriesList">
+          <div class="empty-msg">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Upcoming classes -->
+      <div class="admin-section">
+        <div class="admin-section__head">
+          <h2>Upcoming classes</h2>
+          <span class="sub">Next 7 days</span>
+        </div>
+        <div id="upcomingList">
+          <div class="empty-msg">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== Edit / New form modal (read-only preview this phase) ===== -->
+  <div class="modal-overlay" id="formModal">
+    <div class="form-modal">
+      <div class="form-modal__head">
+        <h3 id="formTitle">Edit class</h3>
+        <button class="form-modal__close" id="formClose" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="form-modal__body">
+        <div class="fld">
+          <label for="f_label">Class name</label>
+          <input type="text" id="f_label" />
+        </div>
+        <div class="fld-row">
+          <div class="fld" id="dayField">
+            <label for="f_day">Day</label>
+            <select id="f_day">
+              <option value="0">Sunday</option><option value="1">Monday</option>
+              <option value="2">Tuesday</option><option value="3">Wednesday</option>
+              <option value="4">Thursday</option><option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+          <div class="fld" id="dateField" style="display:none;">
+            <label for="f_date">Date</label>
+            <input type="date" id="f_date" />
+          </div>
+          <div class="fld">
+            <label for="f_start">Start time</label>
+            <input type="time" id="f_start" />
+          </div>
+          <div class="fld">
+            <label for="f_dur">Duration (min)</label>
+            <input type="number" id="f_dur" min="15" step="5" />
+          </div>
+        </div>
+        <div class="fld-row">
+          <div class="fld">
+            <label for="f_type">Type</label>
+            <select id="f_type">
+              <option value="online">Online</option>
+              <option value="inperson">In person</option>
+            </select>
+          </div>
+          <div class="fld">
+            <label for="f_cap">Capacity (blank = unlimited)</label>
+            <input type="number" id="f_cap" min="1" />
+          </div>
+        </div>
+        <div class="fld">
+          <label for="f_loc">Location</label>
+          <input type="text" id="f_loc" />
+        </div>
+        <div class="fld">
+          <label for="f_tags">Tags (comma-separated)</label>
+          <input type="text" id="f_tags" />
+        </div>
+        <div class="fld">
+          <label for="f_props">Props (comma-separated)</label>
+          <input type="text" id="f_props" />
+        </div>
+        <div class="fld fld-check">
+          <input type="checkbox" id="f_active" />
+          <label for="f_active">Active</label>
+        </div>
+
+        <!-- Danger zone — only shown when editing an existing series -->
+        <div class="danger-zone" id="dangerZone" style="display:none;">
+          <h4>Danger zone</h4>
+          <p>Cancelling emails everyone signed up for upcoming dates and removes those registrations. Deleting removes the class entirely (only when no one is signed up).</p>
+          <div class="danger-actions">
+            <button class="admin-btn admin-btn--danger" id="cancelSeriesBtn" type="button"
+                    data-tip="Emails everyone signed up for upcoming dates, moves their sign-ups to the Archive, then turns the class off.">Cancel series &amp; notify…</button>
+            <button class="admin-btn admin-btn--ghost" id="deleteSeriesBtn" type="button"
+                    data-tip="Permanently removes the class. Only works when no one is signed up — cancel the series first otherwise. Past sign-ups stay in the Archive.">Delete series…</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-modal__foot">
+        <span class="readonly-note">Changes apply to the live schedule right away.</span>
+        <div>
+          <button class="admin-btn admin-btn--ghost" id="formCancel" type="button">Cancel</button>
+          <button class="admin-btn" id="formSave" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Move modal ===== -->
+  <div class="modal-overlay" id="moveModal">
+    <div class="form-modal" style="max-width:440px;">
+      <div class="form-modal__head">
+        <h3>Move class</h3>
+        <button class="form-modal__close" id="moveClose" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="form-modal__body">
+        <p id="moveSummary" style="font-size:.88rem;color:#666;margin:0 0 1rem;"></p>
+        <div class="fld-row">
+          <div class="fld">
+            <label for="m_date">New date</label>
+            <input type="date" id="m_date" />
+          </div>
+          <div class="fld">
+            <label for="m_time">New start time</label>
+            <input type="time" id="m_time" />
+          </div>
+        </div>
+        <div class="notify-block" id="moveNotify" style="display:none;">
+          <div class="fld-check">
+            <input type="checkbox" id="m_notify" checked />
+            <label for="m_notify" id="m_notifyLabel">Email registered students about the change</label>
+          </div>
+          <div class="fld-check" id="m_notifyWlRow" style="display:none;">
+            <input type="checkbox" id="m_notifyWl" />
+            <label for="m_notifyWl" id="m_notifyWlLabel">Also email waitlisted students</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-modal__foot">
+        <span class="readonly-note" id="moveNote">No one is signed up yet — students won’t be emailed.</span>
+        <div>
+          <button class="admin-btn admin-btn--ghost" id="moveCancel" type="button">Cancel</button>
+          <button class="admin-btn" id="moveSave" type="button">Move</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Cancel confirmation modal (single date OR whole series) ===== -->
+  <div class="modal-overlay" id="cancelModal">
+    <div class="form-modal" style="max-width:480px;">
+      <div class="form-modal__head">
+        <h3 id="cancelTitle">Cancel class</h3>
+        <button class="form-modal__close" id="cancelClose" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="form-modal__body">
+        <p id="cancelSummary" style="font-size:.9rem;color:#444;margin:0 0 1rem;line-height:1.5;"></p>
+        <div class="modal-counts" id="cancelCounts"></div>
+        <div class="email-preview" id="cancelPreview"></div>
+        <div class="notify-block" id="cancelNotify">
+          <div class="fld-check">
+            <input type="checkbox" id="c_notifyWl" />
+            <label for="c_notifyWl" id="c_notifyWlLabel">Also email waitlisted students</label>
+          </div>
+          <p class="notify-muted">Registered students are always emailed and their sign-ups removed.</p>
+        </div>
+      </div>
+      <div class="form-modal__foot">
+        <span class="readonly-note">This emails students — it can’t be undone here.</span>
+        <div>
+          <button class="admin-btn admin-btn--ghost" id="cancelDismiss" type="button">Keep class</button>
+          <button class="admin-btn admin-btn--danger" id="cancelConfirm" type="button">Cancel class</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Delete series confirmation modal ===== -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="form-modal" style="max-width:440px;">
+      <div class="form-modal__head">
+        <h3>Delete series</h3>
+        <button class="form-modal__close" id="deleteClose" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="form-modal__body">
+        <p id="deleteSummary" style="font-size:.9rem;color:#444;margin:0 0 1rem;"></p>
+        <div class="status-banner" id="deleteWarn" style="margin:0;"></div>
+        <p style="font-size:.8rem;color:#888;line-height:1.5;margin:.8rem 0 0;">This permanently removes the class from the schedule. Past sign-ups stay in your Archive. This can’t be undone.</p>
+      </div>
+      <div class="form-modal__foot">
+        <span class="readonly-note"></span>
+        <div>
+          <button class="admin-btn admin-btn--ghost" id="deleteDismiss" type="button">Keep series</button>
+          <button class="admin-btn admin-btn--danger" id="deleteConfirm" type="button">Delete permanently</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="tip-pop" id="tipPop" role="tooltip"></div>
+
+  <script src="../schedule-data.js"></script>
+  <script>
+    // ============================================================
+    //  CONFIG
+    // ============================================================
+    // Paste your Google OAuth "Web application" Client ID here.
+    // It must be the SAME value as ADMIN_OAUTH_CLIENT_ID in google-apps-script.js.
+    // (Not a secret — it's safe to ship to the browser.)
+    const ADMIN_OAUTH_CLIENT_ID = '83041676087-iia2s4jjtb3n6je56so3mfbdin9lpe0u.apps.googleusercontent.com';
+
+    // Apps Script web-app /exec URL (same deployment as public signup).
+    const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx3qxkR_qLgCyy0LVmslaK2LHzGFJq5UMUwfvj5SFRqx_vZ5xlssCx_Ku2r_wVhhpU3/exec';
+
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    // Bearer ID token for the current session (held in memory + sessionStorage).
+    let ID_TOKEN = sessionStorage.getItem('adminIdToken') || null;
+
+    // Last-loaded upcoming occurrences (used to total a series' signups for the
+    // cancel/delete dialogs in the Edit form).
+    let LAST_UPCOMING = [];
+
+    // ============================================================
+    //  ELEMENTS
+    // ============================================================
+    const signinView  = document.getElementById('signinView');
+    const appView     = document.getElementById('appView');
+    const userBar     = document.getElementById('userBar');
+    const userEmailEl = document.getElementById('userEmail');
+    const statusBanner = document.getElementById('statusBanner');
+    const seriesList  = document.getElementById('seriesList');
+    const upcomingList = document.getElementById('upcomingList');
+    const toastEl     = document.getElementById('toast');
+
+    // ============================================================
+    //  AUTH (Google Identity Services — ID-token flow)
+    // ============================================================
+    window.addEventListener('load', initAuth);
+
+    function initAuth() {
+      const configured = ADMIN_OAUTH_CLIENT_ID && ADMIN_OAUTH_CLIENT_ID.indexOf('PASTE_') !== 0;
+
+      if (!configured) {
+        document.getElementById('gsiButton').innerHTML =
+          '<p class="cfg-warn">Sign-in is not configured yet. Set <code>ADMIN_OAUTH_CLIENT_ID</code> in <code>admin/index.html</code> (and the matching value in <code>google-apps-script.js</code>).</p>';
+        return;
+      }
+
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+        return setTimeout(initAuth, 100); // GIS library still loading
+      }
+
+      google.accounts.id.initialize({
+        client_id: ADMIN_OAUTH_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('gsiButton'),
+        { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', logo_alignment: 'left' }
+      );
+
+      // If we already have a token from this browser session, try it immediately.
+      // The server re-verifies; an expired/invalid token bounces us back to sign-in.
+      if (ID_TOKEN) {
+        showApp(emailFromToken(ID_TOKEN));
+        loadAdminSchedule();
+      }
+    }
+
+    function handleCredentialResponse(resp) {
+      ID_TOKEN = resp.credential;
+      try { sessionStorage.setItem('adminIdToken', ID_TOKEN); } catch (e) {}
+      showApp(emailFromToken(ID_TOKEN));
+      loadAdminSchedule();
+    }
+
+    // Decode the JWT payload for DISPLAY ONLY (never trusted for authorization —
+    // the server independently verifies the token's signature and allowlist).
+    function emailFromToken(token) {
+      try {
+        const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        const json = decodeURIComponent(atob(payload).split('').map(function (c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return (JSON.parse(json).email || '').toLowerCase();
+      } catch (e) { return ''; }
+    }
+
+    function showApp(email) {
+      userEmailEl.textContent = email || '';
+      userBar.classList.add('show');
+      signinView.style.display = 'none';
+      appView.classList.add('show');
+    }
+
+    function showSignin() {
+      userBar.classList.remove('show');
+      appView.classList.remove('show');
+      signinView.style.display = '';
+    }
+
+    document.getElementById('signOutBtn').addEventListener('click', signOut);
+    function signOut() {
+      ID_TOKEN = null;
+      try { sessionStorage.removeItem('adminIdToken'); } catch (e) {}
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        google.accounts.id.disableAutoSelect();
+      }
+      clearStatus();
+      showSignin();
+    }
+
+    // ============================================================
+    //  DATA LOAD
+    // ============================================================
+    function loadAdminSchedule() {
+      clearStatus();
+      seriesList.innerHTML = '<div class="empty-msg">Loading…</div>';
+      upcomingList.innerHTML = '<div class="empty-msg">Loading…</div>';
+
+      fetch(SHEETS_WEB_APP_URL, {
+        method: 'POST',
+        // text/plain keeps this a CORS "simple request" (no preflight, which
+        // Apps Script can't answer) while still returning a readable response.
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'getScheduleAdmin', idToken: ID_TOKEN })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (payload) {
+          if (!payload || payload.status === 'unauthorized') {
+            setStatus('warn', 'That account isn’t authorized for the admin console. Sign in with the allowlisted admin account.');
+            seriesList.innerHTML = '';
+            upcomingList.innerHTML = '';
+            signOut();
+            return;
+          }
+          if (payload.status !== 'ok') {
+            setStatus('error', 'Could not load the schedule: ' + (payload.message || 'unknown error'));
+            seriesList.innerHTML = '';
+            upcomingList.innerHTML = '';
+            return;
+          }
+          if (payload.adminEmail) userEmailEl.textContent = payload.adminEmail;
+          LAST_UPCOMING = payload.upcoming || [];
+          renderSeries(payload.classes || []);
+          renderUpcoming(payload.upcoming || []);
+        })
+        .catch(function (err) {
+          setStatus('error', 'Network error loading the schedule. Check your connection and try again.');
+          seriesList.innerHTML = '';
+          upcomingList.innerHTML = '';
+        });
+    }
+
+    // ============================================================
+    //  RENDER — class series
+    // ============================================================
+    function typeBadge(type) {
+      if (type === 'inperson') return '<span class="badge badge--inperson">In Person</span>';
+      return '<span class="badge badge--zoom">Online</span>';
+    }
+
+    function renderSeries(classes) {
+      if (!classes.length) {
+        seriesList.innerHTML = '<div class="empty-msg">No classes yet. Use “+ New series” or “+ New one-off” to add one.</div>';
+        return;
+      }
+      seriesList.innerHTML = classes.map(function (c) {
+        const time = YogaSchedule.formatTimeRange(c.startH, c.startM, c.durationMins);
+        // Drop tags already conveyed by the type badge (online / in person / via zoom).
+        const typeWords = { 'in person': 1, 'inperson': 1, 'online': 1, 'via zoom': 1 };
+        const tagBadges = (c.tags || []).filter(function (t) {
+          return !typeWords[String(t).trim().toLowerCase()];
+        }).map(function (t) {
+          return '<span class="badge badge--tag">' + esc(t) + '</span>';
+        }).join('');
+        const cap = (c.capacity == null) ? 'Unlimited' : (c.capacity + ' spots');
+        // One-offs show their single date; recurring classes show the weekday.
+        const whenLine = c.oneOffDate ? ('One-off &middot; ' + esc(formatOneOffDate(c.oneOffDate))) : (DAY_NAMES[c.day] + 's');
+        const oneOffBadge = c.oneOffDate ? '<span class="badge badge--tag">One-off</span>' : '';
+        return '' +
+          '<div class="series-card' + (c.active ? '' : ' is-inactive') + '">' +
+            '<div class="series-card__main">' +
+              '<div class="series-card__name">' + esc(c.label) + '</div>' +
+              '<div class="series-card__meta">' + whenLine + ' &middot; ' + esc(time) + ' &middot; ' + cap +
+                (c.location ? ' &middot; ' + esc(c.location) : '') + '</div>' +
+              '<div class="series-card__badges">' + typeBadge(c.type) + oneOffBadge + tagBadges + '</div>' +
+            '</div>' +
+            '<div class="series-card__controls">' +
+              '<div class="toggle' + (c.active ? ' on' : '') + '" role="switch" ' +
+                   'aria-checked="' + (c.active ? 'true' : 'false') + '" ' +
+                   'data-id="' + esc(c.id) + '" data-active="' + (c.active ? 'true' : 'false') + '" ' +
+                   'data-tip="Quietly show or hide this class on the public site — no emails are sent and no sign-ups are removed. To cancel a class people registered for, use Edit then Cancel series." ' +
+                   'onclick="toggleActive(this)"></div>' +
+              '<button class="admin-btn admin-btn--ghost admin-btn--sm" type="button" ' +
+                      'data-tip="Edit class details. Renaming updates existing registrations. For a one-off, changing the Date reschedules it quietly (no email). Cancel series and Delete are in here too." ' +
+                      'onclick=\'openEditForm(' + JSON.stringify(c).replace(/'/g, '&#39;') + ')\'>Edit</button>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // ============================================================
+    //  RENDER — upcoming occurrences
+    // ============================================================
+    function renderUpcoming(upcoming) {
+      if (!upcoming.length) {
+        upcomingList.innerHTML = '<div class="empty-msg">No classes scheduled in the next 7 days.</div>';
+        return;
+      }
+      upcomingList.innerHTML = upcoming.map(function (o) {
+        const time = YogaSchedule.formatTimeRange(o.startH, o.startM, o.durationMins);
+        const capPart = (o.capacity == null) ? '' : ' / ' + o.capacity;
+        const wl = o.waitlist ? ' <span class="wl">(+' + o.waitlist + ' waitlist)</span>' : '';
+        // Move is offered only for plain recurring dates; moving an already
+        // moved/added occurrence is ambiguous, so disable it there for now.
+        const moveBtn = (o.origin === 'recurring')
+          ? '<button class="admin-btn admin-btn--ghost admin-btn--sm" type="button" data-tip="Reschedule this date. If anyone is signed up, you choose whether to email them the new date and time." onclick=\'openMoveForm(' + JSON.stringify(o).replace(/'/g, '&#39;') + ')\'>Move</button>'
+          : '<span class="tip-wrap" data-tip="Already moved or added — manage from the Sheet for now"><button class="admin-btn admin-btn--ghost admin-btn--sm" type="button" disabled>Move</button></span>';
+        return '' +
+          '<div class="occ-card">' +
+            '<div class="occ-card__main">' +
+              '<div class="occ-card__date">' + esc(o.label) + '</div>' +
+              '<div class="occ-card__time">' + esc(o.date) + ' &middot; ' + esc(time) + '</div>' +
+              '<div class="occ-card__counts">' + o.signedUp + capPart + ' signed up' + wl + '</div>' +
+            '</div>' +
+            '<div class="occ-card__actions">' +
+              moveBtn +
+              '<button class="admin-btn admin-btn--ghost admin-btn--sm" type="button" data-tip="Cancel just this date — emails registered students (waitlist optional) and archives their sign-ups. Cannot be undone here." onclick=\'openCancelForm(' + JSON.stringify(o).replace(/'/g, '&#39;') + ')\'>Cancel</button>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // ============================================================
+    //  FORM MODAL (read-only preview)
+    // ============================================================
+    const formModal = document.getElementById('formModal');
+    const moveModal = document.getElementById('moveModal');
+    const cancelModal = document.getElementById('cancelModal');
+    const deleteModal = document.getElementById('deleteModal');
+    let formMode = 'edit';      // 'edit' | 'new'
+    let formKind = 'recurring'; // 'recurring' | 'oneoff'
+    let formEditingId = null;   // id of the series being edited
+    let formEditingLabel = '';  // label of the series being edited
+    let moveCtx = null;         // occurrence being moved
+    let cancelCtx = null;       // { mode:'date'|'series', ... } being cancelled
+    let deleteCtx = null;       // { id, label } being deleted
+
+    // Show the Day dropdown for recurring classes, the Date picker for one-offs.
+    function applyFormKind() {
+      const oneoff = (formKind === 'oneoff');
+      document.getElementById('dayField').style.display  = oneoff ? 'none' : '';
+      document.getElementById('dateField').style.display = oneoff ? '' : 'none';
+    }
+
+    // Open the form to create a class. kind = 'recurring' | 'oneoff'.
+    function openNewForm(kind) {
+      formMode = 'new';
+      formKind = kind;
+      formEditingId = null;
+      formEditingLabel = '';
+      document.getElementById('dangerZone').style.display = 'none';
+      document.getElementById('formTitle').textContent = (kind === 'oneoff') ? 'New one-off class' : 'New series';
+      document.getElementById('f_label').value = '';
+      document.getElementById('f_day').value   = '0';
+      document.getElementById('f_date').value  = '';
+      document.getElementById('f_start').value = '18:00';
+      document.getElementById('f_dur').value   = 75;
+      document.getElementById('f_type').value  = 'online';
+      document.getElementById('f_cap').value   = '';
+      document.getElementById('f_loc').value   = '';
+      document.getElementById('f_tags').value  = '';
+      document.getElementById('f_props').value = '';
+      document.getElementById('f_active').checked = true;
+      applyFormKind();
+      formModal.classList.add('active');
+    }
+
+    function openEditForm(c) {
+      formMode = 'edit';
+      formKind = c.oneOffDate ? 'oneoff' : 'recurring';
+      formEditingId = c.id;
+      formEditingLabel = c.label || '';
+      document.getElementById('dangerZone').style.display = '';
+      document.getElementById('formTitle').textContent = (formKind === 'oneoff') ? 'Edit one-off class' : 'Edit class';
+      document.getElementById('f_label').value = c.label || '';
+      document.getElementById('f_day').value   = String(c.day || 0);
+      document.getElementById('f_date').value  = c.oneOffDate || '';
+      document.getElementById('f_start').value = pad2(c.startH) + ':' + pad2(c.startM);
+      document.getElementById('f_dur').value   = c.durationMins || 75;
+      document.getElementById('f_type').value  = c.type || 'online';
+      document.getElementById('f_cap').value   = (c.capacity == null) ? '' : c.capacity;
+      document.getElementById('f_loc').value   = c.location || '';
+      document.getElementById('f_tags').value  = (c.tags || []).join(', ');
+      document.getElementById('f_props').value = (c.props || []).join(', ');
+      document.getElementById('f_active').checked = !!c.active;
+      applyFormKind();
+      formModal.classList.add('active');
+    }
+
+    document.getElementById('newClassBtn').addEventListener('click', function () { openNewForm('recurring'); });
+    document.getElementById('newOneOffBtn').addEventListener('click', function () { openNewForm('oneoff'); });
+
+    function closeForm() { formModal.classList.remove('active'); }
+    document.getElementById('formClose').addEventListener('click', closeForm);
+    document.getElementById('formCancel').addEventListener('click', closeForm);
+    formModal.addEventListener('click', function (e) { if (e.target === formModal) closeForm(); });
+
+    // ============================================================
+    //  WRITE ACTIONS (token-gated; each reloads the schedule on success)
+    // ============================================================
+    // Every admin write POSTs text/plain {action, idToken, …} and reads the JSON
+    // response. The server re-verifies the token and busts its schedule cache.
+    function adminPost(payload, onOk, onErr) {
+      payload.idToken = ID_TOKEN;
+      fetch(SHEETS_WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (!res || res.status === 'unauthorized') {
+            setStatus('warn', 'Your session expired — please sign in again.');
+            signOut();
+            return;
+          }
+          if (res.status !== 'ok') {
+            (onErr || function (m) { showToast('Error: ' + m); })(res.message || 'unknown error', res);
+            return;
+          }
+          (onOk || function () {})(res);
+        })
+        .catch(function () {
+          (onErr || function () { showToast('Network error — please try again.'); })('network');
+        });
+    }
+
+    // Read the edit/new form into a class object (the server validates + coerces).
+    function readClassForm() {
+      const oneoff = (formKind === 'oneoff');
+      return {
+        label: document.getElementById('f_label').value.trim(),
+        day: oneoff ? 0 : parseInt(document.getElementById('f_day').value, 10), // server derives day for one-offs
+        oneOffDate: oneoff ? document.getElementById('f_date').value : '',       // '' = recurring
+        startTime: document.getElementById('f_start').value,      // "HH:MM"
+        durationMins: parseInt(document.getElementById('f_dur').value, 10),
+        type: document.getElementById('f_type').value,
+        location: document.getElementById('f_loc').value.trim(),
+        capacity: document.getElementById('f_cap').value.trim(),  // '' = unlimited
+        tags: document.getElementById('f_tags').value,            // comma string
+        props: document.getElementById('f_props').value,          // comma string
+        active: document.getElementById('f_active').checked
+      };
+    }
+
+    // Save — create or update depending on how the form was opened.
+    document.getElementById('formSave').addEventListener('click', function () {
+      const c = readClassForm();
+      if (!c.label) { showToast('Class name is required.'); return; }
+      if (formKind === 'oneoff' && !c.oneOffDate) { showToast('Pick a date for the one-off class.'); return; }
+      if (isNaN(c.durationMins) || c.durationMins <= 0) { showToast('Duration must be a positive number.'); return; }
+
+      const btn = this;
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      let payload;
+      if (formMode === 'edit') { c.id = formEditingId; payload = { action: 'updateClass', 'class': c }; }
+      else { payload = { action: 'createClass', 'class': c }; }
+
+      adminPost(payload, function (res) {
+        btn.disabled = false; btn.textContent = 'Save';
+        closeForm();
+        let msg = (formMode === 'edit') ? 'Class updated.' : 'Class created.';
+        if (res.relabeled) { msg += ' ' + res.relabeled + ' upcoming registration(s) updated to the new name.'; }
+        showToast(msg);
+        loadAdminSchedule();
+      }, function (m) {
+        btn.disabled = false; btn.textContent = 'Save';
+        showToast('Could not save: ' + m);
+      });
+    });
+
+    // Active on/off toggle (optimistic; the reload confirms server truth).
+    function toggleActive(el) {
+      const id = el.getAttribute('data-id');
+      const next = el.getAttribute('data-active') !== 'true';
+      el.classList.toggle('on', next);
+      el.setAttribute('data-active', String(next));
+      el.setAttribute('aria-checked', String(next));
+      adminPost({ action: 'setActive', id: id, active: next }, function () {
+        showToast(next ? 'Class activated.' : 'Class deactivated.');
+        loadAdminSchedule();
+      }, function (m) {
+        el.classList.toggle('on', !next);
+        el.setAttribute('data-active', String(!next));
+        el.setAttribute('aria-checked', String(!next));
+        showToast('Could not update: ' + m);
+      });
+    }
+
+    // Move a single occurrence (writes an Exceptions "moved" row).
+    function openMoveForm(o) {
+      moveCtx = o;
+      document.getElementById('moveSummary').textContent = o.label + ' — currently ' + o.date;
+      document.getElementById('m_date').value = o.iso;
+      document.getElementById('m_time').value = pad2(o.startH) + ':' + pad2(o.startM);
+
+      // Notify controls only appear when the occurrence actually has signups.
+      const notifyBlock = document.getElementById('moveNotify');
+      const note = document.getElementById('moveNote');
+      const wlRow = document.getElementById('m_notifyWlRow');
+      if (o.signedUp > 0) {
+        notifyBlock.style.display = '';
+        document.getElementById('m_notify').checked = true;
+        document.getElementById('m_notifyLabel').textContent =
+          'Email the ' + o.signedUp + ' registered student' + (o.signedUp === 1 ? '' : 's') + ' about the change';
+        if (o.waitlist > 0) {
+          wlRow.style.display = '';
+          document.getElementById('m_notifyWl').checked = false;
+          document.getElementById('m_notifyWlLabel').textContent =
+            'Also email the ' + o.waitlist + ' waitlisted student' + (o.waitlist === 1 ? '' : 's');
+        } else {
+          wlRow.style.display = 'none';
+          document.getElementById('m_notifyWl').checked = false;
+        }
+        note.textContent = 'Students will be emailed the new date/time.';
+      } else {
+        notifyBlock.style.display = 'none';
+        document.getElementById('m_notify').checked = false;
+        document.getElementById('m_notifyWl').checked = false;
+        note.textContent = 'No one is signed up yet — students won’t be emailed.';
+      }
+      moveModal.classList.add('active');
+    }
+    function closeMove() { moveModal.classList.remove('active'); }
+    document.getElementById('moveClose').addEventListener('click', closeMove);
+    document.getElementById('moveCancel').addEventListener('click', closeMove);
+    moveModal.addEventListener('click', function (e) { if (e.target === moveModal) closeMove(); });
+
+    document.getElementById('moveSave').addEventListener('click', function () {
+      if (!moveCtx) return;
+      const newDate = document.getElementById('m_date').value;
+      const newTime = document.getElementById('m_time').value;
+      if (!newDate && !newTime) { showToast('Pick a new date or time.'); return; }
+
+      const notify = (moveCtx.signedUp > 0) && document.getElementById('m_notify').checked;
+      const notifyWaitlist = notify && document.getElementById('m_notifyWl').checked;
+
+      const btn = this;
+      btn.disabled = true; btn.textContent = 'Moving…';
+      adminPost({
+        action: 'moveOccurrence',
+        classId: moveCtx.classId,
+        date: moveCtx.iso,
+        dateDisplay: moveCtx.date,
+        newDate: newDate || moveCtx.iso,
+        newStartTime: newTime || (pad2(moveCtx.startH) + ':' + pad2(moveCtx.startM)),
+        notify: notify,
+        notifyWaitlist: notifyWaitlist
+      }, function (res) {
+        btn.disabled = false; btn.textContent = 'Move';
+        closeMove();
+        let msg = 'Class moved.';
+        if (res.emailed) msg += ' Emailed ' + res.emailed + ' student' + (res.emailed === 1 ? '' : 's');
+        if (res.waitlistEmailed) msg += ' + ' + res.waitlistEmailed + ' waitlist';
+        if (res.emailed || res.waitlistEmailed) msg += '.';
+        showToast(msg);
+        loadAdminSchedule();
+      }, function (m) {
+        btn.disabled = false; btn.textContent = 'Move';
+        showToast('Could not move: ' + m);
+      });
+    });
+
+    // ============================================================
+    //  CANCEL / DELETE (Phase 3 — these email students)
+    // ============================================================
+    // Strip weekday prefix + trailing year for compact subject/preview text:
+    // "Sunday, July 5, 2026" -> "July 5".
+    function monthDay(s) {
+      return String(s || '').replace(/^[A-Za-z]+,\s*/, '').replace(/,?\s*\d{4}\s*$/, '').trim();
+    }
+
+    // Total signups/waitlist across the loaded upcoming dates for one series.
+    function seriesCounts(classId) {
+      let signedUp = 0, waitlist = 0, dates = 0;
+      LAST_UPCOMING.forEach(function (o) {
+        if (o.classId === classId) { signedUp += (o.signedUp || 0); waitlist += (o.waitlist || 0); dates++; }
+      });
+      return { signedUp: signedUp, waitlist: waitlist, dates: dates };
+    }
+
+    function renderCancelCounts(signedUp, waitlist, dates) {
+      let html = '';
+      if (typeof dates === 'number') html += '<span>Upcoming dates: <b>' + dates + '</b></span>';
+      html += '<span>Signed up: <b>' + (signedUp || 0) + '</b></span>';
+      html += '<span class="wl">Waitlist: <b>' + (waitlist || 0) + '</b></span>';
+      document.getElementById('cancelCounts').innerHTML = html;
+    }
+
+    function renderCancelPreview(mode, label, dateDisplay) {
+      const shortLabel = (label.split(' — ')[0] || label);
+      const subj = (mode === 'series')
+        ? 'Class cancelled — ' + shortLabel
+        : 'Class cancelled — ' + shortLabel + ' on ' + monthDay(dateDisplay);
+      const dateLine = (mode === 'series') ? 'your upcoming session(s)' : esc(dateDisplay);
+      document.getElementById('cancelPreview').innerHTML =
+        '<div class="email-preview__bar">Email preview — sent to each registered student</div>' +
+        '<div class="email-preview__subject">' + esc(subj) + '</div>' +
+        '<div class="email-preview__body">Hi [name], we’re sorry to let you know that the following class has been cancelled:' +
+          '<span class="pill"><strong>' + esc(label) + '</strong><br>' + dateLine + '</span>' +
+          'No action is needed — your registration has been removed.</div>';
+    }
+
+    function setupCancelNotify(waitlist) {
+      const wl = document.getElementById('c_notifyWl');
+      const row = wl.parentNode; // the .fld-check wrapper
+      wl.checked = false;
+      if (waitlist > 0) {
+        row.style.display = '';
+        document.getElementById('c_notifyWlLabel').textContent =
+          'Also email the ' + waitlist + ' waitlisted student' + (waitlist === 1 ? '' : 's');
+      } else {
+        row.style.display = 'none';
+      }
+    }
+
+    // Per-date cancel (from the Upcoming list).
+    function openCancelForm(o) {
+      cancelCtx = { mode: 'date', classId: o.classId, iso: o.iso, dateDisplay: o.date, label: o.label, waitlist: o.waitlist };
+      document.getElementById('cancelTitle').textContent = 'Cancel this class';
+      document.getElementById('cancelSummary').innerHTML =
+        '<strong>' + esc(o.label) + '</strong><br>' + esc(o.date) + ' · ' +
+        esc(YogaSchedule.formatTimeRange(o.startH, o.startM, o.durationMins));
+      renderCancelCounts(o.signedUp, o.waitlist);
+      renderCancelPreview('date', o.label, o.date);
+      setupCancelNotify(o.waitlist);
+      document.getElementById('cancelConfirm').textContent = 'Cancel class';
+      document.getElementById('cancelDismiss').textContent = 'Keep class';
+      cancelModal.classList.add('active');
+    }
+
+    // Whole-series cancel (from the Edit form danger zone).
+    function openCancelSeries() {
+      const sc = seriesCounts(formEditingId);
+      cancelCtx = { mode: 'series', classId: formEditingId, label: formEditingLabel, waitlist: sc.waitlist };
+      document.getElementById('cancelTitle').textContent = 'Cancel entire series';
+      document.getElementById('cancelSummary').innerHTML =
+        '<strong>' + esc(formEditingLabel) + '</strong><br>This deactivates the class and cancels every upcoming session.';
+      renderCancelCounts(sc.signedUp, sc.waitlist, sc.dates);
+      renderCancelPreview('series', formEditingLabel, null);
+      setupCancelNotify(sc.waitlist);
+      document.getElementById('cancelConfirm').textContent = 'Cancel series';
+      document.getElementById('cancelDismiss').textContent = 'Keep series';
+      closeForm();
+      cancelModal.classList.add('active');
+    }
+
+    function closeCancel() { cancelModal.classList.remove('active'); cancelCtx = null; }
+    document.getElementById('cancelClose').addEventListener('click', closeCancel);
+    document.getElementById('cancelDismiss').addEventListener('click', closeCancel);
+    cancelModal.addEventListener('click', function (e) { if (e.target === cancelModal) closeCancel(); });
+
+    document.getElementById('cancelConfirm').addEventListener('click', function () {
+      if (!cancelCtx) return;
+      const isSeries = cancelCtx.mode === 'series';
+      const restoreLabel = isSeries ? 'Cancel series' : 'Cancel class';
+      const notifyWaitlist = document.getElementById('c_notifyWl').checked;
+      const btn = this; btn.disabled = true; btn.textContent = 'Working…';
+
+      const payload = isSeries
+        ? { action: 'cancelSeries', id: cancelCtx.classId, notifyWaitlist: notifyWaitlist }
+        : { action: 'cancelOccurrence', classId: cancelCtx.classId, date: cancelCtx.iso, dateDisplay: cancelCtx.dateDisplay, notifyWaitlist: notifyWaitlist };
+
+      adminPost(payload, function (res) {
+        btn.disabled = false; btn.textContent = restoreLabel;
+        closeCancel();
+        let msg = isSeries ? 'Series cancelled.' : 'Class cancelled.';
+        msg += ' Emailed ' + (res.emailed || 0) + ' student' + ((res.emailed === 1) ? '' : 's');
+        if (res.waitlistEmailed) msg += ' + ' + res.waitlistEmailed + ' waitlist';
+        msg += '.';
+        showToast(msg);
+        loadAdminSchedule();
+      }, function (m) {
+        btn.disabled = false; btn.textContent = restoreLabel;
+        showToast('Could not cancel: ' + m);
+      });
+    });
+
+    // Delete series (guarded server-side; also blocked here when signups exist).
+    function openDeleteSeries() {
+      deleteCtx = { id: formEditingId, label: formEditingLabel };
+      document.getElementById('deleteSummary').innerHTML = 'Delete <strong>' + esc(formEditingLabel) + '</strong>?';
+      const warn = document.getElementById('deleteWarn');
+      const btn = document.getElementById('deleteConfirm');
+      const sc = seriesCounts(formEditingId);
+      if (sc.signedUp > 0 || sc.waitlist > 0) {
+        warn.className = 'status-banner show status-banner--warn';
+        warn.textContent = 'This series has ' + sc.signedUp + ' signed up and ' + sc.waitlist +
+          ' waitlisted across upcoming dates. Cancel the series first to notify and clear them.';
+        btn.disabled = true;
+      } else {
+        warn.className = 'status-banner'; warn.textContent = '';
+        btn.disabled = false;
+      }
+      closeForm();
+      deleteModal.classList.add('active');
+    }
+
+    function closeDelete() { deleteModal.classList.remove('active'); deleteCtx = null; }
+    document.getElementById('deleteClose').addEventListener('click', closeDelete);
+    document.getElementById('deleteDismiss').addEventListener('click', closeDelete);
+    deleteModal.addEventListener('click', function (e) { if (e.target === deleteModal) closeDelete(); });
+
+    document.getElementById('deleteConfirm').addEventListener('click', function () {
+      if (!deleteCtx) return;
+      const btn = this; btn.disabled = true; btn.textContent = 'Deleting…';
+      adminPost({ action: 'deleteClass', id: deleteCtx.id }, function () {
+        btn.disabled = false; btn.textContent = 'Delete permanently';
+        closeDelete();
+        showToast('Series deleted.');
+        loadAdminSchedule();
+      }, function (m, res) {
+        btn.disabled = false; btn.textContent = 'Delete permanently';
+        if (res && res.code === 'has_upcoming') {
+          const warn = document.getElementById('deleteWarn');
+          warn.className = 'status-banner show status-banner--warn';
+          warn.textContent = m; // server's "cancel the series first" guidance
+        } else {
+          showToast('Could not delete: ' + m);
+        }
+      });
+    });
+
+    document.getElementById('cancelSeriesBtn').addEventListener('click', openCancelSeries);
+    document.getElementById('deleteSeriesBtn').addEventListener('click', openDeleteSeries);
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function pad2(n) { n = parseInt(n, 10) || 0; return (n < 10 ? '0' : '') + n; }
+    function formatOneOffDate(iso) {
+      const p = String(iso || '').split('-');
+      if (p.length < 3) return iso || '';
+      const d = new Date(+p[0], +p[1] - 1, +p[2]);
+      if (isNaN(d.getTime())) return iso;
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function setStatus(kind, msg) {
+      statusBanner.className = 'status-banner show status-banner--' + kind;
+      statusBanner.textContent = msg;
+    }
+    function clearStatus() { statusBanner.className = 'status-banner'; statusBanner.textContent = ''; }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 3200);
+    }
+
+    // ============================================================
+    //  TOOLTIPS — instant, styled, viewport-positioned ([data-tip])
+    // ============================================================
+    // One floating bubble appended in the markup; shown on hover/focus of any
+    // [data-tip] element. position:fixed + body-level element means it's never
+    // clipped by a card or the overflow:hidden modal, and event delegation means
+    // it works on the cards that get re-rendered on every load.
+    (function () {
+      const tip = document.getElementById('tipPop');
+      let current = null;
+
+      function show(el) {
+        const text = el.getAttribute('data-tip');
+        if (!text) return;
+        current = el;
+        tip.textContent = text;
+        tip.style.display = 'block';            // make measurable
+        const r = el.getBoundingClientRect();
+        const tr = tip.getBoundingClientRect();
+        let placement = 'top';
+        let top = r.top - tr.height - 9;
+        if (top < 8) { top = r.bottom + 9; placement = 'bottom'; } // flip below if no room
+        let left = r.left + r.width / 2 - tr.width / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8)); // clamp to viewport
+        tip.style.top = Math.round(top) + 'px';
+        tip.style.left = Math.round(left) + 'px';
+        tip.setAttribute('data-placement', placement);
+        tip.style.setProperty('--arrow-left', Math.round(r.left + r.width / 2 - left) + 'px');
+        tip.classList.add('show');
+      }
+      function hide() {
+        current = null;
+        tip.classList.remove('show');
+        tip.style.display = 'none';
+      }
+
+      document.addEventListener('mouseover', function (e) {
+        const el = e.target.closest ? e.target.closest('[data-tip]') : null;
+        if (el && el !== current) show(el);
+      });
+      document.addEventListener('mouseout', function (e) {
+        const el = e.target.closest ? e.target.closest('[data-tip]') : null;
+        if (!el) return;
+        if (e.relatedTarget && el.contains(e.relatedTarget)) return; // moving within the same target
+        hide();
+      });
+      document.addEventListener('focusin', function (e) {
+        const el = e.target.closest ? e.target.closest('[data-tip]') : null;
+        if (el) show(el);
+      });
+      document.addEventListener('focusout', hide);
+      window.addEventListener('scroll', hide, true);
+      window.addEventListener('resize', hide);
+    })();
+  </script>
+</body>
+</html>
