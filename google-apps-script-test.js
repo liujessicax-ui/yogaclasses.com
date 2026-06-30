@@ -63,9 +63,9 @@ function setupScheduleSheets() {
 
   if (schedule.getLastRow() <= 1) {
     var seed = [
-      ['sunday-online', 'Sunday Evening — Online via Zoom', 0, '18:00', 75, 'online', '', '', 'Open to Everyone', 'Yoga mat, Strap, Two blocks, Wall space, Yoga chair (ideal), Bolster (ideal)', 'TRUE'],
-      ['tuesday-ccv', 'Tuesday Evening — CCV Clubhouse (In Person)', 2, '18:00', 75, 'inperson', 'CCV Clubhouse', 10, 'CCV Residents Only, In Person', 'Yoga mat, Two blocks, Strap', 'TRUE'],
-      ['wednesday-restorative', 'Wednesday Evening — Restorative Yoga (Online)', 3, '20:00', 75, 'online', '', '', 'Restorative, Open to Everyone', 'Yoga mat, Bolster, Two blocks, Two blankets, Strap, Wall space, Yoga chair (ideal)', 'TRUE']
+      ['sunday-online', 'Sunday Evening \u2014 Online via Zoom', 0, '18:00', 75, 'online', '', '', 'Open to Everyone', 'Yoga mat, Strap, Two blocks, Wall space, Yoga chair (ideal), Bolster (ideal)', 'TRUE'],
+      ['tuesday-ccv', 'Tuesday Evening \u2014 CCV Clubhouse (In Person)', 2, '18:00', 75, 'inperson', 'CCV Clubhouse', 10, 'CCV Residents Only, In Person', 'Yoga mat, Two blocks, Strap', 'TRUE'],
+      ['wednesday-restorative', 'Wednesday Evening \u2014 Restorative Yoga (Online)', 3, '20:00', 75, 'online', '', '', 'Restorative, Open to Everyone', 'Yoga mat, Bolster, Two blocks, Two blankets, Strap, Wall space, Yoga chair (ideal)', 'TRUE']
     ];
     var range = schedule.getRange(2, 1, seed.length, 11);
     range.setNumberFormat('@');
@@ -652,7 +652,7 @@ function normalizeAdminClass_(raw, opts) {
     day = new Date(+dp[0], +dp[1] - 1, +dp[2]).getDay();
   } else {
     day = parseInt(raw.day, 10);
-    if (isNaN(day) || day < 0 || day > 6) return { ok: false, error: 'Day must be 0–6' };
+    if (isNaN(day) || day < 0 || day > 6) return { ok: false, error: 'Day must be 0\u20136' };
   }
 
   var t = parseHM_(raw.startTime != null ? raw.startTime : (pad2_(raw.startH) + ':' + pad2_(raw.startM)));
@@ -727,7 +727,7 @@ function findExceptionRow_(sheet, classId, dateIso) {
 
 function slugify_(s) {
   return (s || '').toString().toLowerCase()
-    .replace(/[—–]/g, '-')
+    .replace(/[\u2014\u2013]/g, '-')
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -1075,7 +1075,7 @@ function sendClassCancelledEmail_(student, label, dateDisplay) {
   try {
     var sc = getScheduleClassByLabel_(label);
     var timeStr = sc ? localTimeLine_(sc.startTime, dateDisplay, student.timezone) : '';
-    var subject = 'Class cancelled — ' + ((label || '').split(' — ')[0] || label) + ' on ' + extractMonthDay_(dateDisplay);
+    var subject = 'Class cancelled \u2014 ' + ((label || '').split(' \u2014 ')[0] || label) + ' on ' + extractMonthDay_(dateDisplay);
     var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
       '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
         '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
@@ -1085,13 +1085,13 @@ function sendClassCancelledEmail_(student, label, dateDisplay) {
       '</div>' +
       '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
         '<p style="font-size:15px;">Hi ' + escHtml(student.firstName || 'there') + ',</p>' +
-        '<p style="font-size:15px;line-height:1.6;">We’re sorry to let you know that the following class has been <strong>cancelled</strong>:</p>' +
+        '<p style="font-size:15px;line-height:1.6;">We&rsquo;re sorry to let you know that the following class has been <strong>cancelled</strong>:</p>' +
         '<div style="background:#fdecea;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #c62828;">' +
           '<strong>' + escHtml(label) + '</strong><br>' + escHtml(dateDisplay) +
           (timeStr ? '<br>' + escHtml(timeStr) : '') +
         '</div>' +
         (student.guestFirst ? '<p style="font-size:14px;color:#555;">This also releases the spot held for your guest, ' + escHtml(student.guestFirst) + ' ' + escHtml(student.guestLast) + '.</p>' : '') +
-        '<p style="font-size:14px;line-height:1.6;color:#555;">No action is needed — your registration has been removed. We hope to see you in a future class; you can view the latest schedule and sign up again anytime:</p>' +
+        '<p style="font-size:14px;line-height:1.6;color:#555;">No action is needed &mdash; your registration has been removed. We hope to see you in a future class; you can view the latest schedule and sign up again anytime:</p>' +
         '<div style="text-align:center;margin:20px 0;">' +
           '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">View Schedule</a>' +
         '</div>' +
@@ -1114,7 +1114,7 @@ function sendClassMovedEmail_(student, label, oldDateDisplay, newDateDisplay, ne
     var hhmm = newStartTime || (sc ? sc.startTime : '');
     var tzLine = localTimeLine_(hhmm, newDateDisplay, student.timezone);
     var timeLine = tzLine ? (' at ' + escHtml(tzLine)) : '';
-    var subject = 'Class rescheduled — ' + ((label || '').split(' — ')[0] || label);
+    var subject = 'Class rescheduled \u2014 ' + ((label || '').split(' \u2014 ')[0] || label);
     var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
       '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
         '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
@@ -1124,13 +1124,13 @@ function sendClassMovedEmail_(student, label, oldDateDisplay, newDateDisplay, ne
       '</div>' +
       '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
         '<p style="font-size:15px;">Hi ' + escHtml(student.firstName || 'there') + ',</p>' +
-        '<p style="font-size:15px;line-height:1.6;">Your upcoming class has been <strong>rescheduled</strong>. Your spot is reserved for the new date — no action is needed.</p>' +
+        '<p style="font-size:15px;line-height:1.6;">Your upcoming class has been <strong>rescheduled</strong>. Your spot is reserved for the new date &mdash; no action is needed.</p>' +
         '<div style="background:#f0f5ee;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
           '<strong>' + escHtml(label) + '</strong><br>' +
           '<span style="color:#999;text-decoration:line-through;">' + escHtml(oldDateDisplay) + '</span><br>' +
           '<strong style="color:#5B7553;">Now: ' + escHtml(newDateDisplay) + timeLine + '</strong>' +
         '</div>' +
-        (student.guestFirst ? '<p style="font-size:14px;color:#555;">Your guest’s spot (' + escHtml(student.guestFirst) + ' ' + escHtml(student.guestLast) + ') has moved with you.</p>' : '') +
+        (student.guestFirst ? '<p style="font-size:14px;color:#555;">Your guest&rsquo;s spot (' + escHtml(student.guestFirst) + ' ' + escHtml(student.guestLast) + ') has moved with you.</p>' : '') +
         '<div style="text-align:center;margin:20px 0;">' +
           '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">View Schedule</a>' +
         '</div>' +
@@ -1215,14 +1215,14 @@ function sendClassReminderEmail_(student, cls, hhmm) {
       '</div>' +
       '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
         '<p style="font-size:15px;">Hi ' + escHtml(student.firstName || 'there') + ',</p>' +
-        '<p style="font-size:15px;line-height:1.6;">A friendly reminder that you’re registered for a class <strong>today</strong>:</p>' +
+        '<p style="font-size:15px;line-height:1.6;">A friendly reminder that you&rsquo;re registered for a class <strong>today</strong>:</p>' +
         '<div style="background:#f0f5ee;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
           '<strong>' + escHtml(cls.label) + '</strong><br>' + escHtml(cls.classDate) +
           (timeStr ? '<br>' + escHtml(timeStr) : '') +
         '</div>' +
         detailHtml +
         (student.guestFirst ? '<p style="font-size:14px;color:#555;">Your guest ' + escHtml(student.guestFirst) + ' ' + escHtml(student.guestLast) + ' is registered with you.</p>' : '') +
-        '<p style="font-size:14px;color:#555;line-height:1.6;">Don’t forget to check the <a href="' + SITE_URL + '/props.html" style="color:#5B7553;">Props page</a> for what to bring.</p>' +
+        '<p style="font-size:14px;color:#555;line-height:1.6;">Don&rsquo;t forget to check the <a href="' + SITE_URL + '/props.html" style="color:#5B7553;">Props page</a> for what to bring.</p>' +
         '<p style="font-size:14px;color:#555;">See you soon!<br>Jessica</p>' +
       '</div>' +
       '<div style="padding:16px;text-align:center;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
@@ -1248,7 +1248,7 @@ function sendAdminClassActionNotification_(title, lines) {
         '<p style="color:#777;font-size:13px;margin-top:16px;">' + ts + '</p>' +
       '</div>' +
     '</div>';
-    deliverEmail_(ADMIN_EMAIL, '⚠ Admin: ' + title, body, 'Admin - Schedule Change');
+    deliverEmail_(ADMIN_EMAIL, '\u26A0 Admin: ' + title, body, 'Admin - Schedule Change');
   } catch (err) { Logger.log('sendAdminClassActionNotification_ error: ' + err); }
 }
 
@@ -1354,7 +1354,7 @@ function adminCancelOccurrence_(data) {
     // 2. Notify + archive the affected registrants.
     var res = cancelOneDate_(label, dateDisplay, notifyWaitlist);
 
-    sendAdminClassActionNotification_('Class cancelled — ' + label, [
+    sendAdminClassActionNotification_('Class cancelled \u2014 ' + label, [
       '<strong>Date:</strong> ' + escHtml(dateDisplay),
       '<strong>Registered students emailed:</strong> ' + res.emailed + ' of ' + res.signups,
       '<strong>Waitlist emailed:</strong> ' + res.waitlistEmailed + ' of ' + res.waitlist,
@@ -1399,7 +1399,7 @@ function adminCancelSeries_(data) {
       totals.archived += r.archived; totals.waitlistArchived += r.waitlistArchived;
     }
 
-    sendAdminClassActionNotification_('Series cancelled — ' + label, [
+    sendAdminClassActionNotification_('Series cancelled \u2014 ' + label, [
       'The series was deactivated and removed from the public schedule.',
       '<strong>Upcoming dates affected:</strong> ' + dates.length,
       '<strong>Registered students emailed:</strong> ' + totals.emailed + ' of ' + totals.signups,
@@ -1459,7 +1459,7 @@ function adminMoveOccurrence_(data) {
       }
     }
 
-    sendAdminClassActionNotification_('Class moved — ' + label, [
+    sendAdminClassActionNotification_('Class moved \u2014 ' + label, [
       '<strong>From:</strong> ' + escHtml(oldDisplay),
       '<strong>To:</strong> ' + escHtml(newDisplay) + (newStart ? ' at ' + escHtml(fmtTime12_(newStart)) : ''),
       '<strong>Registration rows re-dated:</strong> ' + restamped,
@@ -1694,7 +1694,7 @@ function logConfirmationEmail(rows, cancelToken, meetLink) {
   }
 
   var cancelUrl = SITE_URL + '/cancel.html?token=' + cancelToken;
-  var subject = 'Yoga with Jessica — Sign-Up Confirmation';
+  var subject = 'Yoga with Jessica \u2014 Sign-Up Confirmation';
 
   var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
     '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
@@ -1724,7 +1724,7 @@ function logConfirmationEmail(rows, cancelToken, meetLink) {
       (meetLink ?
         '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
           '<strong>&#x1F4F9; Your Zoom link is ready</strong><br>' +
-          '<p style="margin:8px 0;">Class is starting soon — join here:</p>' +
+          '<p style="margin:8px 0;">Class is starting soon &mdash; join here:</p>' +
           '<div style="text-align:center;margin:12px 0;">' +
             '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
           '</div>' +
@@ -1767,7 +1767,7 @@ function logConfirmationEmail(rows, cancelToken, meetLink) {
 
 function logWaitlistNotificationEmail(email, firstName, className, classDate) {
   var logSheet = getOrCreateEmailLogSheet();
-  var subject = 'Yoga with Jessica — A Spot Opened Up';
+  var subject = 'Yoga with Jessica \u2014 A Spot Opened Up';
   var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
     '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
       '<h1 style="margin:0;font-family:Georgia,serif;color:#5B7553;font-size:24px;">Yoga with Jessica</h1>' +
@@ -1819,10 +1819,10 @@ function logAdminSignupNotification(rows) {
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       var icon = r.classType === 'In-Person' ? '&#x1F3E0;' : '&#x1F4BB;';
-      classLines += '<li>' + icon + ' ' + escHtml(r.className) + ' — ' + escHtml(r.classDate) + ' (' + escHtml(r.classType) + ')</li>';
+      classLines += '<li>' + icon + ' ' + escHtml(r.className) + ' &mdash; ' + escHtml(r.classDate) + ' (' + escHtml(r.classType) + ')</li>';
     }
 
-    var subject = '\uD83E\uDDD8 New Sign-Up: ' + firstName + ' ' + lastName + ' — ' + (rows[0].className || '').split(' — ')[0];
+    var subject = '\uD83E\uDDD8 New Sign-Up: ' + firstName + ' ' + lastName + ' \u2014 ' + (rows[0].className || '').split(' \u2014 ')[0];
 
     var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
       '<div style="background:#e8f5e9;padding:16px 24px;border-radius:8px 8px 0 0;border-left:4px solid #5B7553;">' +
@@ -1860,10 +1860,10 @@ function logAdminCancelNotification(studentName, studentEmail, guestName, cancel
     var classLines = '';
     for (var i = 0; i < cancelledClasses.length; i++) {
       var c = cancelledClasses[i];
-      classLines += '<li>' + escHtml(c.className) + ' — ' + escHtml(c.classDate) + ' (' + escHtml(c.classType) + ')</li>';
+      classLines += '<li>' + escHtml(c.className) + ' &mdash; ' + escHtml(c.classDate) + ' (' + escHtml(c.classType) + ')</li>';
     }
 
-    var subject = '\u274C Cancellation: ' + studentName + ' — ' + (cancelledClasses[0] ? cancelledClasses[0].className : '').split(' — ')[0];
+    var subject = '\u274C Cancellation: ' + studentName + ' \u2014 ' + (cancelledClasses[0] ? cancelledClasses[0].className : '').split(' \u2014 ')[0];
 
     var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
       '<div style="background:#ffebee;padding:16px 24px;border-radius:8px 8px 0 0;border-left:4px solid #c62828;">' +
@@ -2017,6 +2017,7 @@ function handleCancellation(token) {
 // Tests can set up Zoom state via ?action=set_meet_link and ?action=clear_meet_state
 // The mock checks if a class is online, starts within 30 min, and has simulated Zoom state.
 
+var LATE_SIGNUP_WINDOW_MIN = 40; // keep >= sendMeetInvites upper window (prod parity)
 function checkAndCreateMeetForLateSignup(rows) {
   if (!rows || rows.length === 0) return '';
 
@@ -2042,7 +2043,7 @@ function checkAndCreateMeetForLateSignup(rows) {
 
     var minutesUntilClass = (cls.startH * 60 + cls.startM) - currentTotalMin;
 
-    if (minutesUntilClass > 30 || minutesUntilClass < -15) continue;
+    if (minutesUntilClass > LATE_SIGNUP_WINDOW_MIN || minutesUntilClass < -15) continue;
 
     // Check if this student signed up for this class
     var classDate = cls.classDate;
@@ -2322,7 +2323,7 @@ function doGet(e) {
                 rowEmail === email &&
                 rowClass === checkClass &&
                 rowDate === checkDate) {
-              duplicates.push(checkClass + ' — ' + checkDate);
+              duplicates.push(checkClass + ' \u2014 ' + checkDate);
               break;
             }
           }
@@ -2555,7 +2556,7 @@ function handleSeed(data) {
           row.className || '',
           row.classDate || '',
           row.classType || 'In-Person',
-          row.liabilityWaiver || 'YES — Accepted',
+          row.liabilityWaiver || 'YES \u2014 Accepted',
           row.guestFirstName || '',
           row.guestLastName || '',
           row.guestOf || '',
