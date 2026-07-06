@@ -398,8 +398,8 @@ function buildAdminSchedulePayload_(adminEmail) {
 
 // Expand occurrences over the next windowDays Pacific days (applying active +
 // exceptions via getOccurrencesOnPacificDate_) and attach sign-up/waitlist
-// counts. Mirrors the public 15-min sign-up cutoff so already-passed classes
-// today drop off.
+// counts. Keeps a 15-min grace after start so an in-progress class stays
+// manageable here even though public sign-ups now close at the start time.
 function buildUpcomingAdminOccurrences_(windowDays) {
   var out = [];
   var exceptions = getSchedule().exceptions;
@@ -1556,6 +1556,18 @@ function doPost(e) {
 
     var rows = data.rows;
 
+    // Backstop for stale pages: drop rows whose class has already started
+    // (public sign-ups close at the start time). The signup page re-checks
+    // this before submitting, but its POST is no-cors so a rejection can't be
+    // surfaced — rows we can't resolve are let through rather than risking a
+    // false drop.
+    if (rows && rows.length) {
+      rows = rows.filter(function(row) { return !classAlreadyStarted_(row); });
+      if (!rows.length) {
+        return jsonOut_({ status: 'rejected', message: 'Sign-ups closed: class already started.' });
+      }
+    }
+
     // Check if this is a waitlist submission
     if (data.action === 'waitlist') {
       return handleWaitlist(rows);
@@ -1630,6 +1642,29 @@ function doPost(e) {
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// True when a sign-up row's class occurrence has already started (Pacific
+// wall clock). Start time is resolved from the Schedule sheet by label; the
+// stored display date must carry a year ("Sunday, April 13, 2026"). Any row
+// that can't be resolved returns false — the client already gates sign-ups,
+// so this backstop must never reject a legitimate row.
+function classAlreadyStarted_(row) {
+  try {
+    var sc = getScheduleClassByLabel_(((row && row.className) || '').toString().trim());
+    if (!sc) return false;
+    var s = String((row && row.classDate) || '').trim().replace(/^[A-Za-z]+,\s*/, '');
+    if (!/\d{4}/.test(s)) return false; // old year-less format — fail open
+    var classDate = new Date(s);
+    if (isNaN(classDate.getTime())) return false;
+    var start = new Date(classDate);
+    start.setHours(sc.startH, sc.startM, 0, 0);
+    var pstNow = new Date(new Date().toLocaleString('en-US', { timeZone: MEET_TZ }));
+    return pstNow >= start;
+  } catch (e) {
+    Logger.log('classAlreadyStarted_ error: ' + e);
+    return false;
   }
 }
 
@@ -2573,7 +2608,7 @@ function sendZoomLinkToStudents(students, cls, zoomLink) {
           '<p style="margin:6px 0 0;color:#888;font-size:13px;">Class Starting Soon</p>' +
         '</div>' +
         '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
-          '<p style="font-size:15px;">Hi there,</p>' +
+          '<p style="font-size:15px;">Hi ' + escHtml(s.firstName || 'there') + ',</p>' +
           '<p style="font-size:15px;line-height:1.6;">Your <strong>' + escHtml(cls.label || cls.name) + '</strong> class starts in about 30 minutes. Here\'s your Zoom link:</p>' +
           timeHtml +
           '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +

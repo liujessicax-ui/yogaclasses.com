@@ -1554,6 +1554,17 @@ function doPost(e) {
       return handleSeed(data);
     }
 
+    // Backstop for stale pages: drop rows whose class has already started
+    // (public sign-ups close at the start time). Placed after `seed` so tests
+    // can still insert historical rows. Rows we can't resolve are let through
+    // rather than risking a false drop (the client already gates sign-ups).
+    if (rows && rows.length) {
+      rows = rows.filter(function(row) { return !classAlreadyStarted_(row); });
+      if (!rows.length) {
+        return jsonOut_({ status: 'rejected', message: 'Sign-ups closed: class already started.' });
+      }
+    }
+
     // Waitlist submission
     if (data.action === 'waitlist') {
       return handleWaitlist(rows);
@@ -1628,6 +1639,29 @@ function doPost(e) {
     return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// True when a sign-up row's class occurrence has already started (Pacific
+// wall clock). Start time is resolved from the Schedule sheet by label; the
+// stored display date must carry a year ("Sunday, April 13, 2026"). Any row
+// that can't be resolved returns false — the client already gates sign-ups,
+// so this backstop must never reject a legitimate row.
+function classAlreadyStarted_(row) {
+  try {
+    var sc = getScheduleClassByLabel_(((row && row.className) || '').toString().trim());
+    if (!sc) return false;
+    var s = String((row && row.classDate) || '').trim().replace(/^[A-Za-z]+,\s*/, '');
+    if (!/\d{4}/.test(s)) return false; // old year-less format — fail open
+    var classDate = new Date(s);
+    if (isNaN(classDate.getTime())) return false;
+    var start = new Date(classDate);
+    start.setHours(sc.startH, sc.startM, 0, 0);
+    var pstNow = new Date(new Date().toLocaleString('en-US', { timeZone: MEET_TZ }));
+    return pstNow >= start;
+  } catch (e) {
+    Logger.log('classAlreadyStarted_ error: ' + e);
+    return false;
   }
 }
 

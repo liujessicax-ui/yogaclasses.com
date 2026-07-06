@@ -203,7 +203,6 @@
     exceptions = exceptions || [];
     var nowUTC = new Date();
     var pac = getNowInPacific();
-    var windowEnd = new Date(nowUTC.getTime() + windowDays * 86400000);
     var results = [];
     var seen = {};
 
@@ -212,13 +211,23 @@
     // the rolling weekly series which only open ~windowDays out.
     function consider(y, mo, da, h, m, ignoreWindow) {
       var classStart = pacificDate(y, mo, da, h, m);
-      var signupCutoff = new Date(classStart.getTime() + 15 * 60000);
-      if (signupCutoff > nowUTC && (ignoreWindow || classStart <= windowEnd)) {
-        var key = classStart.getTime();
-        if (seen[key]) return;
-        seen[key] = true;
-        results.push({ date: classStart, startHour: h, startMin: m, durationMins: cls.durationMins });
+      // Sign-ups close the moment class starts — no signing up mid-class.
+      if (classStart <= nowUTC) return;
+      if (!ignoreWindow) {
+        // A weekly occurrence only opens once the same slot windowDays earlier
+        // has *ended* — next Sunday's 6pm class appears right after this
+        // Sunday's class finishes, never while it's still running.
+        var prev = new Date(y, mo - 1, da - windowDays);
+        var prevSlotEnd = new Date(
+          pacificDate(prev.getFullYear(), prev.getMonth() + 1, prev.getDate(), h, m).getTime() +
+          cls.durationMins * 60000
+        );
+        if (nowUTC < prevSlotEnd) return;
       }
+      var key = classStart.getTime();
+      if (seen[key]) return;
+      seen[key] = true;
+      results.push({ date: classStart, startHour: h, startMin: m, durationMins: cls.durationMins });
     }
 
     if (cls.oneOffDate) {

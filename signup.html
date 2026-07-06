@@ -867,6 +867,22 @@
         };
       });
 
+      // Re-check that every selected class is still open — a page left open
+      // across a class start would otherwise submit a stale option (sign-ups
+      // close at the start time; next week's class opens after this week's ends).
+      const staleEntry = classEntries.find(entry => {
+        const cls = CLASSES.find(c => c.id === entry.id);
+        if (!cls) return true;
+        return !YogaSchedule.upcomingOccurrences(cls, EXCEPTIONS, 7)
+          .some(occ => occ.date.toISOString() === entry.isoDate);
+      });
+      if (staleEntry) {
+        buildClassOptions();
+        showValidationModal('Sign-up for "' + staleEntry.name + '" on ' + staleEntry.date +
+          ' has closed — sign-ups close when class starts. The class list has been refreshed, please re-select.');
+        return;
+      }
+
       pendingFormData = {
         firstName, lastName, email,
         classEntries,
