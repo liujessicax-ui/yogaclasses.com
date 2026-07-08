@@ -395,6 +395,42 @@ h3 { font-size: 1.3rem; margin-bottom: .4em; }
   color: rgba(255,255,255,.45);
 }
 .footer__links a:hover { color: var(--warm-lt); }
+.footer__cert {
+  display: inline-flex; align-items: center; gap: .6rem;
+  margin-bottom: 1.25rem; text-decoration: none;
+  color: rgba(255,255,255,.55); font-size: .8rem; letter-spacing: .02em;
+  transition: color .2s ease, opacity .2s ease;
+}
+.footer__cert:hover { color: rgba(255,255,255,.8); }
+.footer__cert-badge { width: 48px; height: auto; opacity: .9; }
+.footer__cert:hover .footer__cert-badge { opacity: 1; }
+
+/* ========== Credentials (about page) ========== */
+.credential-card {
+  display: flex; align-items: center; gap: 1.5rem;
+  max-width: 560px; margin: 1.5rem auto 0;
+  padding: 1.25rem 1.75rem;
+  background: var(--white); border-radius: 14px;
+  border: 1px solid var(--sand);
+  box-shadow: 0 2px 14px rgba(0,0,0,.08);
+  text-decoration: none; color: inherit;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.credential-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(0,0,0,.12);
+}
+.credential-badge { width: 120px; height: auto; flex-shrink: 0; }
+.credential-title {
+  font-family: var(--font-heading); color: var(--charcoal);
+  font-size: 1.4rem; font-weight: 600; margin: 0 0 .35rem;
+}
+.credential-sub { color: #6b6b6b; font-size: .95rem; line-height: 1.6; margin: 0; }
+.credential-link { color: var(--olive); font-weight: 700; white-space: nowrap; }
+@media (max-width: 560px) {
+  .credential-card { flex-direction: column; text-align: center; gap: 1rem; padding: 1.5rem; }
+  .credential-badge { width: 130px; }
+}
 
 /* ========== Page header (inner pages) ========== */
 .page-header {
