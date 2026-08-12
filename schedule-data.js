@@ -198,9 +198,17 @@
   // Return upcoming dated occurrences of a class within windowDays, applying
   // exceptions: cancelled/moved removes the original date; moved/extra add a
   // new date (with an optional new start time).
-  function upcomingOccurrences(cls, exceptions, windowDays) {
+  //
+  // opts.includeCancelled — when true, a cancelled single date is NOT dropped;
+  // it's still returned, flagged with `cancelled: true`, so the pages can keep
+  // its box visible but un-selectable instead of making it vanish. It falls out
+  // on its own once the class start passes (same as any other occurrence), at
+  // which point the next week's slot opens normally. Default (false) preserves
+  // the original "cancelled dates disappear" behavior for all existing callers.
+  function upcomingOccurrences(cls, exceptions, windowDays, opts) {
     if (!cls.active) return [];
     exceptions = exceptions || [];
+    var includeCancelled = !!(opts && opts.includeCancelled);
     var nowUTC = new Date();
     var pac = getNowInPacific();
     var results = [];
@@ -209,7 +217,7 @@
     // ignoreWindow=true lets one-off classes be signed up for any time before the
     // event (not just within windowDays) — they're announced ahead of time, unlike
     // the rolling weekly series which only open ~windowDays out.
-    function consider(y, mo, da, h, m, ignoreWindow) {
+    function consider(y, mo, da, h, m, ignoreWindow, cancelled) {
       var classStart = pacificDate(y, mo, da, h, m);
       // Sign-ups close the moment class starts — no signing up mid-class.
       if (classStart <= nowUTC) return;
@@ -227,7 +235,7 @@
       var key = classStart.getTime();
       if (seen[key]) return;
       seen[key] = true;
-      results.push({ date: classStart, startHour: h, startMin: m, durationMins: cls.durationMins });
+      results.push({ date: classStart, startHour: h, startMin: m, durationMins: cls.durationMins, cancelled: !!cancelled });
     }
 
     if (cls.oneOffDate) {
@@ -236,7 +244,12 @@
       var od = dateFromIso(cls.oneOffDate);
       if (od) {
         var oex = findEx(exceptions, cls.id, cls.oneOffDate);
-        if (!(oex && (oex.status === 'cancelled' || oex.status === 'moved'))) {
+        var oStatus = oex ? oex.status : '';
+        if (oStatus === 'moved') {
+          // Relocated: original date drops out (re-added under newDate below).
+        } else if (oStatus === 'cancelled') {
+          if (includeCancelled) consider(od.year, od.month, od.day, cls.startHour, cls.startMin, true, true);
+        } else {
           consider(od.year, od.month, od.day, cls.startHour, cls.startMin, true);
         }
       }
@@ -246,8 +259,10 @@
         if (scan.getDay() !== cls.day) continue;
         var iso = isoFromParts(scan.getFullYear(), scan.getMonth() + 1, scan.getDate());
         var ex = findEx(exceptions, cls.id, iso);
-        if (ex && (ex.status === 'cancelled' || ex.status === 'moved')) continue;
-        consider(scan.getFullYear(), scan.getMonth() + 1, scan.getDate(), cls.startHour, cls.startMin);
+        if (ex && ex.status === 'moved') continue; // relocated away; shown under newDate
+        var isCancelled = !!(ex && ex.status === 'cancelled');
+        if (isCancelled && !includeCancelled) continue;
+        consider(scan.getFullYear(), scan.getMonth() + 1, scan.getDate(), cls.startHour, cls.startMin, false, isCancelled);
       }
     }
 

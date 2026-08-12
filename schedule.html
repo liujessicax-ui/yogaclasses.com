@@ -29,6 +29,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="preview-styles.css" />
+  <style>
+    /* A single cancelled date on an otherwise-recurring class */
+    .schedule-card__cancelled {
+      margin-top: .5rem;
+      font-family: var(--font-body);
+      font-size: .82rem; font-weight: 700;
+      color: #a0603e;
+      background: rgba(196,120,90,.1);
+      border-left: 3px solid rgba(196,120,90,.5);
+      padding: .4rem .6rem; border-radius: 4px;
+    }
+    .btn--disabled {
+      background: #ccc !important; border-color: #ccc !important;
+      color: #fff !important; cursor: not-allowed;
+      pointer-events: none; box-shadow: none;
+    }
+  </style>
 </head>
 <body>
 
@@ -237,7 +254,8 @@
       return cls.type === 'online' ? ICON_VIDEO : ICON_CALENDAR;
     }
 
-    function renderSchedule(classes) {
+    function renderSchedule(classes, exceptions) {
+      exceptions = exceptions || [];
       const today = todayIsoPacific();
       // Hide one-off classes whose single date has already passed.
       const active = classes.filter(c => c.active && (!c.oneOffDate || c.oneOffDate >= today));
@@ -256,16 +274,31 @@
             ? '<span class="schedule-card__tag schedule-card__tag--inperson">In Person</span>'
             : `<span class="schedule-card__tag">${escHtml(t)}</span>`).join('');
         const props = cls.props.map(p => `<li>${escHtml(p)}</li>`).join('');
+
+        // If the next slot people would sign up for is a cancelled single date,
+        // keep the box but name the date, say it's cancelled, and disable Sign
+        // Up. It restores itself once that class start passes and the following
+        // week's slot opens (handled in schedule-data.js).
+        const occs = YogaSchedule.upcomingOccurrences(cls, exceptions, 7, { includeCancelled: true });
+        const cancelledOcc = (occs.length && occs.every(o => o.cancelled)) ? occs[0] : null;
+        const cancelNote = cancelledOcc
+          ? `<p class="schedule-card__cancelled">Class on ${escHtml(YogaSchedule.formatDate(cancelledOcc.date))} is cancelled.</p>`
+          : '';
+        const action = cancelledOcc
+          ? `<span class="btn btn--primary btn--disabled" style="font-size:.75rem;padding:.5rem 1.2rem;" aria-disabled="true">Sign Up</span>`
+          : `<a href="signup.html?class=${encodeURIComponent(cls.id)}" class="btn btn--primary" style="font-size:.75rem;padding:.5rem 1.2rem;">Sign Up</a>`;
+
         return `
-          <div class="card schedule-card">
+          <div class="card schedule-card${cancelledOcc ? ' schedule-card--cancelled' : ''}">
             <div class="schedule-card__icon">${iconFor(cls)}</div>
             <div class="schedule-card__details">
               <h3>${escHtml(name)}</h3>
               <p><strong class="class-time" data-pt-hour="${cls.startHour}" data-pt-min="${cls.startMin}" data-duration="${cls.durationMins}">${fallbackTime}</strong> &bull; ${escHtml(descriptor)}${dateNote}</p>
               ${badges}
+              ${cancelNote}
             </div>
             <div class="schedule-card__action">
-              <a href="signup.html?class=${encodeURIComponent(cls.id)}" class="btn btn--primary" style="font-size:.75rem;padding:.5rem 1.2rem;">Sign Up</a>
+              ${action}
             </div>
             <div class="schedule-card__props">
               <span style="font-family:var(--font-body);font-weight:600;">Props to bring:</span>
@@ -312,8 +345,9 @@
 
     // Render immediately from the cached/fallback copy, then refresh from the network.
     const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx3qxkR_qLgCyy0LVmslaK2LHzGFJq5UMUwfvj5SFRqx_vZ5xlssCx_Ku2r_wVhhpU3/exec';
-    renderSchedule(YogaSchedule.current().classes);
-    YogaSchedule.load(SHEETS_WEB_APP_URL).then(data => renderSchedule(data.classes));
+    const initialSchedule = YogaSchedule.current();
+    renderSchedule(initialSchedule.classes, initialSchedule.exceptions);
+    YogaSchedule.load(SHEETS_WEB_APP_URL).then(data => renderSchedule(data.classes, data.exceptions));
   </script>
 </body>
 </html>
