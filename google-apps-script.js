@@ -44,6 +44,63 @@ var ADMIN_OAUTH_CLIENT_ID = '83041676087-iia2s4jjtb3n6je56so3mfbdin9lpe0u.apps.g
 var ADMIN_ALLOWLIST = ['liu.jessica.x@gmail.com'];
 
 // ============================================================================
+// ========== TEACHING HIATUS (feature flag) ==========
+// ============================================================================
+// A single toggle, flipped from the admin console (Pause teaching), that lets
+// Jessica step away for an undetermined stretch WITHOUT the public site looking
+// cancelled. When ON:
+//   - The public schedule and the whole sign-up flow are UNCHANGED. Students
+//     can still pick dates and submit exactly as before.
+//   - Instead of the normal confirmation email, each new sign-up receives a
+//     "sorry, class has been cancelled for your dates, please check back later"
+//     note (sendHiatusCancelledEmail_).
+//   - NO Zoom meeting is ever scheduled and NO Zoom-link or reminder emails go
+//     out for any class — the time-driven triggers (sendMeetInvites,
+//     sendClassReminders) and the late-sign-up Zoom path all short-circuit.
+// The flag lives in Script Properties so it survives redeploys and is readable
+// by the triggers, which run outside any request. Off by default.
+var HIATUS_FLAG_KEY = 'TEACHING_PAUSED';
+var HIATUS_NOTE_KEY = 'TEACHING_PAUSED_NOTE';
+
+// True when teaching is currently paused. Never throws — a properties read
+// failure is treated as "not paused" so a glitch can't silently suppress a
+// real class's emails.
+function isTeachingPaused_() {
+  try {
+    return PropertiesService.getScriptProperties().getProperty(HIATUS_FLAG_KEY) === 'true';
+  } catch (e) {
+    Logger.log('isTeachingPaused_ error: ' + e);
+    return false;
+  }
+}
+
+// Current hiatus state for the admin payload: { paused, note }.
+function getHiatusState_() {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    return {
+      paused: props.getProperty(HIATUS_FLAG_KEY) === 'true',
+      note: props.getProperty(HIATUS_NOTE_KEY) || ''
+    };
+  } catch (e) {
+    return { paused: false, note: '' };
+  }
+}
+
+// Admin write: flip the flag (and optionally store a note appended to the
+// cancellation email, e.g. an expected return window). Returns the new state.
+function adminSetHiatus_(data) {
+  var props = PropertiesService.getScriptProperties();
+  var paused = (data.paused === true || data.paused === 'true');
+  props.setProperty(HIATUS_FLAG_KEY, paused ? 'true' : 'false');
+  if (typeof data.note === 'string') {
+    props.setProperty(HIATUS_NOTE_KEY, data.note.slice(0, 500));
+  }
+  Logger.log('adminSetHiatus_: teaching ' + (paused ? 'PAUSED' : 'resumed'));
+  return { status: 'ok', hiatus: getHiatusState_() };
+}
+
+// ============================================================================
 // ========== SCHEDULE — SINGLE SOURCE OF TRUTH (Google Sheet) ==========
 // ============================================================================
 // The class schedule lives in two tabs of the "Yoga Signup" spreadsheet:
@@ -389,7 +446,8 @@ function buildAdminSchedulePayload_(adminEmail) {
       adminEmail: adminEmail,
       classes: sched.classes,
       exceptions: sched.exceptions,
-      upcoming: buildUpcomingAdminOccurrences_(7)
+      upcoming: buildUpcomingAdminOccurrences_(7),
+      hiatus: getHiatusState_()
     };
   } catch (err) {
     return { status: 'error', message: err.toString() };
@@ -1160,6 +1218,55 @@ function sendClassCancelledEmail_(student, label, dateDisplay) {
   } catch (err) { Logger.log('sendClassCancelledEmail_ error for ' + student.email + ': ' + err); return false; }
 }
 
+// Sent in place of the sign-up confirmation while teaching is paused (see the
+// HIATUS feature flag). One email per sign-up batch, listing every date the
+// student just picked, telling them the class is cancelled and to check back
+// later. An optional admin note (e.g. an expected return window) is appended.
+function sendHiatusCancelledEmail_(rows) {
+  if (!rows || !rows.length) return;
+  var to = rows[0].email;
+  if (!to) return;
+  try {
+    var firstName = rows[0].firstName || 'there';
+    var note = '';
+    try { note = PropertiesService.getScriptProperties().getProperty(HIATUS_NOTE_KEY) || ''; } catch (e) {}
+
+    var items = rows.map(function (r) {
+      var label = r.className || '';
+      var date = r.classDate || '';
+      return '<div style="background:#fdecea;padding:14px 16px;border-radius:6px;margin:10px 0;font-size:14px;border-left:4px solid #c62828;">' +
+        '<strong>' + escHtml(label) + '</strong>' + (date ? '<br>' + escHtml(date) : '') +
+      '</div>';
+    }).join('');
+
+    var subject = 'About your Yoga with Jessica sign-up — class cancelled';
+    var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+      '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
+        '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
+          '<a href="' + SITE_URL + '" style="color:#5B7553;text-decoration:none;">yogawithjessica.com</a>' +
+        '</h1>' +
+        '<p style="margin:6px 0 0;color:#888;font-size:13px;">Class Cancelled</p>' +
+      '</div>' +
+      '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
+        '<p style="font-size:15px;">Hi ' + escHtml(firstName) + ',</p>' +
+        '<p style="font-size:15px;line-height:1.6;">Thank you so much for signing up. I&rsquo;m so sorry to say that class has been <strong>cancelled</strong> for the date' + (rows.length > 1 ? 's' : '') + ' you chose, so there won&rsquo;t be a session on:</p>' +
+        items +
+        '<p style="font-size:14px;line-height:1.6;color:#555;">No action is needed on your part. Please <strong>check back later</strong> &mdash; new class dates will be open for sign-up on the schedule when things resume.</p>' +
+        (note ? '<div style="background:#f0f5ee;padding:14px 16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;color:#3f4f39;">' + escHtml(note) + '</div>' : '') +
+        '<div style="text-align:center;margin:20px 0;">' +
+          '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">View Schedule</a>' +
+        '</div>' +
+        '<p style="font-size:14px;color:#555;">With gratitude,<br>Jessica</p>' +
+      '</div>' +
+      '<div style="padding:16px;text-align:center;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
+        '<p style="margin:0;font-size:12px;color:#999;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
+        '<p style="margin:6px 0 0;"><a href="' + SITE_URL + '" style="color:#5B7553;font-size:15px;font-weight:600;text-decoration:none;">yogawithjessica.com</a></p>' +
+      '</div>' +
+    '</div>';
+    deliverEmail_(to, subject, body, 'Class Cancelled');
+  } catch (err) { Logger.log('sendHiatusCancelledEmail_ error for ' + to + ': ' + err); }
+}
+
 function sendClassMovedEmail_(student, label, oldDateDisplay, newDateDisplay, newStartTime) {
   if (!student || !student.email) return false;
   try {
@@ -1534,7 +1641,8 @@ function doPost(e) {
     // deleteClass. Every write busts the schedule cache.
     var ADMIN_ACTIONS = {
       getScheduleAdmin: 1, updateClass: 1, createClass: 1, setActive: 1, setException: 1,
-      cancelOccurrence: 1, cancelSeries: 1, moveOccurrence: 1, deleteClass: 1
+      cancelOccurrence: 1, cancelSeries: 1, moveOccurrence: 1, deleteClass: 1,
+      setHiatus: 1
     };
     if (data.action && ADMIN_ACTIONS[data.action]) {
       var adminEmail = verifyAdminToken_(data.idToken);
@@ -1551,6 +1659,7 @@ function doPost(e) {
         case 'cancelSeries':     return jsonOut_(adminCancelSeries_(data));
         case 'moveOccurrence':   return jsonOut_(adminMoveOccurrence_(data));
         case 'deleteClass':      return jsonOut_(adminDeleteClass_(data));
+        case 'setHiatus':        return jsonOut_(adminSetHiatus_(data));
       }
     }
 
@@ -1619,6 +1728,19 @@ function doPost(e) {
     var header18 = sheet.getRange(1, 18).getValue();
     if (!header18) {
       sheet.getRange(1, 18).setValue('Timezone').setFontWeight('bold');
+    }
+
+    // TEACHING HIATUS: the sign-up is fully recorded above and the flow returns
+    // success as normal (the student never sees a difference on the site), but
+    // instead of the confirmation email they get a "class cancelled for your
+    // dates, check back later" note, and NO Zoom meeting is scheduled. Jessica
+    // is still notified so she can see who signed up during the pause.
+    if (isTeachingPaused_()) {
+      sendHiatusCancelledEmail_(rows);
+      sendAdminSignupNotification(rows);
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'ok', cancelToken: cancelToken, hiatus: true }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     // Check if any online classes in this sign-up are starting within 30 minutes
@@ -2451,6 +2573,8 @@ var LATE_SIGNUP_WINDOW_MIN = 40;
 
 function checkAndCreateMeetForLateSignup(rows) {
   if (!rows || rows.length === 0) return '';
+  // Teaching paused: never schedule a Zoom meeting for a late sign-up.
+  if (isTeachingPaused_()) { Logger.log('Teaching paused — skipping late sign-up Zoom scheduling'); return ''; }
 
   var now = new Date();
   var pstNow = new Date(now.toLocaleString('en-US', { timeZone: MEET_TZ }));
@@ -2653,6 +2777,9 @@ function sendZoomLinkToStudents(students, cls, zoomLink) {
 var MEET_TZ = 'America/Los_Angeles';
 
 function sendMeetInvites() {
+  // Teaching paused: don't create any Zoom meetings or send join links.
+  if (isTeachingPaused_()) { Logger.log('Teaching paused — sendMeetInvites skipped'); return; }
+
   var now = new Date();
 
   // Convert "now" to PST to figure out what day/time it is in class timezone
@@ -2735,6 +2862,10 @@ function sendMeetInvites() {
 // forIso (optional 'yyyy-MM-dd') lets tests target a specific class day; the
 // daily trigger calls this with no argument, which uses the real Pacific today.
 function sendClassReminders(forIso) {
+  // Teaching paused: students already got a cancellation note at sign-up, so
+  // don't send "see you in class" reminders.
+  if (isTeachingPaused_()) { Logger.log('Teaching paused — sendClassReminders skipped'); return; }
+
   var pstNow, todayIso;
   if (forIso) {
     var p = String(forIso).split('-');

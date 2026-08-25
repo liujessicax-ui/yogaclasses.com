@@ -147,6 +147,43 @@
       font-size: .78rem; color: #999; font-style: italic; margin-top: .4rem;
     }
 
+    /* Pause teaching (hiatus) panel */
+    .hiatus-card {
+      background: var(--white); border: 1px solid var(--sand);
+      border-radius: 14px; padding: 1.1rem 1.25rem; margin-bottom: 2.5rem;
+      transition: background .2s, border-color .2s;
+    }
+    .hiatus-card.on {
+      background: rgba(196,120,90,.07); border-color: rgba(196,120,90,.4);
+    }
+    .hiatus-card__row {
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .hiatus-card__text { flex: 1; min-width: 220px; }
+    .hiatus-card__text h3 {
+      margin: 0; font-family: var(--font-heading); font-size: 1.05rem;
+      color: var(--olive-dk); font-weight: 600;
+    }
+    .hiatus-card__text p { margin: .3rem 0 0; font-size: .82rem; color: #777; line-height: 1.5; }
+    .hiatus-state {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      padding: .2rem .6rem; border-radius: 50px; margin-left: .5rem;
+      background: rgba(122,139,111,.15); color: var(--olive-dk);
+    }
+    .hiatus-state.on { background: rgba(196,120,90,.18); color: #a0603e; }
+    .hiatus-note-wrap { margin-top: 1rem; }
+    .hiatus-note-wrap.hidden { display: none; }
+    .hiatus-note-wrap label {
+      display: block; font-size: .78rem; font-weight: 700; color: var(--charcoal); margin-bottom: .35rem;
+    }
+    .hiatus-note-wrap textarea {
+      width: 100%; box-sizing: border-box; resize: vertical; min-height: 60px;
+      border: 1px solid var(--sand-dk); border-radius: 8px; padding: .6rem .7rem;
+      font-family: inherit; font-size: .85rem; color: var(--charcoal);
+    }
+    .hiatus-note-wrap .hiatus-note-hint { font-size: .74rem; color: #999; margin-top: .3rem; }
+    .hiatus-note-wrap button { margin-top: .6rem; }
+
     /* Form modal */
     .modal-overlay {
       display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
@@ -315,6 +352,24 @@
 
       <div class="status-banner" id="statusBanner"></div>
 
+      <!-- Pause teaching (hiatus feature flag) -->
+      <div class="hiatus-card" id="hiatusCard">
+        <div class="hiatus-card__row">
+          <div class="hiatus-card__text">
+            <h3>Pause teaching <span class="hiatus-state" id="hiatusState">Off</span></h3>
+            <p>Take undetermined time off without your public site looking cancelled. Students can still browse the schedule and sign up exactly as normal — but while this is on, each sign-up gets a <strong>“class cancelled, please check back later”</strong> email instead of the usual confirmation, and <strong>no Zoom meetings are scheduled</strong> for any class.</p>
+          </div>
+          <div class="toggle" id="hiatusToggle" role="switch" aria-checked="false" tabindex="0"
+               data-tip="Toggle hiatus mode. On: sign-ups still work, but students get a cancellation email and no Zoom links go out. Off: everything works normally."></div>
+        </div>
+        <div class="hiatus-note-wrap hidden" id="hiatusNoteWrap">
+          <label for="hiatusNote">Optional note added to the cancellation email</label>
+          <textarea id="hiatusNote" maxlength="500" placeholder="e.g. I’m taking a short break and hope to be back teaching in September. Thank you for your patience!"></textarea>
+          <div class="hiatus-note-hint">Shown to students under the cancellation notice. Leave blank to skip.</div>
+          <button class="admin-btn" type="button" id="hiatusNoteSave">Save note</button>
+        </div>
+      </div>
+
       <!-- How-this-works guide (collapsible) -->
       <details class="admin-guide">
         <summary>How this works — read me first</summary>
@@ -339,6 +394,9 @@
 
           <h4>When emails go out</h4>
           <p>Sign-up confirmations and the Zoom link (30 min before online classes) are <strong>automatic</strong>. <strong>Cancel</strong> and <strong>Move</strong> only email when you confirm them here (you also get a summary). The <strong>active toggle, Edit, and Delete never email anyone.</strong></p>
+
+          <h4>Pause teaching (time off)</h4>
+          <p>The toggle at the top puts the whole site into <strong>hiatus mode</strong> without making it look cancelled. The public schedule and sign-up flow stay exactly the same, but while it’s on, every new sign-up gets a <strong>“class cancelled, please check back later”</strong> email instead of the usual confirmation, and <strong>no Zoom meetings are scheduled or emailed</strong> for any class. Flip it back off and everything returns to normal. Existing sign-ups already in your sheet are left untouched.</p>
 
           <h4>Undoing a cancel or move</h4>
           <p>Cancels and moves are stored as “exceptions.” To reverse one (un-cancel a date, revert a move), edit the <strong>Exceptions</strong> tab in the Google Sheet.</p>
@@ -589,6 +647,12 @@
     const seriesList  = document.getElementById('seriesList');
     const upcomingList = document.getElementById('upcomingList');
     const toastEl     = document.getElementById('toast');
+    const hiatusCard   = document.getElementById('hiatusCard');
+    const hiatusToggle = document.getElementById('hiatusToggle');
+    const hiatusState  = document.getElementById('hiatusState');
+    const hiatusNoteWrap = document.getElementById('hiatusNoteWrap');
+    const hiatusNoteEl = document.getElementById('hiatusNote');
+    const hiatusNoteSave = document.getElementById('hiatusNoteSave');
 
     // ============================================================
     //  AUTH (Google Identity Services — ID-token flow)
@@ -702,6 +766,7 @@
           }
           if (payload.adminEmail) userEmailEl.textContent = payload.adminEmail;
           LAST_UPCOMING = payload.upcoming || [];
+          applyHiatusState(payload.hiatus || { paused: false, note: '' });
           renderSeries(payload.classes || []);
           renderUpcoming(payload.upcoming || []);
         })
@@ -959,6 +1024,60 @@
         showToast('Could not update: ' + m);
       });
     }
+
+    // ============================================================
+    //  PAUSE TEACHING (hiatus feature flag)
+    // ============================================================
+    // Reflect the server's hiatus state in the panel (called on every load).
+    function applyHiatusState(state) {
+      const paused = !!(state && state.paused);
+      hiatusCard.classList.toggle('on', paused);
+      hiatusToggle.classList.toggle('on', paused);
+      hiatusToggle.setAttribute('aria-checked', String(paused));
+      hiatusState.textContent = paused ? 'On' : 'Off';
+      hiatusState.classList.toggle('on', paused);
+      hiatusNoteWrap.classList.toggle('hidden', !paused);
+      // Don't clobber an in-progress edit; only sync when the field is idle.
+      if (document.activeElement !== hiatusNoteEl) {
+        hiatusNoteEl.value = (state && state.note) || '';
+      }
+    }
+
+    // Flip the flag (optimistic; the reload confirms server truth).
+    function setHiatus(next) {
+      const prev = hiatusToggle.classList.contains('on');
+      applyHiatusState({ paused: next, note: hiatusNoteEl.value });
+      adminPost(
+        { action: 'setHiatus', paused: next, note: hiatusNoteEl.value },
+        function (res) {
+          applyHiatusState(res.hiatus || { paused: next, note: hiatusNoteEl.value });
+          showToast(next ? 'Teaching paused — sign-ups now send a cancellation email.' : 'Teaching resumed — normal confirmations are back on.');
+        },
+        function (m) {
+          applyHiatusState({ paused: prev, note: hiatusNoteEl.value });
+          showToast('Could not update: ' + m);
+        }
+      );
+    }
+
+    hiatusToggle.addEventListener('click', function () {
+      setHiatus(!hiatusToggle.classList.contains('on'));
+    });
+    hiatusToggle.addEventListener('keydown', function (e) {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setHiatus(!hiatusToggle.classList.contains('on')); }
+    });
+
+    // Save just the note (keeps the current paused state).
+    hiatusNoteSave.addEventListener('click', function () {
+      const paused = hiatusToggle.classList.contains('on');
+      const btn = this;
+      btn.disabled = true; btn.textContent = 'Saving…';
+      adminPost(
+        { action: 'setHiatus', paused: paused, note: hiatusNoteEl.value },
+        function () { btn.disabled = false; btn.textContent = 'Save note'; showToast('Note saved.'); },
+        function (m) { btn.disabled = false; btn.textContent = 'Save note'; showToast('Could not save note: ' + m); }
+      );
+    });
 
     // Move a single occurrence (writes an Exceptions "moved" row).
     function openMoveForm(o) {
