@@ -217,7 +217,7 @@
     // ignoreWindow=true lets one-off classes be signed up for any time before the
     // event (not just within windowDays) — they're announced ahead of time, unlike
     // the rolling weekly series which only open ~windowDays out.
-    function consider(y, mo, da, h, m, ignoreWindow, cancelled) {
+    function consider(y, mo, da, h, m, ignoreWindow, cancelled, cancelNote) {
       var classStart = pacificDate(y, mo, da, h, m);
       // Sign-ups close the moment class starts — no signing up mid-class.
       if (classStart <= nowUTC) return;
@@ -235,7 +235,8 @@
       var key = classStart.getTime();
       if (seen[key]) return;
       seen[key] = true;
-      results.push({ date: classStart, startHour: h, startMin: m, durationMins: cls.durationMins, cancelled: !!cancelled });
+      results.push({ date: classStart, startHour: h, startMin: m, durationMins: cls.durationMins, cancelled: !!cancelled,
+                     cancelledForMinimum: !!cancelled && isMinimumCancelNote(cancelNote) });
     }
 
     if (cls.oneOffDate) {
@@ -248,7 +249,7 @@
         if (oStatus === 'moved') {
           // Relocated: original date drops out (re-added under newDate below).
         } else if (oStatus === 'cancelled') {
-          if (includeCancelled) consider(od.year, od.month, od.day, cls.startHour, cls.startMin, true, true);
+          if (includeCancelled) consider(od.year, od.month, od.day, cls.startHour, cls.startMin, true, true, oex.note);
         } else {
           consider(od.year, od.month, od.day, cls.startHour, cls.startMin, true);
         }
@@ -262,7 +263,7 @@
         if (ex && ex.status === 'moved') continue; // relocated away; shown under newDate
         var isCancelled = !!(ex && ex.status === 'cancelled');
         if (isCancelled && !includeCancelled) continue;
-        consider(scan.getFullYear(), scan.getMonth() + 1, scan.getDate(), cls.startHour, cls.startMin, false, isCancelled);
+        consider(scan.getFullYear(), scan.getMonth() + 1, scan.getDate(), cls.startHour, cls.startMin, false, isCancelled, ex && ex.note);
       }
     }
 
@@ -282,7 +283,20 @@
     return results;
   }
 
+  // The Apps Script go/no-go writes this note on a date it cancels for having
+  // fewer than 2 sign-ups 30 minutes before class (see runGoNoGo_).
+  function isMinimumCancelNote(note) {
+    return /^Auto: under \d+ sign-ups/i.test(String(note || ''));
+  }
+  var MIN_CANCEL_REASON = 'fewer than 2 people had signed up 30 minutes before class';
+  var MIN_CANCEL_ADVICE = 'To make sure a class runs, please sign up more than 30 minutes before it starts.';
+  var MIN_CANCEL_MESSAGE = 'This class was cancelled because ' + MIN_CANCEL_REASON + '. ' + MIN_CANCEL_ADVICE;
+
   global.YogaSchedule = {
+    isMinimumCancelNote: isMinimumCancelNote,
+    MIN_CANCEL_MESSAGE: MIN_CANCEL_MESSAGE,
+    MIN_CANCEL_REASON: MIN_CANCEL_REASON,
+    MIN_CANCEL_ADVICE: MIN_CANCEL_ADVICE,
     LA_TZ: LA_TZ,
     FALLBACK: FALLBACK,
     load: load,

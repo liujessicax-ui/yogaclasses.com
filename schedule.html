@@ -284,7 +284,8 @@
         const occs = YogaSchedule.upcomingOccurrences(cls, exceptions, 7, { includeCancelled: true });
         const cancelledOcc = (occs.length && occs.every(o => o.cancelled)) ? occs[0] : null;
         const cancelNote = cancelledOcc
-          ? `<p class="schedule-card__cancelled">Class on ${escHtml(YogaSchedule.formatDate(cancelledOcc.date))} is cancelled.</p>`
+          ? `<p class="schedule-card__cancelled">Class on ${escHtml(YogaSchedule.formatDate(cancelledOcc.date))} is cancelled.` +
+            (cancelledOcc.cancelledForMinimum ? ` ${escHtml(YogaSchedule.MIN_CANCEL_MESSAGE)}` : '') + `</p>`
           : '';
         const action = cancelledOcc
           ? `<span class="btn btn--primary btn--disabled" style="font-size:.75rem;padding:.5rem 1.2rem;" aria-disabled="true">Sign Up</span>`

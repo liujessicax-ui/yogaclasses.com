@@ -1690,6 +1690,18 @@ function doPost(e) {
       if (!rows.length) {
         return jsonOut_({ status: 'rejected', message: 'Sign-ups closed: class already started.' });
       }
+
+      // Backstop for a page opened before go/no-go cancelled the date: don't
+      // record the row, and email the student (the no-cors POST means the page
+      // can't show them a rejection; it re-checks first, so this is rare).
+      var cancelledRows = rows.filter(signupDateCancelled_);
+      if (cancelledRows.length) {
+        rows = rows.filter(function (row) { return !signupDateCancelled_(row); });
+        sendSignupRejectedCancelledEmail_(cancelledRows);
+        if (!rows.length) {
+          return jsonOut_({ status: 'rejected', message: 'Class cancelled.' });
+        }
+      }
     }
 
     // Check if this is a waitlist submission
@@ -1780,6 +1792,55 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// True when a sign-up row's date has been cancelled: by go/no-go (Script
+// Property for that date + start time) or by a cancelled Exceptions row.
+// Anything unresolvable returns false, like classAlreadyStarted_.
+function signupDateCancelled_(row) {
+  try {
+    var sc = getScheduleClassByLabel_(((row && row.className) || '').toString().trim());
+    if (!sc) return false;
+    var iso = isoFromDisplayDate_((row && row.classDate) || '');
+    if (!iso) return false;
+    var key = 'gonogo_' + iso + '_' + pad2_(sc.startH) + ':' + pad2_(sc.startM);
+    if (PropertiesService.getScriptProperties().getProperty(key) === 'cancelled') return true;
+    var ex = findExceptionForDate_(getSchedule().exceptions, sc.id, iso);
+    return !!(ex && ex.status === 'cancelled');
+  } catch (e) {
+    Logger.log('signupDateCancelled_ error: ' + e);
+    return false;
+  }
+}
+
+function sendSignupRejectedCancelledEmail_(rows) {
+  try {
+    var r0 = rows[0];
+    var list = rows.map(function (r) {
+      return '<li>' + escHtml(r.className) + ' &mdash; ' + escHtml(r.classDate) + '</li>';
+    }).join('');
+    var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+      '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
+        '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
+          '<a href="' + SITE_URL + '" style="color:#5B7553;text-decoration:none;">yogawithjessica.com</a>' +
+        '</h1>' +
+        '<p style="margin:6px 0 0;color:#888;font-size:13px;">Class Cancelled</p>' +
+      '</div>' +
+      '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
+        '<p style="font-size:15px;">Hi ' + escHtml(r0.firstName || 'there') + ',</p>' +
+        '<p style="font-size:15px;line-height:1.6;">Thanks for signing up &mdash; unfortunately this class had already been <strong>cancelled</strong>, so you are <strong>not</strong> registered:</p>' +
+        '<ul style="font-size:14px;line-height:1.6;">' + list + '</ul>' +
+        '<p style="font-size:14px;line-height:1.6;color:#555;">Classes run only when at least ' + MIN_CLASS_SIZE + ' people sign up (in person and online combined), ' +
+          'and the decision is made ' + GO_NO_GO_MIN + ' minutes before class. ' +
+          '<strong>To make sure a class runs, please sign up more than ' + GO_NO_GO_MIN + ' minutes before it starts.</strong></p>' +
+        '<div style="text-align:center;margin:20px 0;">' +
+          '<a href="' + SITE_URL + '/schedule.html" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">View Schedule</a>' +
+        '</div>' +
+        '<p style="font-size:14px;color:#555;">Hope to see you at the next one!<br>Jessica</p>' +
+      '</div>' +
+    '</div>';
+    deliverEmail_(r0.email, 'Class cancelled \u2014 you are not registered', body, 'Sign-up Rejected (Cancelled)');
+  } catch (err) { Logger.log('sendSignupRejectedCancelledEmail_ error: ' + err); }
 }
 
 // True when a sign-up row's class occurrence has already started (Pacific

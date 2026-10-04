@@ -117,6 +117,7 @@
     .class-option-info .tag-badge--inperson { background: rgba(196,120,90,.12); color: #a0603e; }
     .class-option-info .tag-badge--zoom { background: rgba(74,114,163,.12); color: #3d6ba3; }
 
+    .class-option-hint { margin: .4rem 0 0; font-size: .78rem; line-height: 1.5; color: #8a5a2b; flex-basis: 100%; }
     .min-size-note {
       margin: 0 0 2rem; padding: .8rem 1rem;
       font-size: .9rem; line-height: 1.6; color: #555; text-align: center;
@@ -674,6 +675,7 @@
                   <span>${durationStr}</span>
                   <span class="tag-badge tag-badge--cancelled">Cancelled</span>
                 </div>
+                ${occ.cancelledForMinimum ? `<p class="class-option-hint">${YogaSchedule.MIN_CANCEL_MESSAGE}</p>` : ''}
               </div>
             </div>`;
             return;
@@ -732,6 +734,7 @@
       // Toggle .selected class on check
       container.querySelectorAll('.class-option').forEach(opt => {
         const cb = opt.querySelector('input[type="checkbox"]');
+        if (!cb) return; // a cancelled date's box has no checkbox
         cb.addEventListener('change', () => {
           opt.classList.toggle('selected', cb.checked);
         });
@@ -928,28 +931,61 @@
         return;
       }
 
-      pendingFormData = {
-        firstName, lastName, email,
-        classEntries,
-        hasInPerson,
-        guestFirstName: guestFirstName,
-        guestLastName: guestLastName,
-        bringingGuest
+      const proceed = () => {
+        pendingFormData = {
+          firstName, lastName, email,
+          classEntries,
+          hasInPerson,
+          guestFirstName: guestFirstName,
+          guestLastName: guestLastName,
+          bringingGuest
+        };
+
+        // ---- DUPLICATE CHECK (runs before liability or submit) ----
+        checkForDuplicates(pendingFormData, function(duplicates, hasPriorWaiver) {
+          // Store waiver status on the pending data
+          pendingFormData.hasPriorWaiver = hasPriorWaiver;
+
+          if (duplicates && duplicates.length > 0) {
+            dupClassList.innerHTML = duplicates.map(d =>
+              '<p style="font-size:.85rem;color:var(--terracotta);margin:.3rem 0;">• ' + d + '</p>'
+            ).join('');
+            dupOverlay.classList.add('active');
+          } else {
+            proceedAfterDupCheck();
+          }
+        });
       };
 
-      // ---- DUPLICATE CHECK (runs before liability or submit) ----
-      checkForDuplicates(pendingFormData, function(duplicates, hasPriorWaiver) {
-        // Store waiver status on the pending data
-        pendingFormData.hasPriorWaiver = hasPriorWaiver;
+      // Within ~35 min of a selected class, its go/no-go may have just run, so
+      // re-fetch the schedule and stop if that date has since been cancelled
+      // (a page opened earlier wouldn't know). The sign-up POST is no-cors, so
+      // this is the only place the student can be told on the page.
+      const nearStart = classEntries.some(e => new Date(e.isoDate).getTime() - Date.now() <= 35 * 60 * 1000);
+      if (!nearStart) { proceed(); return; }
 
-        if (duplicates && duplicates.length > 0) {
-          dupClassList.innerHTML = duplicates.map(d =>
-            '<p style="font-size:.85rem;color:var(--terracotta);margin:.3rem 0;">• ' + d + '</p>'
-          ).join('');
-          dupOverlay.classList.add('active');
-        } else {
-          proceedAfterDupCheck();
-        }
+      submitBtn.classList.add('btn--loading');
+      submitBtn.textContent = 'Checking class status…';
+      YogaSchedule.load(SHEETS_WEB_APP_URL).then(data => {
+        submitBtn.classList.remove('btn--loading');
+        submitBtn.textContent = 'Sign Up';
+        CLASSES = data.classes;
+        EXCEPTIONS = data.exceptions;
+        let cancelledEntry = null, cancelledOcc = null;
+        classEntries.some(entry => {
+          const cls = CLASSES.find(c => c.id === entry.id);
+          const occ = cls && YogaSchedule.upcomingOccurrences(cls, EXCEPTIONS, 7, { includeCancelled: true })
+            .find(o => o.date.toISOString() === entry.isoDate);
+          if (occ && occ.cancelled) { cancelledEntry = entry; cancelledOcc = occ; return true; }
+          return false;
+        });
+        if (!cancelledEntry) { proceed(); return; }
+        buildClassOptions();
+        updateGuestVisibility();
+        showValidationModal(cancelledOcc.cancelledForMinimum
+          ? 'Sorry — the ' + cancelledEntry.date + ' class was cancelled because ' +
+            YogaSchedule.MIN_CANCEL_REASON + '. ' + YogaSchedule.MIN_CANCEL_ADVICE
+          : 'Sorry — the ' + cancelledEntry.date + ' class has been cancelled. The class list has been refreshed.');
       });
     });
 
