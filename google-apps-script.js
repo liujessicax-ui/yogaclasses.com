@@ -2875,7 +2875,8 @@ var MEET_TZ = 'America/Los_Angeles';
 //     entry (so the site shows it cancelled and stops sign-ups), all
 //     registrants are emailed and archived, no Zoom meeting is made.
 //   - At or over: in-person students get a "class is on" email; online
-//     students get the Zoom-link email, which says class is on.
+//     students get the Zoom-link email, which says class is on. Admin gets a
+//     summary only when class is on (not for cancellations).
 // Runs from sendMeetInvites (every 5 min), so no extra trigger is needed.
 // Decided once per group via a Script Property.
 var MIN_CLASS_SIZE = 2;
@@ -2919,8 +2920,7 @@ function runGoNoGo_(pstNow) {
       } else {
         props.setProperty(propKey, 'cancelled');
         cancelled[key] = true;
-        var sentOff = cancelGroupForMinimum_(group, roster);
-        notifyAdminGoNoGo_(group, roster, false, sentOff);
+        cancelGroupForMinimum_(group, roster); // no admin email for a cancellation
       }
     } catch (err) {
       Logger.log('Go/no-go error for ' + key + ': ' + err);
