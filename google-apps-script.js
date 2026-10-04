@@ -273,7 +273,7 @@ function getOccurrencesOnPacificDate_(pstNow) {
     if (!occursToday) return;
     var ex = findExceptionForDate_(sched.exceptions, c.id, iso);
     if (ex && (ex.status === 'cancelled' || ex.status === 'moved')) return;
-    occ.push(makeOccurrence_(c, c.startH, c.startM, display));
+    occ.push(makeOccurrence_(c, c.startH, c.startM, display, 'regular'));
   });
 
   // Moved-in and one-off "extra" occurrences landing on this date.
@@ -285,21 +285,22 @@ function getOccurrencesOnPacificDate_(pstNow) {
     if (!c || !c.active) return;
     if (ex.status === 'moved' && ex.newDate === iso) {
       var t = ex.newStartTime ? parseHM_(ex.newStartTime) : { h: c.startH, m: c.startM };
-      occ.push(makeOccurrence_(c, t.h, t.m, display));
+      occ.push(makeOccurrence_(c, t.h, t.m, display, 'moved'));
     } else if (ex.status === 'extra' && ex.date === iso) {
       var t2 = ex.newStartTime ? parseHM_(ex.newStartTime) : { h: c.startH, m: c.startM };
-      occ.push(makeOccurrence_(c, t2.h, t2.m, display));
+      occ.push(makeOccurrence_(c, t2.h, t2.m, display, 'extra'));
     }
   });
 
   return occ;
 }
 
-function makeOccurrence_(c, h, m, display) {
+function makeOccurrence_(c, h, m, display, origin) {
   return {
     id: c.id, label: c.label, type: c.type,
     startH: h, startM: m, durationMins: c.durationMins,
-    capacity: c.capacity, location: c.location, classDate: display
+    capacity: c.capacity, location: c.location, classDate: display,
+    origin: origin || 'regular'
   };
 }
 
@@ -1019,6 +1020,19 @@ function signedUpBeforeDay_(ts, classIso) {
   return Utilities.formatDate(d, MEET_TZ, 'yyyy-MM-dd') < classIso;
 }
 
+// Sign-up rows store Class Type as the site sends it: "inperson" / "online".
+// Older rows may say "In-Person", so accept both spellings.
+function isInPersonType_(v) {
+  var t = (v || '').toString().trim().toLowerCase();
+  return t === 'inperson' || t === 'in-person' || t === 'in person';
+}
+
+function classTypeLabel_(v) {
+  if (isInPersonType_(v)) return 'In person';
+  var t = (v || '').toString().trim().toLowerCase();
+  return t === 'online' ? 'Online' : (v || '').toString();
+}
+
 // --- registrant / waitlist readers (full records, online + in person) ----
 
 function getRegisteredStudentsFull_(label, dateDisplay) {
@@ -1181,7 +1195,7 @@ function collectUpcomingDatesFromSheet_(ss, sheetName, label, startTimes, set) {
 
 // --- email templates (match the confirmation-email look) -----------------
 
-function sendClassCancelledEmail_(student, label, dateDisplay) {
+function sendClassCancelledEmail_(student, label, dateDisplay, reasonHtml) {
   if (!student || !student.email) return false;
   try {
     var sc = getScheduleClassByLabel_(label);
@@ -1201,6 +1215,7 @@ function sendClassCancelledEmail_(student, label, dateDisplay) {
           '<strong>' + escHtml(label) + '</strong><br>' + escHtml(dateDisplay) +
           (timeStr ? '<br>' + escHtml(timeStr) : '') +
         '</div>' +
+        (reasonHtml ? '<p style="font-size:14px;line-height:1.6;color:#555;">' + reasonHtml + '</p>' : '') +
         (student.guestFirst ? '<p style="font-size:14px;color:#555;">This also releases the spot held for your guest, ' + escHtml(student.guestFirst) + ' ' + escHtml(student.guestLast) + '.</p>' : '') +
         '<p style="font-size:14px;line-height:1.6;color:#555;">No action is needed &mdash; your registration has been removed. We hope to see you in a future class; you can view the latest schedule and sign up again anytime:</p>' +
         '<div style="text-align:center;margin:20px 0;">' +
@@ -1818,16 +1833,16 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
   var recipientTz = rows[0].timezone || '';
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
-    var icon = r.classType === 'In-Person' ? '&#x1F3E0;' : '&#x1F4BB;';
+    var icon = isInPersonType_(r.classType) ? '&#x1F3E0;' : '&#x1F4BB;';
     var sc = getScheduleClassByLabel_(r.className);
     var timeStr = sc ? localTimeLine_(sc.startTime, r.classDate, recipientTz) : '';
     classLines += '<tr>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #eee;">' + icon + ' ' + escHtml(r.className) + '</td>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #eee;">' + escHtml(r.classDate) + '</td>' +
       '<td style="padding:8px 12px;border-bottom:1px solid #eee;">' + (timeStr ? escHtml(timeStr) : '&mdash;') + '</td>' +
-      '<td style="padding:8px 12px;border-bottom:1px solid #eee;">' + escHtml(r.classType) + '</td>' +
+      '<td style="padding:8px 12px;border-bottom:1px solid #eee;">' + escHtml(classTypeLabel_(r.classType)) + '</td>' +
       '</tr>';
-    if (r.classType === 'In-Person') hasInPerson = true;
+    if (isInPersonType_(r.classType)) hasInPerson = true;
   }
 
   // Cancel link — points to cancel.html on the website
@@ -1888,6 +1903,14 @@ function sendConfirmationEmail(rows, cancelToken, meetLink) {
         '</div>'
       ) +
 
+      // Minimum-attendance note
+      '<div style="background:#fff8e6;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #d9a441;">' +
+        '<strong>Please note:</strong> a class runs only if at least <strong>' + MIN_CLASS_SIZE + ' people</strong> sign up ' +
+        '(in-person and online sign-ups for the same class count together). ' +
+        'The decision is made <strong>' + GO_NO_GO_MIN + ' minutes before class</strong>, and you&rsquo;ll get an email then ' +
+        'telling you whether class is on or cancelled.' +
+      '</div>' +
+
       // Props reminder
       '<p style="font-size:14px;color:#555;line-height:1.6;">' +
         'Don\'t forget to check the <a href="' + SITE_URL + '/props.html" style="color:#5B7553;">Props page</a> for recommended props to bring.' +
@@ -1945,8 +1968,8 @@ function sendAdminSignupNotification(rows) {
     var classLines = '';
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
-      var icon = r.classType === 'In-Person' ? '&#x1F3E0;' : '&#x1F4BB;';
-      classLines += '<li>' + icon + ' ' + escHtml(r.className) + ' &mdash; ' + escHtml(r.classDate) + ' (' + escHtml(r.classType) + ')</li>';
+      var icon = isInPersonType_(r.classType) ? '&#x1F3E0;' : '&#x1F4BB;';
+      classLines += '<li>' + icon + ' ' + escHtml(r.className) + ' &mdash; ' + escHtml(r.classDate) + ' (' + escHtml(classTypeLabel_(r.classType)) + ')</li>';
     }
 
     var subject = '\uD83E\uDDD8 New Sign-Up: ' + firstName + ' ' + lastName + ' \u2014 ' + (rows[0].className || '').split(' \u2014 ')[0];
@@ -2611,6 +2634,10 @@ function checkAndCreateMeetForLateSignup(rows) {
     }
     if (!signedUpForThis) continue;
 
+    // Only hand out a link once go/no-go has confirmed the class is on; before
+    // that the student gets it with everyone else in the "class is on" email.
+    if (cache.getProperty('gonogo_' + goNoGoGroupKey_(cls)) !== 'on') continue;
+
     Logger.log('Late sign-up for ' + cls.label + ' (' + minutesUntilClass + ' min away) — checking Zoom meeting');
 
     var linkKey = 'meet_link_' + cls.id + '_' + classDate;
@@ -2714,7 +2741,7 @@ function createZoomMeeting(cls, dateRef, durationMins) {
 
 // Email the Zoom join link to all registered students for a class
 function sendZoomLinkToStudents(students, cls, zoomLink) {
-  var subject = 'Your Zoom link for today\'s Yoga with Jessica class';
+  var subject = 'Class is on \u2014 your Zoom link for today\'s Yoga with Jessica class';
   var hhmm = pad2_(cls.startH) + ':' + pad2_(cls.startM);
   for (var i = 0; i < students.length; i++) {
     try {
@@ -2733,7 +2760,7 @@ function sendZoomLinkToStudents(students, cls, zoomLink) {
         '</div>' +
         '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
           '<p style="font-size:15px;">Hi ' + escHtml(s.firstName || 'there') + ',</p>' +
-          '<p style="font-size:15px;line-height:1.6;">Your <strong>' + escHtml(cls.label || cls.name) + '</strong> class starts in about 30 minutes. Here\'s your Zoom link:</p>' +
+          '<p style="font-size:15px;line-height:1.6;"><strong>Good news &mdash; class is on!</strong> Enough people signed up, so your <strong>' + escHtml(cls.label || cls.name) + '</strong> class will run. It starts in about 30 minutes. Here\'s your Zoom link:</p>' +
           timeHtml +
           '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
             '<strong>&#x1F4F9; Your Zoom link is ready</strong>' +
@@ -2776,6 +2803,176 @@ function sendZoomLinkToStudents(students, cls, zoomLink) {
 
 var MEET_TZ = 'America/Los_Angeles';
 
+// ========== GO / NO-GO (minimum class size) ==========
+// A class runs only if at least MIN_CLASS_SIZE people are signed up, decided
+// GO_NO_GO_MIN minutes before it starts. Every class on the same Pacific date
+// with the same start time counts as ONE class — e.g. Sunday 5 PM "Online" and
+// "CCV Clubhouse (In Person)" are two schedule rows / sign-up links but one
+// class — so their sign-ups are pooled. Each person counts once even if signed
+// up for both rows; each guest counts too.
+//   - Under the minimum: every row in the group gets a cancelled Exceptions
+//     entry (so the site shows it cancelled and stops sign-ups), all
+//     registrants are emailed and archived, no Zoom meeting is made.
+//   - At or over: in-person students get a "class is on" email; online
+//     students get the Zoom-link email, which says class is on.
+// Runs from sendMeetInvites (every 5 min), so no extra trigger is needed.
+// Decided once per group via a Script Property.
+var MIN_CLASS_SIZE = 2;
+var GO_NO_GO_MIN = 30;
+
+function goNoGoGroupKey_(occ) {
+  return isoFromDisplayDate_(occ.classDate) + '_' + pad2_(occ.startH) + ':' + pad2_(occ.startM);
+}
+
+// Returns a map of group keys cancelled for being under the minimum (this run
+// or an earlier one) so the caller can skip Zoom for them.
+function runGoNoGo_(pstNow) {
+  var cancelled = {};
+  var props = PropertiesService.getScriptProperties();
+  var currentTotalMin = pstNow.getHours() * 60 + pstNow.getMinutes();
+  var occurrences = getOccurrencesOnPacificDate_(pstNow);
+
+  var groups = {}, order = [];
+  occurrences.forEach(function (o) {
+    var k = goNoGoGroupKey_(o);
+    if (!groups[k]) { groups[k] = []; order.push(k); }
+    groups[k].push(o);
+  });
+
+  order.forEach(function (key) {
+    var group = groups[key];
+    var minutesUntil = (group[0].startH * 60 + group[0].startM) - currentTotalMin;
+    var propKey = 'gonogo_' + key;
+    var prior = props.getProperty(propKey);
+    if (prior) { if (prior === 'cancelled') cancelled[key] = true; return; }
+    // Decide from GO_NO_GO_MIN out (the 5-minute trigger can land a few minutes
+    // late, so catch up until class starts). Past the start, leave it alone.
+    if (minutesUntil > GO_NO_GO_MIN || minutesUntil <= 0) return;
+
+    try {
+      var roster = goNoGoRoster_(group);
+      if (roster.count >= MIN_CLASS_SIZE) {
+        props.setProperty(propKey, 'on');
+        var sentOn = sendClassOnEmails_(group, roster);
+        notifyAdminGoNoGo_(group, roster, true, sentOn);
+      } else {
+        props.setProperty(propKey, 'cancelled');
+        cancelled[key] = true;
+        var sentOff = cancelGroupForMinimum_(group, roster);
+        notifyAdminGoNoGo_(group, roster, false, sentOff);
+      }
+    } catch (err) {
+      Logger.log('Go/no-go error for ' + key + ': ' + err);
+    }
+  });
+  return cancelled;
+}
+
+// Everyone signed up across the group: unique people (by email) + guests.
+function goNoGoRoster_(group) {
+  var people = {}, entries = [], guests = 0;
+  group.forEach(function (o) {
+    getRegisteredStudentsFull_(o.label, o.classDate).forEach(function (s) {
+      var em = (s.email || '').toLowerCase();
+      if (!em) return;
+      entries.push({ occ: o, student: s });
+      if (!people[em]) { people[em] = true; if (s.guestFirst) guests++; }
+    });
+  });
+  return { count: Object.keys(people).length + guests, people: Object.keys(people).length, guests: guests, entries: entries };
+}
+
+function sendClassOnEmails_(group, roster) {
+  var sent = 0, seen = {};
+  roster.entries.forEach(function (e) {
+    // Online students hear "class is on" in the Zoom-link email instead.
+    if (!isInPersonType_(e.student.classType)) return;
+    var em = e.student.email.toLowerCase();
+    if (seen[em]) return;
+    seen[em] = true;
+    if (sendClassOnEmail_(e.student, e.occ)) sent++;
+  });
+  return sent;
+}
+
+function sendClassOnEmail_(student, occ) {
+  try {
+    var hhmm = pad2_(occ.startH) + ':' + pad2_(occ.startM);
+    var timeStr = localTimeLine_(hhmm, occ.classDate, student.timezone);
+    var subject = 'Class is on \u2014 ' + ((occ.label || '').split(' \u2014 ')[0] || occ.label) + ' today';
+    var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
+      '<div style="background:#f5f0e8;padding:24px;text-align:center;border-radius:8px 8px 0 0;">' +
+        '<h1 style="margin:0;font-family:Georgia,serif;font-size:24px;">' +
+          '<a href="' + SITE_URL + '" style="color:#5B7553;text-decoration:none;">yogawithjessica.com</a>' +
+        '</h1>' +
+        '<p style="margin:6px 0 0;color:#888;font-size:13px;">Class Is On</p>' +
+      '</div>' +
+      '<div style="padding:24px;background:#fff;border:1px solid #e8e4dc;border-top:none;">' +
+        '<p style="font-size:15px;">Hi ' + escHtml(student.firstName || 'there') + ',</p>' +
+        '<p style="font-size:15px;line-height:1.6;"><strong>Good news &mdash; class is on!</strong> Enough people signed up, so this class will run as scheduled:</p>' +
+        '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
+          '<strong>' + escHtml(occ.label) + '</strong><br>' + escHtml(occ.classDate) +
+          (timeStr ? '<br>' + escHtml(timeStr) : '') +
+          (occ.location ? '<br>' + escHtml(occ.location) : '') +
+        '</div>' +
+        (student.guestFirst ? '<p style="font-size:14px;color:#555;">Your guest ' + escHtml(student.guestFirst) + ' ' + escHtml(student.guestLast) + ' is registered with you.</p>' : '') +
+        '<p style="font-size:14px;color:#555;">See you soon!<br>Jessica</p>' +
+      '</div>' +
+      '<div style="padding:16px;text-align:center;background:#f5f0e8;border-radius:0 0 8px 8px;">' +
+        '<p style="margin:0;font-size:12px;color:#999;">Yoga with Jessica &mdash; Playa Del Rey, CA</p>' +
+        '<p style="margin:6px 0 0;"><a href="' + SITE_URL + '" style="color:#5B7553;font-size:15px;font-weight:600;text-decoration:none;">yogawithjessica.com</a></p>' +
+      '</div>' +
+    '</div>';
+    deliverEmail_(student.email, subject, body, 'Class Is On');
+    return true;
+  } catch (err) { Logger.log('sendClassOnEmail_ error for ' + student.email + ': ' + err); return false; }
+}
+
+// Cancel every row in the group for being under the minimum: mark the date
+// cancelled (so the site shows it and stops sign-ups), email each registrant
+// once with the reason, archive their rows. Returns the number emailed.
+function cancelGroupForMinimum_(group, roster) {
+  var reason = 'Classes run only when at least ' + MIN_CLASS_SIZE + ' people sign up (in person and online combined). ' +
+               'As of ' + GO_NO_GO_MIN + ' minutes before class, fewer than ' + MIN_CLASS_SIZE + ' had signed up, so this class won&rsquo;t be held.';
+  var ss = getOrCreateSpreadsheet();
+  var exSheet = getOrCreateExceptionsSheet_(ss);
+  group.forEach(function (o) {
+    // A moved-in date has no Exceptions row of its own for today, so leave it;
+    // regular and one-off/extra dates are marked cancelled.
+    if (o.origin === 'moved') return;
+    var iso = isoFromDisplayDate_(o.classDate);
+    var exRow = findExceptionRow_(exSheet, o.id, iso);
+    if (exRow < 0) exRow = exSheet.getLastRow() + 1;
+    var exRange = exSheet.getRange(exRow, 1, 1, 6);
+    exRange.setNumberFormat('@');
+    exRange.setValues([[o.id, iso, 'cancelled', '', '', 'Auto: under ' + MIN_CLASS_SIZE + ' sign-ups']]);
+  });
+  bustScheduleCache();
+
+  var sent = 0, seen = {};
+  roster.entries.forEach(function (e) {
+    var em = e.student.email.toLowerCase();
+    if (seen[em]) return;
+    seen[em] = true;
+    if (sendClassCancelledEmail_(e.student, e.occ.label, e.occ.classDate, reason)) sent++;
+  });
+  group.forEach(function (o) { archiveRowsForClassDate_(o.label, o.classDate); });
+  return sent;
+}
+
+function notifyAdminGoNoGo_(group, roster, isOn, emailed) {
+  var names = group.map(function (o) { return escHtml(o.label); }).join('<br>');
+  sendAdminClassActionNotification_(
+    (isOn ? 'Class is ON \u2014 ' : 'Class auto-cancelled (under ' + MIN_CLASS_SIZE + ') \u2014 ') + group[0].classDate,
+    [
+      '<strong>Class:</strong><br>' + names,
+      '<strong>Signed up:</strong> ' + roster.people + ' people + ' + roster.guests + ' guest(s) = ' + roster.count + ' (minimum ' + MIN_CLASS_SIZE + ')',
+      isOn
+        ? '<strong>In-person students emailed &ldquo;class is on&rdquo;:</strong> ' + emailed + ' (online students get it with their Zoom link)'
+        : '<strong>Students emailed the cancellation:</strong> ' + emailed + '. The date is marked cancelled on the site and no Zoom meeting was created.'
+    ]);
+}
+
 function sendMeetInvites() {
   // Teaching paused: don't create any Zoom meetings or send join links.
   if (isTeachingPaused_()) { Logger.log('Teaching paused — sendMeetInvites skipped'); return; }
@@ -2789,6 +2986,11 @@ function sendMeetInvites() {
   Logger.log('Zoom invite check at PST: ' + pstNow.toLocaleString());
 
   var cache = PropertiesService.getScriptProperties();
+
+  // Go/no-go first: a class under the minimum is cancelled (and its students
+  // emailed) here, so the Zoom loop below never sends it a link.
+  var cancelledGroups = runGoNoGo_(pstNow);
+
   var occurrences = getOccurrencesOnPacificDate_(pstNow);
 
   for (var c = 0; c < occurrences.length; c++) {
@@ -2796,12 +2998,18 @@ function sendMeetInvites() {
 
     // Only process online classes
     if (cls.type !== 'online') continue;
+    if (cancelledGroups[goNoGoGroupKey_(cls)]) continue;
 
     var minutesUntilClass = (cls.startH * 60 + cls.startM) - currentTotalMin;
 
-    // Send invite when class is 25-35 minutes away (covers the 5-min trigger interval)
-    if (minutesUntilClass < 25 || minutesUntilClass > 35) {
-      Logger.log('Skipping ' + cls.label + ': ' + minutesUntilClass + ' min away (not in 25-35 min window)');
+    // Send the link only once go/no-go has said this class is on (decided
+    // from GO_NO_GO_MIN out; sentKey below stops repeats on later fires).
+    if (minutesUntilClass > GO_NO_GO_MIN || minutesUntilClass <= 0) {
+      Logger.log('Skipping ' + cls.label + ': ' + minutesUntilClass + ' min away (outside go/no-go window)');
+      continue;
+    }
+    if (cache.getProperty('gonogo_' + goNoGoGroupKey_(cls)) !== 'on') {
+      Logger.log('Skipping ' + cls.label + ': not confirmed on yet');
       continue;
     }
 
@@ -2914,7 +3122,7 @@ function sendClassReminderEmail_(student, cls, hhmm) {
     var subject = 'Reminder: your Yoga with Jessica class today';
     var isOnline = (cls.type === 'online');
     var detailHtml = isOnline
-      ? '<p style="font-size:14px;line-height:1.6;color:#555;">This is an <strong>online</strong> class. Your Zoom link will arrive about <strong>30 minutes before</strong> class starts.</p>'
+      ? '<p style="font-size:14px;line-height:1.6;color:#555;">This is an <strong>online</strong> class. If class is on, your Zoom link will arrive about <strong>30 minutes before</strong> class starts.</p>'
       : ('<p style="font-size:14px;line-height:1.6;color:#555;">This is an <strong>in-person</strong> class' +
          (cls.location ? ' at <strong>' + escHtml(cls.location) + '</strong>' : '') + '.</p>');
     var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
@@ -2932,6 +3140,8 @@ function sendClassReminderEmail_(student, cls, hhmm) {
           (timeStr ? '<br>' + escHtml(timeStr) : '') +
         '</div>' +
         detailHtml +
+        '<p style="font-size:14px;line-height:1.6;color:#555;">Class runs if at least ' + MIN_CLASS_SIZE + ' people sign up (in person and online combined). ' +
+          'You&rsquo;ll get a final email <strong>' + GO_NO_GO_MIN + ' minutes before class</strong> confirming whether it&rsquo;s on or cancelled.</p>' +
         (student.guestFirst ? '<p style="font-size:14px;color:#555;">Your guest ' + escHtml(student.guestFirst) + ' ' + escHtml(student.guestLast) + ' is registered with you.</p>' : '') +
         '<p style="font-size:14px;color:#555;line-height:1.6;">Don&rsquo;t forget to check the <a href="' + SITE_URL + '/props.html" style="color:#5B7553;">Props page</a> for what to bring.</p>' +
         '<p style="font-size:14px;color:#555;">See you soon!<br>Jessica</p>' +

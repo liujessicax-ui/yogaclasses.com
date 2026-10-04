@@ -204,7 +204,8 @@
       }
       if (data.classes && data.classes.length) {
         data.classes.forEach(function(c) {
-          var icon = c.classType === 'In-Person' ? '\uD83C\uDFE0' : '\uD83D\uDCBB';
+          var t = (c.classType || '').toLowerCase();
+          var icon = (t === 'inperson' || t === 'in-person') ? '\uD83C\uDFE0' : '\uD83D\uDCBB';
           listHtml += '<p style="margin:.25rem 0;font-size:.9rem;">' + icon + ' ' + escH(c.className) + ' \u2014 ' + escH(c.classDate) + '</p>';
         });
       }

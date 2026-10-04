@@ -117,6 +117,11 @@
     .class-option-info .tag-badge--inperson { background: rgba(196,120,90,.12); color: #a0603e; }
     .class-option-info .tag-badge--zoom { background: rgba(74,114,163,.12); color: #3d6ba3; }
 
+    .min-size-note {
+      margin: 0 0 2rem; padding: .8rem 1rem;
+      font-size: .9rem; line-height: 1.6; color: #555; text-align: center;
+      background: rgba(217,164,65,.1); border-left: 3px solid #d9a441; border-radius: 6px;
+    }
     .no-classes-msg {
       text-align: center; padding: 1.5rem;
       color: #888; font-style: italic;
@@ -466,9 +471,13 @@
       <form id="signupForm" novalidate>
         <div class="card" style="padding:2.5rem;">
 
-          <p style="color:#555;font-size:.95rem;margin-bottom:2rem;text-align:center;">
+          <p style="color:#555;font-size:.95rem;margin-bottom:1rem;text-align:center;">
             Sign up for classes happening in the next 7 days. If the class you&rsquo;re looking for isn&rsquo;t listed yet, please check back when it gets closer.
             For in-person classes, walk-ins are welcome, but I encourage signing up ahead of time in case space is limited.
+          </p>
+          <p class="min-size-note">
+            <strong>Each class needs at least 2 sign-ups to run</strong> (in-person and online sign-ups for the same class count together).
+            The decision is made <strong>30 minutes before class</strong> &mdash; you&rsquo;ll get an email then telling you whether class is on or cancelled.
           </p>
 
           <div class="form-row">

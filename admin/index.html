@@ -393,7 +393,8 @@
           <p><strong>Edit → Delete series:</strong> permanently removes the class. It’s only allowed when <strong>no one is signed up</strong> for upcoming dates — cancel the series first if needed. Past sign-ups always stay in your Archive.</p>
 
           <h4>When emails go out</h4>
-          <p>Sign-up confirmations and the Zoom link (30 min before online classes) are <strong>automatic</strong>. <strong>Cancel</strong> and <strong>Move</strong> only email when you confirm them here (you also get a summary). The <strong>active toggle, Edit, and Delete never email anyone.</strong></p>
+          <p><strong>2-person minimum:</strong> 30 minutes before each class the site counts sign-ups (classes on the same day at the same start time — e.g. Sunday online + in person — count together; guests count). <strong>2 or more:</strong> class is on — in-person students get a “class is on” email, online students get it with their Zoom link. <strong>Under 2:</strong> the date is cancelled automatically, everyone signed up is emailed, and no Zoom meeting is made. You get a summary email either way.</p>
+          <p>Sign-up confirmations and the Zoom link (30 min before online classes, once class is confirmed on) are <strong>automatic</strong>. <strong>Cancel</strong> and <strong>Move</strong> only email when you confirm them here (you also get a summary). The <strong>active toggle, Edit, and Delete never email anyone.</strong></p>
 
           <h4>Pause teaching (time off)</h4>
           <p>The toggle at the top puts the whole site into <strong>hiatus mode</strong> without making it look cancelled. The public schedule and sign-up flow stay exactly the same, but while it’s on, every new sign-up gets a <strong>“class cancelled, please check back later”</strong> email instead of the usual confirmation, and <strong>no Zoom meetings are scheduled or emailed</strong> for any class. Flip it back off and everything returns to normal. Existing sign-ups already in your sheet are left untouched.</p>
@@ -930,7 +931,27 @@
     function closeForm() { formModal.classList.remove('active'); }
     document.getElementById('formClose').addEventListener('click', closeForm);
     document.getElementById('formCancel').addEventListener('click', closeForm);
-    formModal.addEventListener('click', function (e) { if (e.target === formModal) closeForm(); });
+    // Close a modal on a backdrop click only when the press also *started* on the
+    // backdrop. Dragging to select text in a field and releasing outside the box
+    // fires a click on the backdrop, which used to close the form mid-edit.
+    function closeOnBackdrop(modal, close) {
+      let downOnBackdrop = false;
+      modal.addEventListener('mousedown', function (e) { downOnBackdrop = (e.target === modal); });
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal && downOnBackdrop) close();
+        downOnBackdrop = false;
+      });
+    }
+    closeOnBackdrop(formModal, closeForm);
+
+    // Enter in any field of the class form = Save (which closes it on success).
+    formModal.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      if (!e.target.matches('input, select')) return;
+      e.preventDefault();
+      const saveBtn = document.getElementById('formSave');
+      if (!saveBtn.disabled) saveBtn.click();
+    });
 
     // ============================================================
     //  WRITE ACTIONS (token-gated; each reloads the schedule on success)
@@ -1116,7 +1137,7 @@
     function closeMove() { moveModal.classList.remove('active'); }
     document.getElementById('moveClose').addEventListener('click', closeMove);
     document.getElementById('moveCancel').addEventListener('click', closeMove);
-    moveModal.addEventListener('click', function (e) { if (e.target === moveModal) closeMove(); });
+    closeOnBackdrop(moveModal, closeMove);
 
     document.getElementById('moveSave').addEventListener('click', function () {
       if (!moveCtx) return;
@@ -1240,7 +1261,7 @@
     function closeCancel() { cancelModal.classList.remove('active'); cancelCtx = null; }
     document.getElementById('cancelClose').addEventListener('click', closeCancel);
     document.getElementById('cancelDismiss').addEventListener('click', closeCancel);
-    cancelModal.addEventListener('click', function (e) { if (e.target === cancelModal) closeCancel(); });
+    closeOnBackdrop(cancelModal, closeCancel);
 
     document.getElementById('cancelConfirm').addEventListener('click', function () {
       if (!cancelCtx) return;
@@ -1291,7 +1312,7 @@
     function closeDelete() { deleteModal.classList.remove('active'); deleteCtx = null; }
     document.getElementById('deleteClose').addEventListener('click', closeDelete);
     document.getElementById('deleteDismiss').addEventListener('click', closeDelete);
-    deleteModal.addEventListener('click', function (e) { if (e.target === deleteModal) closeDelete(); });
+    closeOnBackdrop(deleteModal, closeDelete);
 
     document.getElementById('deleteConfirm').addEventListener('click', function () {
       if (!deleteCtx) return;
