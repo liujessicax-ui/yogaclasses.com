@@ -27,9 +27,9 @@
   // rough sync but don't rely on it for day-to-day changes.
   var FALLBACK = {
     classes: [
-      { id: 'sunday-online', label: 'Sunday Evening — Online via Zoom', day: 0, startTime: '18:00', durationMins: 75, type: 'online', location: '', capacity: null, tags: ['Open to Everyone'], props: ['Yoga mat', 'Strap', 'Two blocks', 'Wall space', 'Yoga chair (ideal)', 'Bolster (ideal)'], active: true },
-      { id: 'tuesday-ccv', label: 'Tuesday Evening — CCV Clubhouse (In Person)', day: 2, startTime: '18:00', durationMins: 75, type: 'inperson', location: 'CCV Clubhouse', capacity: 10, tags: ['CCV Residents Only', 'In Person'], props: ['Yoga mat', 'Two blocks', 'Strap'], active: true },
-      { id: 'wednesday-restorative', label: 'Wednesday Evening — Restorative Yoga (Online)', day: 3, startTime: '20:00', durationMins: 75, type: 'online', location: '', capacity: null, tags: ['Restorative', 'Open to Everyone'], props: ['Yoga mat', 'Bolster', 'Two blocks', 'Two blankets', 'Strap', 'Wall space', 'Yoga chair (ideal)'], active: true }
+      { id: 'sunday-online', label: 'Sunday Evening — Online', day: 0, startTime: '17:00', durationMins: 60, type: 'online', location: '', capacity: null, tags: ['Open to Everyone'], props: ['Yoga mat', 'Strap', 'Two blocks', 'Wall space', 'Yoga chair (ideal)', 'Bolster (ideal)'], active: true },
+      { id: 'tuesday-ccv', label: 'Sunday Evening — CCV Clubhouse (In Person)', day: 0, startTime: '17:00', durationMins: 60, type: 'inperson', location: 'CCV Clubhouse', capacity: 10, tags: ['CCV Residents Only', 'In Person'], props: ['Yoga mat', 'Two blocks', 'Strap'], active: true },
+      { id: 'wednesday-restorative', label: 'Wednesday Evening — Restorative Yoga (Online)', day: 3, startTime: '20:00', durationMins: 75, type: 'online', location: '', capacity: null, tags: ['Restorative', 'Open to Everyone'], props: ['Yoga mat', 'Bolster', 'Two blocks', 'Two blankets', 'Strap', 'Wall space', 'Yoga chair (ideal)'], active: false }
     ],
     exceptions: []
   };

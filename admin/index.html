@@ -357,10 +357,10 @@
         <div class="hiatus-card__row">
           <div class="hiatus-card__text">
             <h3>Pause teaching <span class="hiatus-state" id="hiatusState">Off</span></h3>
-            <p>Take undetermined time off without your public site looking cancelled. Students can still browse the schedule and sign up exactly as normal — but while this is on, each sign-up gets a <strong>“class cancelled, please check back later”</strong> email instead of the usual confirmation, and <strong>no Zoom meetings are scheduled</strong> for any class.</p>
+            <p>Take undetermined time off without your public site looking cancelled. Students can still browse the schedule and sign up exactly as normal — but while this is on, each sign-up gets a <strong>“class cancelled, please check back later”</strong> email instead of the usual confirmation, and <strong>no class meetings are scheduled</strong> for any class.</p>
           </div>
           <div class="toggle" id="hiatusToggle" role="switch" aria-checked="false" tabindex="0"
-               data-tip="Toggle hiatus mode. On: sign-ups still work, but students get a cancellation email and no Zoom links go out. Off: everything works normally."></div>
+               data-tip="Toggle hiatus mode. On: sign-ups still work, but students get a cancellation email and no Google Meet links go out. Off: everything works normally."></div>
         </div>
         <div class="hiatus-note-wrap hidden" id="hiatusNoteWrap">
           <label for="hiatusNote">Optional note added to the cancellation email</label>
@@ -393,8 +393,8 @@
           <p><strong>Edit → Delete series:</strong> permanently removes the class. It’s only allowed when <strong>no one is signed up</strong> for upcoming dates — cancel the series first if needed. Past sign-ups always stay in your Archive.</p>
 
           <h4>When emails go out</h4>
-          <p><strong>2-person minimum:</strong> 30 minutes before each class the site counts sign-ups (classes on the same day at the same start time — e.g. Sunday online + in person — count together; guests count). <strong>2 or more:</strong> class is on — in-person students get a “class is on” email, online students get it with their Zoom link. <strong>Under 2:</strong> the date is cancelled automatically, everyone signed up is emailed, and no Zoom meeting is made. You get a summary email only when class is on.</p>
-          <p>Sign-up confirmations and the Zoom link (30 min before online classes, once class is confirmed on) are <strong>automatic</strong>. <strong>Cancel</strong> and <strong>Move</strong> only email when you confirm them here (you also get a summary). The <strong>active toggle, Edit, and Delete never email anyone.</strong></p>
+          <p><strong>2-person minimum:</strong> 30 minutes before each class the site counts sign-ups (classes on the same day at the same start time — e.g. Sunday online + in person — count together; guests count). <strong>2 or more:</strong> class is on — in-person students get a “class is on” email, online students get it with their Google Meet link. <strong>Under 2:</strong> the date is cancelled automatically, everyone signed up is emailed, and no meeting is made. You get a summary email only when class is on.</p>
+          <p>Sign-up confirmations and the Google Meet link (30 min before online classes, once class is confirmed on; it's also on your Google Calendar, where you start class and admit students who tap &ldquo;Ask to join&rdquo;) are <strong>automatic</strong>. If Google Meet ever fails, the class automatically falls back to Zoom and you get an email saying so. <strong>Cancel</strong> and <strong>Move</strong> only email when you confirm them here (you also get a summary). The <strong>active toggle, Edit, and Delete never email anyone.</strong></p>
 
           <h4>Pause teaching (time off)</h4>
           <p>The toggle at the top puts the whole site into <strong>hiatus mode</strong> without making it look cancelled. The public schedule and sign-up flow stay exactly the same, but while it’s on, every new sign-up gets a <strong>“class cancelled, please check back later”</strong> email instead of the usual confirmation, and <strong>no Zoom meetings are scheduled or emailed</strong> for any class. Flip it back off and everything returns to normal. Existing sign-ups already in your sheet are left untouched.</p>
@@ -793,8 +793,8 @@
       }
       seriesList.innerHTML = classes.map(function (c) {
         const time = YogaSchedule.formatTimeRange(c.startH, c.startM, c.durationMins);
-        // Drop tags already conveyed by the type badge (online / in person / via zoom).
-        const typeWords = { 'in person': 1, 'inperson': 1, 'online': 1, 'via zoom': 1 };
+        // Drop tags already conveyed by the type badge (online / in person / via zoom or meet).
+        const typeWords = { 'in person': 1, 'inperson': 1, 'online': 1, 'via zoom': 1, 'via google meet': 1 };
         const tagBadges = (c.tags || []).filter(function (t) {
           return !typeWords[String(t).trim().toLowerCase()];
         }).map(function (t) {

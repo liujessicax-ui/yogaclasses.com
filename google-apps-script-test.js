@@ -1203,7 +1203,7 @@ function sendClassReminderEmail_(student, cls, hhmm) {
     var subject = 'Reminder: your Yoga with Jessica class today';
     var isOnline = (cls.type === 'online');
     var detailHtml = isOnline
-      ? '<p style="font-size:14px;line-height:1.6;color:#555;">This is an <strong>online</strong> class. Your Zoom link will arrive about <strong>30 minutes before</strong> class starts.</p>'
+      ? '<p style="font-size:14px;line-height:1.6;color:#555;">This is an <strong>online</strong> class. Your Google Meet link will arrive about <strong>30 minutes before</strong> class starts.</p>'
       : ('<p style="font-size:14px;line-height:1.6;color:#555;">This is an <strong>in-person</strong> class' +
          (cls.location ? ' at <strong>' + escHtml(cls.location) + '</strong>' : '') + '.</p>');
     var body = '<div style="font-family:Calibri,Arial,sans-serif;max-width:600px;margin:0 auto;color:#333;">' +
@@ -1757,16 +1757,17 @@ function logConfirmationEmail(rows, cancelToken, meetLink) {
       : '') +
       (meetLink ?
         '<div style="background:#e8f5e9;padding:16px;border-radius:6px;margin:16px 0;font-size:14px;border-left:4px solid #5B7553;">' +
-          '<strong>&#x1F4F9; Your Zoom link is ready</strong><br>' +
+          '<strong>&#x1F4F9; Your ' + meetingWord_(meetLink) + ' link is ready</strong><br>' +
           '<p style="margin:8px 0;">Class is starting soon &mdash; join here:</p>' +
           '<div style="text-align:center;margin:12px 0;">' +
-            '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join Zoom</a>' +
+            '<a href="' + meetLink + '" style="display:inline-block;background:#5B7553;color:#fff;padding:12px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:600;">Join ' + meetingWord_(meetLink) + '</a>' +
           '</div>' +
+          joinTipHtml_(meetLink) +
           '<p style="margin:8px 0 0;color:#555;">Please have your camera on with good lighting. Microphones will be muted to minimize noise.</p>' +
         '</div>'
       :
         '<div style="background:#f0f5ee;padding:12px 16px;border-radius:6px;margin:16px 0;font-size:14px;">' +
-          '<strong>For online classes:</strong> A Zoom link will be sent to you 30 minutes before class. ' +
+          '<strong>For online classes:</strong> A Google Meet link will be sent to you 30 minutes before class, once the class is confirmed. ' +
           'Please have your camera on with good lighting. Microphones will be muted to minimize noise.' +
         '</div>'
       ) +
@@ -1828,6 +1829,17 @@ function logWaitlistNotificationEmail(email, firstName, className, classDate) {
     '',
     'Waitlist Notification'
   ]);
+}
+
+// "Google Meet" or "Zoom", read from the link itself (Zoom is only a fallback).
+function meetingWord_(link) {
+  return /zoom\.us/i.test(String(link || '')) ? 'Zoom' : 'Google Meet';
+}
+
+function joinTipHtml_(link) {
+  return meetingWord_(link) === 'Google Meet'
+    ? '<p style="margin:8px 0 0;color:#555;">When the link opens, tap <strong>Ask to join</strong> and Jessica will let you in.</p>'
+    : '';
 }
 
 function escHtml(str) {

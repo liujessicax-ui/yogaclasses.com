@@ -117,7 +117,7 @@
           I make the call <strong>30 minutes before class</strong>, and everyone who signed up gets an email then saying whether class is on or cancelled.
           Click the <strong>Sign Up</strong> button on any class below to see available dates and register.
           If you need to cancel, you can do so from the confirmation email you'll receive after signing up.
-          For online classes, a Zoom link will be sent to your email <strong>30 minutes before</strong> class starts.
+          For online classes, a Google Meet link will be sent to your email <strong>30 minutes before</strong> class starts. When it opens, tap <strong>Ask to join</strong> and I&rsquo;ll let you in.
           Please have your <strong>camera on with good lighting</strong> so I can see your alignment and offer corrections.
           Microphones will generally be muted during class to minimize background noise.
         </p>
@@ -139,8 +139,8 @@
           </div>
           <div class="schedule-card__details">
             <h3>Sunday Evening</h3>
-            <p><strong class="class-time" data-pt-hour="18" data-pt-min="0" data-duration="75">6:00 PM &ndash; 7:15 PM PDT</strong> &bull; Online via Zoom</p>
-            <span class="schedule-card__tag schedule-card__tag--zoom">Via Zoom</span>
+            <p><strong class="class-time" data-pt-hour="17" data-pt-min="0" data-duration="60">5:00 PM &ndash; 6:00 PM PDT</strong> &bull; Online via Google Meet</p>
+            <span class="schedule-card__tag schedule-card__tag--zoom">Via Google Meet</span>
             <span class="schedule-card__tag">Open to Everyone</span>
           </div>
           <div class="schedule-card__action">
@@ -179,8 +179,8 @@
           </div>
           <div class="schedule-card__details">
             <h3>Wednesday Evening &mdash; Restorative Yoga</h3>
-            <p><strong class="class-time" data-pt-hour="20" data-pt-min="0" data-duration="75">8:00 PM &ndash; 9:15 PM PDT</strong> &bull; Online via Zoom</p>
-            <span class="schedule-card__tag schedule-card__tag--zoom">Via Zoom</span>
+            <p><strong class="class-time" data-pt-hour="20" data-pt-min="0" data-duration="75">8:00 PM &ndash; 9:15 PM PDT</strong> &bull; Online via Google Meet</p>
+            <span class="schedule-card__tag schedule-card__tag--zoom">Via Google Meet</span>
             <span class="schedule-card__tag">Restorative</span>
             <span class="schedule-card__tag">Open to Everyone</span>
           </div>
@@ -266,12 +266,12 @@
         const parts = cls.label.split(' \u2014 ');
         const name = parts[0] || cls.label;
         let descriptor = parts.slice(1).join(' \u2014 ');
-        if (!descriptor) descriptor = cls.type === 'online' ? 'Online via Zoom' : (cls.location || 'In Person');
+        if (!descriptor) descriptor = cls.type === 'online' ? 'Online via Google Meet' : (cls.location || 'In Person');
         const fallbackTime = YogaSchedule.formatTimeRange(cls.startHour, cls.startMin, cls.durationMins);
         const dateNote = cls.oneOffDate ? ` &bull; ${escHtml(oneOffDateLong(cls.oneOffDate))}` : '';
         const badges =
           (cls.oneOffDate ? '<span class="schedule-card__tag">One-off</span>' : '') +
-          (cls.type === 'online' ? '<span class="schedule-card__tag schedule-card__tag--zoom">Via Zoom</span>' : '') +
+          (cls.type === 'online' ? '<span class="schedule-card__tag schedule-card__tag--zoom">Via Google Meet</span>' : '') +
           cls.tags.map(t => t === 'In Person'
             ? '<span class="schedule-card__tag schedule-card__tag--inperson">In Person</span>'
             : `<span class="schedule-card__tag">${escHtml(t)}</span>`).join('');
