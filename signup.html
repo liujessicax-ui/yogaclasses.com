@@ -663,10 +663,12 @@
             `<span class="tag-badge ${t === 'In Person' ? 'tag-badge--inperson' : 'tag-badge--open'}">${t}</span>`
           ).join('');
 
-          // Cancelled single date: keep the box so students see it, but make it
-          // un-selectable (no checkbox, not registered for submit). It clears on
-          // its own once the class start passes and the next week's slot opens.
-          if (occ.cancelled) {
+          // Single date Jessica cancelled: keep the box so students see it, but
+          // make it un-selectable (no checkbox, not registered for submit). It
+          // clears on its own once the class start passes and the next week's
+          // slot opens. A date cancelled automatically for the 2-person minimum
+          // is deliberately rendered as a normal option; submit refuses it.
+          if (occ.cancelled && !occ.cancelledForMinimum) {
             html += `
             <div class="class-option-wrap">
               <div class="class-option class-option--cancelled" data-type="${cls.type}" aria-disabled="true">
@@ -675,7 +677,6 @@
                   <span>${durationStr}</span>
                   <span class="tag-badge tag-badge--cancelled">Cancelled</span>
                 </div>
-                ${occ.cancelledForMinimum ? `<p class="class-option-hint">${YogaSchedule.MIN_CANCEL_MESSAGE}</p>` : ''}
               </div>
             </div>`;
             return;
@@ -921,7 +922,7 @@
       const staleEntry = classEntries.find(entry => {
         const cls = CLASSES.find(c => c.id === entry.id);
         if (!cls) return true;
-        return !YogaSchedule.upcomingOccurrences(cls, EXCEPTIONS, 7)
+        return !YogaSchedule.upcomingOccurrences(cls, EXCEPTIONS, 7, { includeCancelled: true })
           .some(occ => occ.date.toISOString() === entry.isoDate);
       });
       if (staleEntry) {
@@ -957,10 +958,44 @@
         });
       };
 
+      // A selected date may be cancelled: one cancelled automatically for the
+      // 2-person minimum still looks open on purpose, and any date may have
+      // been cancelled after this page loaded. The sign-up POST is no-cors, so
+      // refusing it here is the only way the student can be told on the page.
+      const findCancelled = () => {
+        let found = null;
+        classEntries.some(entry => {
+          const cls = CLASSES.find(c => c.id === entry.id);
+          const occ = cls && YogaSchedule.upcomingOccurrences(cls, EXCEPTIONS, 7, { includeCancelled: true })
+            .find(o => o.date.toISOString() === entry.isoDate);
+          if (occ && occ.cancelled) { found = { entry: entry, occ: occ }; return true; }
+          return false;
+        });
+        return found;
+      };
+      const refuseCancelled = (c) => {
+        if (c.occ.cancelledForMinimum) {
+          // The date keeps looking open, so just untick it; other picks stay.
+          const cb = document.querySelector('input[name="classes"][value="' + c.entry.id + '|' + c.entry.isoDate + '"]');
+          if (cb) {
+            cb.checked = false;
+            const opt = cb.closest('.class-option');
+            if (opt) opt.classList.remove('selected');
+          }
+          updateGuestVisibility();
+          showValidationModal('Sorry — the ' + c.entry.date + ' class is cancelled. ' + YogaSchedule.MIN_CANCEL_ADVICE);
+        } else {
+          buildClassOptions();
+          updateGuestVisibility();
+          showValidationModal('Sorry — the ' + c.entry.date + ' class has been cancelled. The class list has been refreshed.');
+        }
+      };
+
+      const known = findCancelled();
+      if (known) { refuseCancelled(known); return; }
+
       // Within ~35 min of a selected class, its go/no-go may have just run, so
-      // re-fetch the schedule and stop if that date has since been cancelled
-      // (a page opened earlier wouldn't know). The sign-up POST is no-cors, so
-      // this is the only place the student can be told on the page.
+      // re-fetch the schedule first (a page opened earlier wouldn't know).
       const nearStart = classEntries.some(e => new Date(e.isoDate).getTime() - Date.now() <= 35 * 60 * 1000);
       if (!nearStart) { proceed(); return; }
 
@@ -971,21 +1006,8 @@
         submitBtn.textContent = 'Sign Up';
         CLASSES = data.classes;
         EXCEPTIONS = data.exceptions;
-        let cancelledEntry = null, cancelledOcc = null;
-        classEntries.some(entry => {
-          const cls = CLASSES.find(c => c.id === entry.id);
-          const occ = cls && YogaSchedule.upcomingOccurrences(cls, EXCEPTIONS, 7, { includeCancelled: true })
-            .find(o => o.date.toISOString() === entry.isoDate);
-          if (occ && occ.cancelled) { cancelledEntry = entry; cancelledOcc = occ; return true; }
-          return false;
-        });
-        if (!cancelledEntry) { proceed(); return; }
-        buildClassOptions();
-        updateGuestVisibility();
-        showValidationModal(cancelledOcc.cancelledForMinimum
-          ? 'Sorry — the ' + cancelledEntry.date + ' class was cancelled because ' +
-            YogaSchedule.MIN_CANCEL_REASON + '. ' + YogaSchedule.MIN_CANCEL_ADVICE
-          : 'Sorry — the ' + cancelledEntry.date + ' class has been cancelled. The class list has been refreshed.');
+        const fresh = findCancelled();
+        if (fresh) refuseCancelled(fresh); else proceed();
       });
     });
 

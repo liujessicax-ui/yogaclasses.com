@@ -277,15 +277,16 @@
             : `<span class="schedule-card__tag">${escHtml(t)}</span>`).join('');
         const props = cls.props.map(p => `<li>${escHtml(p)}</li>`).join('');
 
-        // If the next slot people would sign up for is a cancelled single date,
+        // If the next slot people would sign up for is a date Jessica cancelled,
         // keep the box but name the date, say it's cancelled, and disable Sign
         // Up. It restores itself once that class start passes and the following
-        // week's slot opens (handled in schedule-data.js).
+        // week's slot opens (handled in schedule-data.js). A date cancelled
+        // automatically for the 2-person minimum is deliberately left looking
+        // open; the sign-up page refuses it when the student submits.
         const occs = YogaSchedule.upcomingOccurrences(cls, exceptions, 7, { includeCancelled: true });
-        const cancelledOcc = (occs.length && occs.every(o => o.cancelled)) ? occs[0] : null;
+        const cancelledOcc = (occs.length && occs.every(o => o.cancelled && !o.cancelledForMinimum)) ? occs[0] : null;
         const cancelNote = cancelledOcc
-          ? `<p class="schedule-card__cancelled">Class on ${escHtml(YogaSchedule.formatDate(cancelledOcc.date))} is cancelled.` +
-            (cancelledOcc.cancelledForMinimum ? ` ${escHtml(YogaSchedule.MIN_CANCEL_MESSAGE)}` : '') + `</p>`
+          ? `<p class="schedule-card__cancelled">Class on ${escHtml(YogaSchedule.formatDate(cancelledOcc.date))} is cancelled.</p>`
           : '';
         const action = cancelledOcc
           ? `<span class="btn btn--primary btn--disabled" style="font-size:.75rem;padding:.5rem 1.2rem;" aria-disabled="true">Sign Up</span>`

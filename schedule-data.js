@@ -288,14 +288,10 @@
   function isMinimumCancelNote(note) {
     return /^Auto: under \d+ sign-ups/i.test(String(note || ''));
   }
-  var MIN_CANCEL_REASON = 'fewer than 2 people had signed up 30 minutes before class';
-  var MIN_CANCEL_ADVICE = 'To make sure a class runs, please sign up more than 30 minutes before it starts.';
-  var MIN_CANCEL_MESSAGE = 'This class was cancelled because ' + MIN_CANCEL_REASON + '. ' + MIN_CANCEL_ADVICE;
+  var MIN_CANCEL_ADVICE = 'Please sign up earlier than 30 minutes before class starts.';
 
   global.YogaSchedule = {
     isMinimumCancelNote: isMinimumCancelNote,
-    MIN_CANCEL_MESSAGE: MIN_CANCEL_MESSAGE,
-    MIN_CANCEL_REASON: MIN_CANCEL_REASON,
     MIN_CANCEL_ADVICE: MIN_CANCEL_ADVICE,
     LA_TZ: LA_TZ,
     FALLBACK: FALLBACK,
